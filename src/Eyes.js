@@ -1,28 +1,48 @@
-(function () {
+'use strict';
+// import {EyesBase, ContextBasedScaleProviderFactory, FixedScaleProviderFactory, ScaleProviderIdentityFactory} from 'eyes.sdk';
 
-  const EyesSDK = require('eyes.sdk');
-  const EyesUtils = require('eyes.utils');
-  const EyesBase = EyesSDK.EyesBase;
-  const NullScaleProvider = EyesSDK.NullScaleProvider;
-  const ContextBasedScaleProviderFactory = EyesSDK.ContextBasedScaleProviderFactory;
-  const FixedScaleProviderFactory = EyesSDK.FixedScaleProviderFactory;
-  const ScaleProviderIdentityFactory = EyesSDK.ScaleProviderIdentityFactory;
-  const SimplePropertyHandler = EyesUtils.SimplePropertyHandler;
-  const PromiseFactory = EyesUtils.PromiseFactory;
-  const ArgumentGuard = EyesUtils.ArgumentGuard;
-  const EyesWDIOUtils = require('./EyesWDIOUtils');
-  const Target = require('./Target');
-  const EyesRemoteWebElement = require('./EyesRemoteWebElement');
-  const ElementFinderWrapper = require('./ElementFinderWrappers').ElementFinderWrapper;
-  const ScrollPositionProvider = require('./ScrollPositionProvider');
-  const CssTranslatePositionProvider = require('./CssTranslatePositionProvider');
-  const GeometryUtils = EyesUtils.GeometryUtils;
+const EyesSDK = require('eyes.sdk');
+const EyesUtils = require('eyes.utils');
+const EyesBase = EyesSDK.EyesBase;
+const NullScaleProvider = EyesSDK.NullScaleProvider;
+const ContextBasedScaleProviderFactory = EyesSDK.ContextBasedScaleProviderFactory;
+const FixedScaleProviderFactory = EyesSDK.FixedScaleProviderFactory;
+const ScaleProviderIdentityFactory = EyesSDK.ScaleProviderIdentityFactory;
+const RegionProvider = EyesSDK.RegionProvider;
+const NullRegionProvider = EyesSDK.NullRegionProvider;
+const SimplePropertyHandler = EyesUtils.SimplePropertyHandler;
+const PromiseFactory = EyesSDK.PromiseFactory;
+const CheckSettings = EyesSDK.CheckSettings;
+const RectangleSize = EyesSDK.RectangleSize;
+const ArgumentGuard = EyesUtils.ArgumentGuard;
+const CssTranslatePositionProvider = require('./CssTranslatePositionProvider');
+const EyesWDIOUtils = require('./EyesWDIOUtils');
+const EyesWDIOScreenshot = require('./EyesWDIOScreenshot');
+const EyesWebDriver = require('./EyesWebDriver');
+const EyesRemoteWebElement = require('./EyesRemoteWebElement');
+const ElementFinderWrapper = require('./ElementFinderWrappers').ElementFinderWrapper;
+const ScrollPositionProvider = require('./ScrollPositionProvider');
+const Target = require('./Target');
+const GeometryUtils = EyesUtils.GeometryUtils;
 
-  const UNKNOWN_DEVICE_PIXEL_RATIO = 0;
-  const DEFAULT_DEVICE_PIXEL_RATIO = 1;
 
+class Eyes extends EyesBase {
 
-  function Eyes(serverUrl) {
+  static get UNKNOWN_DEVICE_PIXEL_RATIO() {
+    return 0;
+  }
+
+  static get DEFAULT_DEVICE_PIXEL_RATIO() {
+    return 1;
+  }
+
+  constructor(serverUrl) {
+    let promiseFactory = new PromiseFactory((asyncAction) => {
+      return new Promise(asyncAction);
+    }, null);
+
+    super(promiseFactory, serverUrl || EyesBase.DEFAULT_EYES_SERVER);
+
     this._forceFullPage = false;
     this._imageRotationDegrees = 0;
     this._automaticRotation = true;
@@ -30,16 +50,11 @@
     this._hideScrollbars = null;
     this._checkFrameOrElement = false;
 
-    this._promiseFactory = new PromiseFactory();
-
-    EyesBase.call(this, this._promiseFactory, serverUrl || EyesBase.DEFAULT_EYES_SERVER, false);
+    // this._promiseFactory = promiseFactory;
   }
 
-  Eyes.prototype = new EyesBase();
-  Eyes.prototype.constructor = Eyes;
 
-
-  function _init(that, driver) {
+  static _init(that, driver) {
     that._promiseFactory.setFactoryMethods(function (asyncAction) {
       return driver.call(function () {
         let deferred = Promise.defer();
@@ -52,16 +67,18 @@
   }
 
 
-  Eyes.prototype.open = function* (driver, appName, testName, viewportSize) {
+  * open(driver, appName, testName, viewportSize) {
     let that = this;
 
-    _init(that, driver);
+    Eyes._init(that, driver);
+
 
     that._isProtractorLoaded = false;
     that._logger.verbose("Running using Webdriverio module");
 
-    that._devicePixelRatio = UNKNOWN_DEVICE_PIXEL_RATIO;
-    that._driver = driver;
+    that._devicePixelRatio = Eyes.UNKNOWN_DEVICE_PIXEL_RATIO;
+    // that._driver = driver;
+    that._driver = new EyesWebDriver(driver, that, that._logger, that._promiseFactory);
     that.setStitchMode(that._stitchMode);
 
     if (this._isDisabled) {
@@ -70,41 +87,38 @@
       });
     }
 
-    return driver.call(function () {
-      return driver.status().then((status) => {
-        const platformVersion = status.value.os.version;
+    if (driver.isMobile) {
+      let status = yield driver.status();
+      const platformVersion = status.value.os.version;
 
-        let majorVersion;
-        if (!platformVersion || platformVersion.length < 1) {
-          return;
+      let majorVersion;
+      if (!platformVersion || platformVersion.length < 1) {
+        return;
+      }
+      majorVersion = platformVersion.split('.', 2)[0];
+      let isAndroid = driver.isAndroid;
+      let isIOS = driver.isIOS;
+      if (isAndroid) {
+        if (!that.getHostOS()) {
+          that.setHostOS('Android ' + majorVersion);
         }
-        majorVersion = platformVersion.split('.', 2)[0];
-        if (driver.isAndroid) {
-          if (!that.getHostOS()) {
-            that.setHostOS('Android ' + majorVersion);
-          }
-        } else if (driver.isIOS) {
-          if (!that.getHostOS()) {
-            that.setHostOS('iOS ' + majorVersion);
-          }
-        } else {
-          return;
+      } else if (isIOS) {
+        if (!that.getHostOS()) {
+          that.setHostOS('iOS ' + majorVersion);
         }
+      }
 
-        const orientation = driver.getOrientation();
-        if (orientation && orientation.toUpperCase() === 'LANDSCAPE') {
-          that._isLandscape = true;
-        }
-      }).then(function () {
-        return EyesBase.prototype.open.call(that, appName, testName, viewportSize);
-      }).then(function () {
-        return that._driver;
-      });
-    });
-  };
+      const orientation = driver.getOrientation();
+      if (orientation && orientation.toUpperCase() === 'LANDSCAPE') {
+        that._isLandscape = true;
+      }
+    }
+
+    return super.openBase(appName, testName, viewportSize, null);
+  }
 
 
-  Eyes.prototype.close = function (throwEx) {
+  close(throwEx) {
     let that = this;
 
     if (throwEx === undefined) {
@@ -119,37 +133,20 @@
           throw err;
         });
     });
-  };
+  }
 
 
-  Eyes.prototype.checkWindow1 = function* (name) {
-    const that = this;
-
-    /*
-        const imageMatchSettings = {
-          matchLevel: target.getMatchLevel(),
-          ignoreCaret: target.getIgnoreCaret(),
-          ignore: target.getIgnoreRegions(),
-          floating: target.getFloatingRegions(),
-          exact: null
-        };
-    */
-    let result = yield EyesBase.prototype.checkWindow.call(that, name, false, null, null, null);
-
-    if (result.asExpected) {
-      return result;
-    } else {
-      throw EyesBase.buildTestError(result, that._sessionStartInfo.scenarioIdOrName, that._sessionStartInfo.appIdOrName);
-    }
-  };
-
-
-  Eyes.prototype.checkWindow = function (tag, matchTimeout) {
+  checkWindow(tag, matchTimeout) {
     return this.check(tag, Target.window().timeout(matchTimeout));
   };
 
 
-  Eyes.prototype.check = function (name, target) {
+  checkElement(element, matchTimeout, tag) {
+    return this.check(tag, Target.region(element).timeout(matchTimeout));
+  };
+
+
+  * check(name, target) {
     ArgumentGuard.notNullOrEmpty(name, "Name");
     ArgumentGuard.notNull(target, "Target");
 
@@ -164,10 +161,11 @@
       return promise;
     }
 
+    // todo
     if (target.getIgnoreObjects().length) {
       target.getIgnoreObjects().forEach(function (obj) {
         promise = promise.then(function () {
-          return findElementByLocator(that, obj.element);
+          return Eyes.findElementByLocator(that, obj.element);
         }).then(function (element) {
           if (!isElementObject(element)) {
             throw new Error("Unsupported ignore region type: " + typeof element);
@@ -180,10 +178,11 @@
       });
     }
 
+    // todo
     if (target.getFloatingObjects().length) {
       target.getFloatingObjects().forEach(function (obj) {
         promise = promise.then(function () {
-          return findElementByLocator(that, obj.element);
+          return Eyes.findElementByLocator(that, obj.element);
         }).then(function (element) {
           if (!isElementObject(element)) {
             throw new Error("Unsupported floating region type: " + typeof element);
@@ -211,10 +210,11 @@
       that._forceFullPage = true;
     }
 
+    // todo
     // If frame specified
     if (target.isUsingFrame()) {
       promise = promise.then(function () {
-        return findElementByLocator(that, target.getFrame());
+        return Eyes.findElementByLocator(that, target.getFrame());
       }).then(function (frame) {
         that._logger.verbose("Switching to frame...");
         return that._driver.switchTo().frame(frame);
@@ -234,10 +234,11 @@
       });
     }
 
+    // todo
     // if region specified
     if (target.isUsingRegion()) {
       promise = promise.then(function () {
-        return findElementByLocator(that, target.getRegion());
+        return Eyes.findElementByLocator(that, target.getRegion());
       }).then(function (region) {
         regionObject = region;
 
@@ -272,96 +273,90 @@
           throw new Error("Unsupported region type: " + typeof regionObject);
         }
       });
+    } else {
+      regionProvider = new NullRegionProvider();
     }
 
-    return promise.then(function () {
-      that._logger.verbose("Call to checkWindowBase...");
-      const imageMatchSettings = {
-        matchLevel: target.getMatchLevel(),
-        ignoreCaret: target.getIgnoreCaret(),
-        ignore: target.getIgnoreRegions(),
-        floating: target.getFloatingRegions(),
-        exact: null
-      };
-      return EyesBase.prototype.checkWindow.call(that, name, target.getIgnoreMismatch(), target.getTimeout(), regionProvider, imageMatchSettings);
-    }).then(function (result) {
-      that._logger.verbose("Processing results...");
-      if (result.asExpected || !that._failureReportOverridden) {
-        return result;
-      } else {
-        throw EyesBase.buildTestError(result, that._sessionStartInfo.scenarioIdOrName, that._sessionStartInfo.appIdOrName);
-      }
-    }).then(function () {
-      that._logger.verbose("Done!");
-      that._logger.verbose("Restoring temporal variables...");
+    that._logger.verbose("Call to checkWindowBase...");
+    const imageMatchSettings = {
+      matchLevel: target.getMatchLevel(),
+      ignoreCaret: target.getIgnoreCaret(),
+      ignore: target.getIgnoreRegions(),
+      floating: target.getFloatingRegions(),
+      exact: null
+    };
 
-      if (that._regionToCheck) {
-        that._regionToCheck = null;
-      }
+    let result = yield super.checkWindowBase(regionProvider, name, target.getIgnoreMismatch(), new CheckSettings(target.getTimeout()));
 
-      if (that._checkFrameOrElement) {
-        that._checkFrameOrElement = false;
-      }
+    that._logger.verbose("Processing results...");
+    if (result.asExpected || !that._failureReportOverridden) {
+      return result;
+    } else {
+      throw EyesBase.buildTestError(result, that._sessionStartInfo.scenarioIdOrName, that._sessionStartInfo.appIdOrName);
+    }
 
-      // restore initial values
-      if (originalForceFullPage !== undefined) {
-        that._forceFullPage = originalForceFullPage;
-      }
+    that._logger.verbose("Done!");
+    that._logger.verbose("Restoring temporal variables...");
 
-      if (originalHideScrollBars !== undefined) {
-        that._hideScrollbars = originalHideScrollBars;
-      }
+    if (that._regionToCheck) {
+      that._regionToCheck = null;
+    }
 
-      if (originalPositionProvider !== undefined) {
-        that.setPositionProvider(originalPositionProvider);
-      }
+    if (that._checkFrameOrElement) {
+      that._checkFrameOrElement = false;
+    }
 
-      if (originalOverflow !== undefined) {
-        return regionObject.setOverflow(originalOverflow);
-      }
-    }).then(function () {
-      that._logger.verbose("Done!");
+    // restore initial values
+    if (originalForceFullPage !== undefined) {
+      that._forceFullPage = originalForceFullPage;
+    }
 
-      // restore parent frame, if another frame was selected
-      if (isFrameSwitched) {
-        throw new Error('Frame support is not implemented yet!');
-        that._logger.verbose("Switching back to parent frame...");
-        return that._driver.switchTo().parentFrame().then(function () {
-          that._logger.verbose("Done!");
-        });
-      }
-    });
-  };
+    if (originalHideScrollBars !== undefined) {
+      that._hideScrollbars = originalHideScrollBars;
+    }
+
+    if (originalPositionProvider !== undefined) {
+      that.setPositionProvider(originalPositionProvider);
+    }
+
+    if (originalOverflow !== undefined) {
+      return regionObject.setOverflow(originalOverflow);
+    }
+
+    that._logger.verbose("Done!");
+
+    // restore parent frame, if another frame was selected
+    if (isFrameSwitched) {
+      throw new Error('Frame support is not implemented yet!');
+      that._logger.verbose("Switching back to parent frame...");
+      return that._driver.switchTo().parentFrame().then(function () {
+        that._logger.verbose("Done!");
+      });
+    }
+  }
 
 
-  const findElementByLocator = function (that, elementObject) {
+  static findElementByLocator(that, elementObject) {
     return that._promiseFactory.makePromise(function (resolve) {
-      if (isLocatorObject(elementObject)) {
-        that._logger.verbose("Trying to find element...", elementObject);
-        return resolve(that._driver.findElement(elementObject));
-      } else if (elementObject instanceof ElementFinderWrapper) {
-        return resolve(elementObject.getWebElement());
-      }
-
-      resolve(elementObject);
+      return resolve(that._driver.findElement(elementObject));
     });
   };
 
-  const isElementObject = function (o) {
+  static isElementObject(o) {
     return o instanceof EyesRemoteWebElement;
   };
 
-  const isLocatorObject = function (o) {
+  static isLocatorObject(o) {
     return o instanceof webdriver.By || o.findElementsOverride !== undefined || (o.using !== undefined && o.value !== undefined);
   };
 
 
-  Eyes.prototype.getViewportSize = function () {
+  getViewportSize() {
     return EyesWDIOUtils.getViewportSizeOrDisplaySize(this._logger, this._driver, this._promiseFactory);
   };
 
 
-  const getRegionFromWebElement = function (element) {
+  static getRegionFromWebElement(element) {
     let elementSize;
     return element.getSize().then(function (size) {
       elementSize = size;
@@ -372,11 +367,11 @@
   };
 
 
-  Eyes.prototype.setStitchMode = function (mode) {
+  setStitchMode(mode) {
     this._stitchMode = mode;
     if (this._driver) {
       switch (mode) {
-        case StitchMode.CSS:
+        case Eyes.StitchMode.CSS:
           this.setPositionProvider(new CssTranslatePositionProvider(this._logger, this._driver, this._promiseFactory));
           break;
         default:
@@ -389,14 +384,14 @@
    * Get the stitch mode.
    * @return {StitchMode} The currently set StitchMode.
    */
-  Eyes.prototype.getStitchMode = function () {
+  getStitchMode() {
     return this._stitchMode;
   };
 
 
-  Eyes.prototype.getScreenShot = function () {
+  getScreenshot() {
     const that = this;
-    return that.updateScalingParams().then(function (scaleProviderFactory) {
+    return that.updateScalingParams().then(scaleProviderFactory => {
       return EyesWDIOUtils.getScreenshot(
         that._driver,
         that._promiseFactory,
@@ -406,7 +401,7 @@
         that._cutProviderHandler.get(),
         that._forceFullPage,
         that._hideScrollbars,
-        that._stitchMode === StitchMode.CSS,
+        that._stitchMode === Eyes.StitchMode.CSS,
         that._imageRotationDegrees,
         that._automaticRotation,
         that._os === 'Android' ? 90 : 270,
@@ -417,22 +412,26 @@
         that._saveDebugScreenshots,
         that._debugScreenshotsPath
       );
+    }).then(screenshot => {
+      return new EyesWDIOScreenshot(screenshot);
     });
   };
 
-  const StitchMode = {
-    // Uses scrolling to get to the different parts of the page.
-    Scroll: 'Scroll',
+  static get StitchMode() {
+    return {
+      // Uses scrolling to get to the different parts of the page.
+      Scroll: 'Scroll',
 
-    // Uses CSS transitions to get to the different parts of the page.
-    CSS: 'CSS'
-  };
+      // Uses CSS transitions to get to the different parts of the page.
+      CSS: 'CSS'
+    };
+  }
 
 
-  Eyes.prototype.updateScalingParams = function () {
+  updateScalingParams() {
     const that = this;
     return that._promiseFactory.makePromise(function (resolve) {
-      if (that._devicePixelRatio === UNKNOWN_DEVICE_PIXEL_RATIO && that._scaleProviderHandler.get() instanceof NullScaleProvider) {
+      if (that._devicePixelRatio === Eyes.UNKNOWN_DEVICE_PIXEL_RATIO && that._scaleProviderHandler.get() instanceof NullScaleProvider) {
         let factory, enSize, vpSize;
         that._logger.verbose("Trying to extract device pixel ratio...");
 
@@ -440,17 +439,17 @@
           that._devicePixelRatio = ratio;
         }, function (err) {
           that._logger.verbose("Failed to extract device pixel ratio! Using default.", err);
-          that._devicePixelRatio = DEFAULT_DEVICE_PIXEL_RATIO;
+          that._devicePixelRatio = Eyes.DEFAULT_DEVICE_PIXEL_RATIO;
         }).then(function () {
           that._logger.verbose("Device pixel ratio: " + that._devicePixelRatio);
           that._logger.verbose("Setting scale provider..");
           return that._positionProvider.getEntireSize();
         }).then(function (entireSize) {
-          enSize = entireSize;
+          enSize = new RectangleSize(entireSize.width, entireSize.height);
           return that.getViewportSize();
         }).then(function (viewportSize) {
-          vpSize = viewportSize;
-          factory = new ContextBasedScaleProviderFactory(enSize, vpSize, that._devicePixelRatio, that._scaleProviderHandler);
+          vpSize = new RectangleSize(viewportSize.width, viewportSize.height);
+          factory = new ContextBasedScaleProviderFactory(that._logger, enSize, vpSize, that._devicePixelRatio, that._driver.getRemoteWebDriver().isMobile, that._scaleProviderHandler);
         }, function (err) {
           // This can happen in Appium for example.
           that._logger.verbose("Failed to set ContextBasedScaleProvider.", err);
@@ -468,12 +467,13 @@
   };
 
 
-  Eyes.prototype.setViewportSize = function (size) {
+  setViewportSize(size) {
+    this._viewportSize = new RectangleSize(size.width, size.height);
     return EyesWDIOUtils.setViewportSize(this._logger, this._driver, size, this._promiseFactory);
   };
 
 
-  Eyes.prototype.getInferredEnvironment = function () {
+  getInferredEnvironment() {
     let res = 'useragent:';
     return this._driver.execute('return navigator.userAgent').then(function (userAgent) {
       return res + userAgent;
@@ -483,12 +483,12 @@
   };
 
 
-  Eyes.prototype._getBaseAgentId = function () {
+  getBaseAgentId() {
     return 'webdriverio/4.8.0';
   };
 
 
-  Eyes.prototype.setFailureReport = function (mode) {
+  setFailureReport(mode) {
     if (mode === EyesBase.FailureReport.Immediate) {
       this._failureReportOverridden = true;
       mode = EyesBase.FailureReport.OnClose;
@@ -498,25 +498,25 @@
   };
 
 
-  Eyes.prototype.getAUTSessionId = function () {
+  getAUTSessionId() {
     if (!this._driver) {
       return undefined;
     }
 
-    return Promise.resolve(this._driver.requestHandler.sessionID);
+    return Promise.resolve(this._driver.getRemoteWebDriver().requestHandler.sessionID);
   };
 
 
-  Eyes.prototype._waitTimeout = function (ms) {
+  _waitTimeout(ms) {
     return this._driver.timeouts(ms);
   };
 
 
-  Eyes.prototype.getTitle = function () {
+  getTitle() {
     return this._driver.getTitle();
   };
 
 
-  module.exports = Eyes;
+}
 
-}());
+module.exports = Eyes;

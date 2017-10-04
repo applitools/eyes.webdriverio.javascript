@@ -1,3 +1,15 @@
+"use strict";
+
+const EyesSDK = require('eyes.sdk');
+const EyesUtils = require('eyes.utils');
+const MutableImage = EyesSDK.MutableImage;
+const CoordinatesType = EyesSDK.CoordinatesType;
+const Location = EyesSDK.Location;
+const GeneralUtils = EyesUtils.GeneralUtils;
+const GeometryUtils = EyesUtils.GeometryUtils;
+const ImageUtils = EyesUtils.ImageUtils;
+
+
 /*
  ---
 
@@ -8,65 +20,59 @@
  ---
  */
 
-(function () {
-  "use strict";
 
-  const EyesSDK = require('eyes.sdk'),
-    EyesUtils = require('eyes.utils');
-  const MutableImage = EyesSDK.MutableImage,
-    CoordinatesType = EyesSDK.CoordinatesType,
-    GeneralUtils = EyesUtils.GeneralUtils,
-    GeometryUtils = EyesUtils.GeometryUtils,
-    ImageUtils = EyesUtils.ImageUtils;
+class EyesWDIOUtils {
 
-  const EyesWDIOUtils = {};
 
   /**
    * @private
    * @type {string}
    */
-  const JS_GET_VIEWPORT_SIZE =
-    'var height = undefined; ' +
-    "var width = undefined; " +
-    "if (window.innerHeight) { height = window.innerHeight; } " +
-    "else if (document.documentElement && document.documentElement.clientHeight) { height = document.documentElement.clientHeight; } " +
-    "else { var b = document.getElementsByTagName('body')[0]; if (b.clientHeight) {height = b.clientHeight;} }; " +
-    "if (window.innerWidth) { width = window.innerWidth; } " +
-    "else if (document.documentElement && document.documentElement.clientWidth) { width = document.documentElement.clientWidth; } " +
-    "else { var b = document.getElementsByTagName('body')[0]; if (b.clientWidth) { width = b.clientWidth;} }; " +
-    "return [width, height];";
+  static get JS_GET_VIEWPORT_SIZE() {
+    return "var height = undefined; " +
+      "var width = undefined; " +
+      "if (window.innerHeight) { height = window.innerHeight; } " +
+      "else if (document.documentElement && document.documentElement.clientHeight) { height = document.documentElement.clientHeight; } " +
+      "else { var b = document.getElementsByTagName('body')[0]; if (b.clientHeight) {height = b.clientHeight;} }; " +
+      "if (window.innerWidth) { width = window.innerWidth; } " +
+      "else if (document.documentElement && document.documentElement.clientWidth) { width = document.documentElement.clientWidth; } " +
+      "else { var b = document.getElementsByTagName('body')[0]; if (b.clientWidth) { width = b.clientWidth;} }; " +
+      "return [width, height];";
+  }
 
   /**
    * @private
    * @type {string}
    */
-  const JS_GET_CURRENT_SCROLL_POSITION =
-    "var doc = document.documentElement; " +
-    "var x = window.scrollX || ((window.pageXOffset || doc.scrollLeft) - (doc.clientLeft || 0)); " +
-    "var y = window.scrollY || ((window.pageYOffset || doc.scrollTop) - (doc.clientTop || 0)); " +
-    "return [x, y];";
+  static get JS_GET_CURRENT_SCROLL_POSITION() {
+    return "var doc = document.documentElement; " +
+      "var x = window.scrollX || ((window.pageXOffset || doc.scrollLeft) - (doc.clientLeft || 0)); " +
+      "var y = window.scrollY || ((window.pageYOffset || doc.scrollTop) - (doc.clientTop || 0)); " +
+      "return [x, y];";
+  }
 
   /**
    * @private
    * @type {string}
    */
-  const JS_GET_CONTENT_ENTIRE_SIZE =
-    "var scrollWidth = document.documentElement.scrollWidth; " +
-    "var bodyScrollWidth = document.body.scrollWidth; " +
-    "var totalWidth = Math.max(scrollWidth, bodyScrollWidth); " +
-    "var clientHeight = document.documentElement.clientHeight; " +
-    "var bodyClientHeight = document.body.clientHeight; " +
-    "var scrollHeight = document.documentElement.scrollHeight; " +
-    "var bodyScrollHeight = document.body.scrollHeight; " +
-    "var maxDocElementHeight = Math.max(clientHeight, scrollHeight); " +
-    "var maxBodyHeight = Math.max(bodyClientHeight, bodyScrollHeight); " +
-    "var totalHeight = Math.max(maxDocElementHeight, maxBodyHeight); " +
-    "return [totalWidth, totalHeight];";
+  static get JS_GET_CONTENT_ENTIRE_SIZE() {
+    return "var scrollWidth = document.documentElement.scrollWidth; " +
+      "var bodyScrollWidth = document.body.scrollWidth; " +
+      "var totalWidth = Math.max(scrollWidth, bodyScrollWidth); " +
+      "var clientHeight = document.documentElement.clientHeight; " +
+      "var bodyClientHeight = document.body.clientHeight; " +
+      "var scrollHeight = document.documentElement.scrollHeight; " +
+      "var bodyScrollHeight = document.body.scrollHeight; " +
+      "var maxDocElementHeight = Math.max(clientHeight, scrollHeight); " +
+      "var maxBodyHeight = Math.max(bodyClientHeight, bodyScrollHeight); " +
+      "var totalHeight = Math.max(maxDocElementHeight, maxBodyHeight); " +
+      "return [totalWidth, totalHeight];";
+  }
 
   /**
    * @return {string}
    */
-  const JS_GET_COMPUTED_STYLE_FORMATTED_STR = function (propStyle) {
+  static JS_GET_COMPUTED_STYLE_FORMATTED_STR(propStyle) {
     return "var elem = arguments[0]; var styleProp = '" + propStyle + "'; " +
       "if (window.getComputedStyle) { " +
       "return window.getComputedStyle(elem, null).getPropertyValue(styleProp);" +
@@ -80,18 +86,21 @@
   /**
    * @return {string}
    */
-  const JS_GET_IS_BODY_OVERFLOW_HIDDEN =
-    "var styles = window.getComputedStyle(document.body, null);" +
-    "var overflow = styles.getPropertyValue('overflow');" +
-    "var overflowX = styles.getPropertyValue('overflow-x');" +
-    "var overflowY = styles.getPropertyValue('overflow-y');" +
-    "return overflow == 'hidden' || overflowX == 'hidden' || overflowY == 'hidden'";
+  static get JS_GET_IS_BODY_OVERFLOW_HIDDEN() {
+    return "var styles = window.getComputedStyle(document.body, null);" +
+      "var overflow = styles.getPropertyValue('overflow');" +
+      "var overflowX = styles.getPropertyValue('overflow-x');" +
+      "var overflowY = styles.getPropertyValue('overflow-y');" +
+      "return overflow == 'hidden' || overflowX == 'hidden' || overflowY == 'hidden'";
+  }
 
   /**
    * @private
    * @type {string[]}
    */
-  const JS_TRANSFORM_KEYS = ["transform", "-webkit-transform"];
+  static get JS_TRANSFORM_KEYS() {
+    return ["transform", "-webkit-transform"];
+  }
 
   /**
    * Executes a script using the browser's executeScript function - and optionally waits a timeout.
@@ -103,7 +112,7 @@
    *        let the browser a chance to stabilize (e.g., finish rendering).
    * @return {Promise<void>} A promise which resolves to the result of the script's execution on the tab.
    */
-  EyesWDIOUtils.executeScript = function executeScript(browser, script, promiseFactory, stabilizationTimeMs) {
+  static executeScript(browser, script, promiseFactory, stabilizationTimeMs) {
     return browser.execute(script).then(function (result) {
       if (stabilizationTimeMs) {
         return GeneralUtils.sleep(stabilizationTimeMs, promiseFactory)
@@ -126,8 +135,8 @@
    * @param {string} propStyle The style property which value we would like to extract.
    * @return {Promise<string>} The value of the style property of the element, or {@code null}.
    */
-  EyesWDIOUtils.getComputedStyle = function (browser, element, propStyle) {
-    const scriptToExec = JS_GET_COMPUTED_STYLE_FORMATTED_STR(propStyle);
+  static getComputedStyle(browser, element, propStyle) {
+    const scriptToExec = EyesWDIOUtils.JS_GET_COMPUTED_STYLE_FORMATTED_STR(propStyle);
     return browser.executeScript(scriptToExec, element).then(function (computedStyle) {
       return computedStyle;
     });
@@ -142,7 +151,7 @@
    * @param {PromiseFactory} promiseFactory
    * @return {Promise<{x: number, y: number}>} The location of the content of the element.
    */
-  EyesWDIOUtils.getLocationWithBordersAddition = function (logger, element, location, promiseFactory) {
+  static getLocationWithBordersAddition(logger, element, location, promiseFactory) {
     logger.verbose("BordersAdditionFrameLocationProvider(logger, element, [" + location.x + "," + location.y + "])");
     if (element.getRemoteWebElement !== undefined) {
       element = element.getRemoteWebElement();
@@ -169,7 +178,7 @@
    * @param {WebElement} element
    * @return {Promise<number>}
    */
-  function _getLeftBorderWidth(logger, promiseFactory, element) {
+  static _getLeftBorderWidth(logger, promiseFactory, element) {
     return promiseFactory.makePromise(function (resolve) {
       logger.verbose("Get element border left width...");
       return EyesWDIOUtils.getComputedStyle(element.getDriver(), element, "border-left-width").then(function (styleValue) {
@@ -199,7 +208,7 @@
    * @param {WebElement} element
    * @return {Promise<number>}
    */
-  function _getTopBorderWidth(logger, promiseFactory, element) {
+  static _getTopBorderWidth(logger, promiseFactory, element) {
     return promiseFactory.makePromise(function (resolve) {
       logger.verbose("Get element's border top width...");
       return EyesWDIOUtils.getComputedStyle(element.getDriver(), element, "border-top-width").then(function (styleValue) {
@@ -227,11 +236,11 @@
    * @param {PromiseFactory} promiseFactory
    * @return {Promise<number>} A promise which resolves to the device pixel ratio (float type).
    */
-  EyesWDIOUtils.getDevicePixelRatio = function getDevicePixelRatio(browser, promiseFactory) {
+  static getDevicePixelRatio(browser, promiseFactory) {
     return EyesWDIOUtils.executeScript(browser, 'return window.devicePixelRatio', promiseFactory, undefined).then(function (results) {
       return parseFloat(results);
     });
-  };
+  }
 
   /**
    * Get the current transform of page.
@@ -240,17 +249,17 @@
    * @param {PromiseFactory} promiseFactory
    * @return {Promise<object.<string, string>>} A promise which resolves to the current transform value.
    */
-  EyesWDIOUtils.getCurrentTransform = function getCurrentTransform(browser, promiseFactory) {
+  static getCurrentTransform(browser, promiseFactory) {
     let script = "return { ";
     let i = 0;
-    const l = JS_TRANSFORM_KEYS.length;
+    const l = EyesWDIOUtils.JS_TRANSFORM_KEYS.length;
     for (; i < l; i++) {
-      script += "'" + JS_TRANSFORM_KEYS[i] + "': document.documentElement.style['" + JS_TRANSFORM_KEYS[i] + "'],";
+      script += "'" + EyesWDIOUtils.JS_TRANSFORM_KEYS[i] + "': document.documentElement.style['" + EyesWDIOUtils.JS_TRANSFORM_KEYS[i] + "'],";
     }
     script += " }";
 
     return EyesWDIOUtils.executeScript(browser, script, promiseFactory, undefined);
-  };
+  }
 
   /**
    * Sets transforms for document.documentElement according to the given map of style keys and values.
@@ -260,7 +269,7 @@
    * @param {PromiseFactory} promiseFactory
    * @returns {Promise<void>}
    */
-  EyesWDIOUtils.setTransforms = function (browser, transforms, promiseFactory) {
+  static setTransforms(browser, transforms, promiseFactory) {
     let script = "";
     for (let key in transforms) {
       if (transforms.hasOwnProperty(key)) {
@@ -269,7 +278,7 @@
     }
 
     return EyesWDIOUtils.executeScript(browser, script, promiseFactory, 250);
-  };
+  }
 
   /**
    * Set the given transform to document.documentElement for all style keys defined in {@link JS_TRANSFORM_KEYS}
@@ -279,20 +288,20 @@
    * @param {PromiseFactory} promiseFactory
    * @return {Promise<void>} A promise which resolves to the previous transform once the updated transform is set.
    */
-  EyesWDIOUtils.setTransform = function setTransform(browser, transformToSet, promiseFactory) {
+  static setTransform(browser, transformToSet, promiseFactory) {
     const transforms = {};
     if (!transformToSet) {
       transformToSet = '';
     }
 
     let i = 0;
-    const l = JS_TRANSFORM_KEYS.length;
+    const l = EyesWDIOUtils.JS_TRANSFORM_KEYS.length;
     for (; i < l; i++) {
-      transforms[JS_TRANSFORM_KEYS[i]] = transformToSet;
+      transforms[EyesWDIOUtils.JS_TRANSFORM_KEYS[i]] = transformToSet;
     }
 
     return EyesWDIOUtils.setTransforms(browser, transforms, promiseFactory);
-  };
+  }
 
   /**
    * CSS translate the document to a given location.
@@ -302,9 +311,9 @@
    * @param {PromiseFactory} promiseFactory
    * @return {Promise<void>} A promise which resolves to the previous transform when the scroll is executed.
    */
-  EyesWDIOUtils.translateTo = function translateTo(browser, point, promiseFactory) {
+  static translateTo(browser, point, promiseFactory) {
     return EyesWDIOUtils.setTransform(browser, 'translate(-' + point.x + 'px, -' + point.y + 'px)', promiseFactory);
-  };
+  }
 
   /**
    * Scroll to the specified position.
@@ -314,11 +323,11 @@
    * @param {PromiseFactory} promiseFactory
    * @return {Promise<void>} A promise which resolves after the action is performed and timeout passed.
    */
-  EyesWDIOUtils.scrollTo = function scrollTo(browser, point, promiseFactory) {
+  static scrollTo(browser, point, promiseFactory) {
     return EyesWDIOUtils.executeScript(browser,
       'window.scrollTo(' + parseInt(point.x, 10) + ', ' + parseInt(point.y, 10) + ');',
       promiseFactory, 250);
-  };
+  }
 
   /**
    * Gets the current scroll position.
@@ -327,14 +336,14 @@
    * @param {PromiseFactory} promiseFactory
    * @return {Promise<{x: number, y: number}>} A promise which resolves to the current scroll position.
    */
-  EyesWDIOUtils.getCurrentScrollPosition = function getCurrentScrollPosition(browser, promiseFactory) {
-    return EyesWDIOUtils.executeScript(browser, JS_GET_CURRENT_SCROLL_POSITION, promiseFactory, undefined).then(function (results) {
+  static getCurrentScrollPosition(browser, promiseFactory) {
+    return EyesWDIOUtils.executeScript(browser, EyesWDIOUtils.JS_GET_CURRENT_SCROLL_POSITION, promiseFactory, undefined).then(function (results) {
       // If we can't find the current scroll position, we use 0 as default.
       const x = parseInt(results[0], 10) || 0;
       const y = parseInt(results[1], 10) || 0;
-      return {x: x, y: y};
+      return new Location(x, y);
     });
-  };
+  }
 
   /**
    * Get the entire page size.
@@ -343,18 +352,18 @@
    * @param {PromiseFactory} promiseFactory
    * @return {Promise<{width: number, height: number}>} A promise which resolves to an object containing the width/height of the page.
    */
-  EyesWDIOUtils.getEntirePageSize = function getEntirePageSize(browser, promiseFactory) {
+  static getEntirePageSize(browser, promiseFactory) {
     // IMPORTANT: Notice there's a major difference between scrollWidth
     // and scrollHeight. While scrollWidth is the maximum between an
     // element's width and its content width, scrollHeight might be
     // smaller (!) than the clientHeight, which is why we take the
     // maximum between them.
-    return EyesWDIOUtils.executeScript(browser, JS_GET_CONTENT_ENTIRE_SIZE, promiseFactory).then(function (results) {
+    return EyesWDIOUtils.executeScript(browser, EyesWDIOUtils.JS_GET_CONTENT_ENTIRE_SIZE, promiseFactory).then(function (results) {
       const totalWidth = parseInt(results[0], 10) || 0;
       const totalHeight = parseInt(results[1], 10) || 0;
       return {width: totalWidth, height: totalHeight};
     });
-  };
+  }
 
   /**
    * Updates the document's documentElement "overflow" value (mainly used to remove/allow scrollbars).
@@ -364,7 +373,7 @@
    * @param {PromiseFactory} promiseFactory
    * @return {Promise<string>} A promise which resolves to the original overflow of the document.
    */
-  EyesWDIOUtils.setOverflow = function setOverflow(browser, overflowValue, promiseFactory) {
+  static setOverflow(browser, overflowValue, promiseFactory) {
     let script;
     if (overflowValue === null) {
       script =
@@ -379,7 +388,7 @@
     }
 
     return EyesWDIOUtils.executeScript(browser, script, promiseFactory, 100);
-  };
+  }
 
   /**
    * Updates the document's body "overflow" value
@@ -389,7 +398,7 @@
    * @param {PromiseFactory} promiseFactory
    * @return {Promise<string>} A promise which resolves to the original overflow of the document.
    */
-  EyesWDIOUtils.setBodyOverflow = function setOverflow(browser, overflowValue, promiseFactory) {
+  static setBodyOverflow(browser, overflowValue, promiseFactory) {
     let script;
     if (overflowValue === null) {
       script =
@@ -404,7 +413,7 @@
     }
 
     return EyesWDIOUtils.executeScript(browser, script, promiseFactory, 100);
-  };
+  }
 
   /**
    * Hides the scrollbars of the current context's document element.
@@ -413,9 +422,9 @@
    * @param {PromiseFactory} promiseFactory
    * @return {Promise<string>} The previous value of the overflow property (could be {@code null}).
    */
-  EyesWDIOUtils.hideScrollbars = function (browser, promiseFactory) {
+  static hideScrollbars(browser, promiseFactory) {
     return EyesWDIOUtils.setOverflow(browser, "hidden", promiseFactory);
-  };
+  }
 
   /**
    * Tries to get the viewport size using Javascript. If fails, gets the entire browser window size!
@@ -424,9 +433,9 @@
    * @param {PromiseFactory} promiseFactory
    * @return {Promise<{width: number, height: number}>} The viewport size.
    */
-  EyesWDIOUtils.getViewportSize = function (browser, promiseFactory) {
+  static getViewportSize(browser, promiseFactory) {
     return promiseFactory.makePromise(function (resolve, reject) {
-      return EyesWDIOUtils.executeScript(browser, JS_GET_VIEWPORT_SIZE, promiseFactory, undefined).then(function (results) {
+      return EyesWDIOUtils.executeScript(browser, EyesWDIOUtils.JS_GET_VIEWPORT_SIZE, promiseFactory, undefined).then(function (results) {
         if (isNaN(results.value[0]) || isNaN(results.value[1])) {
           reject("Can't parse values.");
         } else {
@@ -439,7 +448,7 @@
         reject(err);
       });
     });
-  };
+  }
 
   /**
    * @param {Logger} logger
@@ -447,7 +456,7 @@
    * @param {PromiseFactory} promiseFactory
    * @return {Promise<{width: number, height: number}>} The viewport size of the current context, or the display size if the viewport size cannot be retrieved.
    */
-  EyesWDIOUtils.getViewportSizeOrDisplaySize = function (logger, browser, promiseFactory) {
+  static getViewportSizeOrDisplaySize(logger, browser, promiseFactory) {
     logger.verbose("getViewportSizeOrDisplaySize()");
 
     return EyesWDIOUtils.getViewportSize(browser, promiseFactory).catch(function (err) {
@@ -460,7 +469,7 @@
         return size;
       });
     });
-  };
+  }
 
   /**
    * @param {Logger} logger
@@ -469,15 +478,15 @@
    * @param {PromiseFactory} promiseFactory
    * @return {Promise<boolean>}
    */
-  EyesWDIOUtils.setBrowserSize = function (logger, browser, requiredSize, promiseFactory) {
-    return _setBrowserSize(logger, browser, requiredSize, 3, promiseFactory).then(function () {
+  static setBrowserSize(logger, browser, requiredSize, promiseFactory) {
+    return EyesWDIOUtils._setBrowserSize(logger, browser, requiredSize, 3, promiseFactory).then(function () {
       return true;
     }, function () {
       return false;
     });
-  };
+  }
 
-  function _setBrowserSize(logger, browser, requiredSize, retries, promiseFactory) {
+  static _setBrowserSize(logger, browser, requiredSize, retries, promiseFactory) {
     return promiseFactory.makePromise(function (resolve, reject) {
       logger.verbose("Trying to set browser size to:", requiredSize);
 
@@ -497,7 +506,7 @@
           return;
         }
 
-        _setBrowserSize(logger, browser, requiredSize, retries - 1, promiseFactory).then(function () {
+        EyesWDIOUtils._setBrowserSize(logger, browser, requiredSize, retries - 1, promiseFactory).then(function () {
           resolve();
         }, function (err) {
           reject(err);
@@ -514,7 +523,7 @@
    * @param {PromiseFactory} promiseFactory
    * @return {Promise<boolean>}
    */
-  EyesWDIOUtils.setBrowserSizeByViewportSize = function (logger, browser, actualViewportSize, requiredViewportSize, promiseFactory) {
+  static setBrowserSizeByViewportSize(logger, browser, actualViewportSize, requiredViewportSize, promiseFactory) {
     return browser.windowHandleSize().then(function (browserSize) {
       logger.verbose("Current browser size:", browserSize);
       const requiredBrowserSize = {
@@ -523,7 +532,7 @@
       };
       return EyesWDIOUtils.setBrowserSize(logger, browser, requiredBrowserSize, promiseFactory);
     });
-  };
+  }
 
   /**
    * Tries to set the viewport
@@ -534,7 +543,7 @@
    * @param {PromiseFactory} promiseFactory
    * @returns {Promise<void>}
    */
-  EyesWDIOUtils.setViewportSize = function (logger, browser, requiredSize, promiseFactory) {
+  static setViewportSize(logger, browser, requiredSize, promiseFactory) {
     // First we will set the window size to the required size.
     // Then we'll check the viewport size and increase the window size accordingly.
     logger.verbose("setViewportSize(", requiredSize, ")");
@@ -613,7 +622,7 @@
         reject(new Error(err));
       }
     });
-  };
+  }
 
   /**
    * @private
@@ -633,20 +642,20 @@
    * @param {PromiseFactory} promiseFactory
    * @return {Promise<void>}
    */
-  function _setWindowSize(logger,
-                          browser,
-                          requiredSize,
-                          actualViewportSize,
-                          browserSize,
-                          widthDiff,
-                          widthStep,
-                          heightDiff,
-                          heightStep,
-                          currWidthChange,
-                          currHeightChange,
-                          retriesLeft,
-                          lastRequiredBrowserSize,
-                          promiseFactory) {
+  static _setWindowSize(logger,
+                        browser,
+                        requiredSize,
+                        actualViewportSize,
+                        browserSize,
+                        widthDiff,
+                        widthStep,
+                        heightDiff,
+                        heightStep,
+                        currWidthChange,
+                        currHeightChange,
+                        retriesLeft,
+                        lastRequiredBrowserSize,
+                        promiseFactory) {
     return promiseFactory.makePromise(function (resolve, reject) {
       logger.verbose("Retries left: " + retriesLeft);
       // We specifically use "<=" (and not "<"), so to give an extra resize attempt
@@ -721,26 +730,10 @@
    * @param {string} [debugScreenshotsPath=null]
    * @return {Promise<void>}
    */
-  const _processPart = function (part,
-                                 parts,
-                                 imageObj,
-                                 browser,
-                                 promise,
-                                 promiseFactory,
-                                 viewportSize,
-                                 positionProvider,
-                                 scaleProviderFactory,
-                                 cutProvider,
-                                 entirePageSize,
-                                 pixelRatio,
-                                 rotationDegrees,
-                                 automaticRotation,
-                                 automaticRotationDegrees,
-                                 isLandscape,
-                                 waitBeforeScreenshots,
-                                 regionInScreenshot,
-                                 saveDebugScreenshots,
-                                 debugScreenshotsPath) {
+  static _processPart(part, parts, imageObj, browser, promise, promiseFactory, viewportSize, positionProvider,
+                      scaleProviderFactory, cutProvider, entirePageSize, pixelRatio, rotationDegrees,
+                      automaticRotation, automaticRotationDegrees, isLandscape, waitBeforeScreenshots,
+                      regionInScreenshot, saveDebugScreenshots, debugScreenshotsPath) {
     return promise.then(function () {
       return promiseFactory.makePromise(function (resolve) {
         // Skip 0,0 as we already got the screenshot
@@ -759,7 +752,7 @@
         return positionProvider.setPosition(partPosition).then(function () {
           return positionProvider.getCurrentPosition();
         }).then(function (currentPosition) {
-          return _captureViewport(browser, promiseFactory, viewportSize, scaleProviderFactory, cutProvider, entirePageSize,
+          return EyesWDIOUtils._captureViewport(browser, promiseFactory, viewportSize, scaleProviderFactory, cutProvider, entirePageSize,
             pixelRatio, rotationDegrees, automaticRotation, automaticRotationDegrees, isLandscape,
             waitBeforeScreenshots, regionInScreenshot, saveDebugScreenshots, debugScreenshotsPath).then(function (partImage) {
             return partImage.asObject();
@@ -775,7 +768,7 @@
         });
       });
     });
-  };
+  }
 
   /**
    * @private
@@ -796,21 +789,21 @@
    * @param {string} [debugScreenshotsPath=null]
    * @return {Promise<MutableImage>}
    */
-  const _captureViewport = function (browser,
-                                   promiseFactory,
-                                   viewportSize,
-                                   scaleProviderFactory,
-                                   cutProvider,
-                                   entirePageSize,
-                                   pixelRatio,
-                                   rotationDegrees,
-                                   automaticRotation,
-                                   automaticRotationDegrees,
-                                   isLandscape,
-                                   waitBeforeScreenshots,
-                                   regionInScreenshot,
-                                   saveDebugScreenshots,
-                                   debugScreenshotsPath) {
+  static _captureViewport(browser,
+                          promiseFactory,
+                          viewportSize,
+                          scaleProviderFactory,
+                          cutProvider,
+                          entirePageSize,
+                          pixelRatio,
+                          rotationDegrees,
+                          automaticRotation,
+                          automaticRotationDegrees,
+                          isLandscape,
+                          waitBeforeScreenshots,
+                          regionInScreenshot,
+                          saveDebugScreenshots,
+                          debugScreenshotsPath) {
     let mutableImage, scaleRatio = 1;
     return GeneralUtils.sleep(waitBeforeScreenshots, promiseFactory).then(function () {
       return Promise.resolve(browser.saveScreenshot()).then(function (screenshot64) {
@@ -830,15 +823,16 @@
       }).then(function () {
         return mutableImage.getSize();
       }).then(function (imageSize) {
-        if (isLandscape && automaticRotation && imageSize.height > imageSize.width) {
+        if (isLandscape && automaticRotation && imageSize.getHeight() > imageSize.getWidth()) {
           rotationDegrees = automaticRotationDegrees;
         }
 
         if (scaleProviderFactory) {
-          const scaleProvider = scaleProviderFactory.getScaleProvider(imageSize.width);
+          const scaleProvider = scaleProviderFactory.getScaleProvider(imageSize.getWidth());
           scaleRatio = scaleProvider.getScaleRatio();
         }
 
+        // todo
         if (regionInScreenshot) {
           const scaledRegion = GeometryUtils.scaleRegion(regionInScreenshot, 1 / scaleRatio);
           return mutableImage.cropImage(scaledRegion);
@@ -865,19 +859,19 @@
         return mutableImage.getSize();
       }).then(function (imageSize) {
         // If the image is a viewport screenshot, we want to save the current scroll position (we'll need it for check region).
-        if (imageSize.width <= viewportSize.width && imageSize.height <= viewportSize.height) {
+        if (imageSize.getWidth() <= viewportSize.getWidth() && imageSize.getHeight() <= viewportSize.getHeight()) {
           return EyesWDIOUtils.getCurrentScrollPosition(browser, promiseFactory).then(function (scrollPosition) {
             return mutableImage.setCoordinates(scrollPosition);
           }, function () {
             // Failed to get Scroll position, setting coordinates to default.
-            return mutableImage.setCoordinates({x: 0, y: 0});
+            return mutableImage.setCoordinates(new Location(0, 0));
           });
         }
       }).then(function () {
         return mutableImage;
       });
     });
-  };
+  }
 
   /**
    * Capture screenshot from given driver
@@ -902,24 +896,11 @@
    * @param {string} [debugScreenshotsPath=null]
    * @returns {Promise<MutableImage>}
    */
-  EyesWDIOUtils.getScreenshot = function getScreenshot(browser,
-                                                       promiseFactory,
-                                                       viewportSize,
-                                                       positionProvider,
-                                                       scaleProviderFactory,
-                                                       cutProvider,
-                                                       fullPage,
-                                                       hideScrollbars,
-                                                       useCssTransition,
-                                                       rotationDegrees,
-                                                       automaticRotation,
-                                                       automaticRotationDegrees,
-                                                       isLandscape,
-                                                       waitBeforeScreenshots,
-                                                       checkFrameOrElement,
-                                                       regionProvider,
-                                                       saveDebugScreenshots,
-                                                       debugScreenshotsPath) {
+  static getScreenshot(browser, promiseFactory, viewportSize, positionProvider, scaleProviderFactory,
+                       cutProvider, fullPage, hideScrollbars, useCssTransition, rotationDegrees, automaticRotation,
+                       automaticRotationDegrees, isLandscape,
+                       waitBeforeScreenshots, checkFrameOrElement,
+                       regionProvider, saveDebugScreenshots, debugScreenshotsPath) {
     const MIN_SCREENSHOT_PART_HEIGHT = 10,
       MAX_SCROLLBAR_SIZE = 50;
     let originalPosition,
@@ -954,7 +935,7 @@
           originalOverflow = originalVal;
 
           if (useCssTransition) {
-            return EyesWDIOUtils.executeScript(browser, JS_GET_IS_BODY_OVERFLOW_HIDDEN, promiseFactory).then(function (isBodyOverflowHidden) {
+            return EyesWDIOUtils.executeScript(browser, EyesWDIOUtils.JS_GET_IS_BODY_OVERFLOW_HIDDEN, promiseFactory).then(function (isBodyOverflowHidden) {
               if (isBodyOverflowHidden) {
                 return EyesWDIOUtils.setBodyOverflow(browser, "initial", promiseFactory).then(function (originalBodyVal) {
                   originalBodyOverflow = originalBodyVal;
@@ -980,7 +961,7 @@
       }
     }).then(function () {
       if (regionProvider) {
-        return _captureViewport(browser, promiseFactory, viewportSize, scaleProviderFactory, cutProvider, entirePageSize, pixelRatio,
+        return EyesWDIOUtils._captureViewport(browser, promiseFactory, viewportSize, scaleProviderFactory, cutProvider, entirePageSize, pixelRatio,
           rotationDegrees, automaticRotation, automaticRotationDegrees, isLandscape, waitBeforeScreenshots).then(function (image) {
           return regionProvider.getRegionInLocation(image, CoordinatesType.SCREENSHOT_AS_IS, promiseFactory);
         }).then(function (region) {
@@ -989,9 +970,9 @@
       }
     }).then(function () {
       // step #5 - Take screenshot of the 0,0 tile / current viewport
-      return _captureViewport(browser, promiseFactory, viewportSize, scaleProviderFactory, cutProvider, entirePageSize, pixelRatio, rotationDegrees,
-        automaticRotation, automaticRotationDegrees, isLandscape, waitBeforeScreenshots,
-        checkFrameOrElement ? regionInScreenshot : null, saveDebugScreenshots, debugScreenshotsPath)
+       return EyesWDIOUtils._captureViewport(browser, promiseFactory, viewportSize, scaleProviderFactory, cutProvider,
+        entirePageSize, pixelRatio, rotationDegrees, automaticRotation, automaticRotationDegrees, isLandscape,
+        waitBeforeScreenshots, checkFrameOrElement ? regionInScreenshot : null, saveDebugScreenshots, debugScreenshotsPath)
         .then(function (image) {
           screenshot = image;
           return screenshot.asObject();
@@ -1006,7 +987,7 @@
         }
         // IMPORTANT This is required! Since when calculating the screenshot parts for full size,
         // we use a screenshot size which is a bit smaller (see comment below).
-        if (imageObject.width >= entirePageSize.width && imageObject.height >= entirePageSize.height) {
+        if (imageObject.width >= entirePageSize.getWidth() && imageObject.height >= entirePageSize.getHeight()) {
           resolve();
           return;
         }
@@ -1059,7 +1040,8 @@
     }).then(function () {
       return screenshot;
     });
-  };
+  }
 
-  module.exports = EyesWDIOUtils;
-}());
+}
+
+module.exports = EyesWDIOUtils;

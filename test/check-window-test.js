@@ -23,10 +23,10 @@ test.beforeEach(function* (t) {
   yield eyes.open(browser, appName, testName, {width: 800, height: 600});
 });
 
-test('My third Javascript test!', function* main() {
+test('Check window test!', function* main() {
   try {
-    yield browser.url('https://applitools.com/helloworld?diff1');
-    // yield browser.url('https://applitools.com/helloworld');
+    yield browser.url('https://applitools.com/helloworld');
+    // yield browser.url('https://applitools.com/helloworld?diff1');
 
     yield eyes.checkWindow('Main Page');
 
