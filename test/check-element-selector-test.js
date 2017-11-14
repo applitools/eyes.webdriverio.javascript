@@ -28,7 +28,7 @@ test('Check element test!', async() => {
     await browser.url('https://applitools.com/helloworld');
     // await browser.url('https://applitools.com/helloworld?diff2');
 
-    let elementToCheck = '/html/body/div/div[1]';
+    let elementToCheck = 'body > div > div:nth-child(1)';
     await eyes.checkElement(elementToCheck, null, 'Header');
 
     await eyes.close();
