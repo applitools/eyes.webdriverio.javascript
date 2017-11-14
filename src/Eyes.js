@@ -9,21 +9,26 @@ const ContextBasedScaleProviderFactory = EyesSDK.ContextBasedScaleProviderFactor
 const FixedScaleProviderFactory = EyesSDK.FixedScaleProviderFactory;
 const ScaleProviderIdentityFactory = EyesSDK.ScaleProviderIdentityFactory;
 const RegionProvider = EyesSDK.RegionProvider;
+const Region = EyesSDK.Region;
 const NullRegionProvider = EyesSDK.NullRegionProvider;
 const SimplePropertyHandler = EyesUtils.SimplePropertyHandler;
 const PromiseFactory = EyesSDK.PromiseFactory;
 const CheckSettings = EyesSDK.CheckSettings;
 const RectangleSize = EyesSDK.RectangleSize;
+const CoordinatesType = EyesSDK.CoordinatesType;
 const ArgumentGuard = EyesUtils.ArgumentGuard;
 const CssTranslatePositionProvider = require('./CssTranslatePositionProvider');
 const EyesWDIOUtils = require('./EyesWDIOUtils');
 const EyesWDIOScreenshot = require('./EyesWDIOScreenshot');
 const EyesWebDriver = require('./EyesWebDriver');
-const EyesRemoteWebElement = require('./EyesRemoteWebElement');
+const EyesWebElement = require('./EyesWebElement');
 const ElementFinderWrapper = require('./ElementFinderWrappers').ElementFinderWrapper;
 const ScrollPositionProvider = require('./ScrollPositionProvider');
+const EyesRegionProvider = require('./EyesRegionProvider');
 const Target = require('./Target');
 const GeometryUtils = EyesUtils.GeometryUtils;
+
+const VERSION = require('../package.json').version;
 
 
 class Eyes extends EyesBase {
@@ -54,32 +59,26 @@ class Eyes extends EyesBase {
   }
 
 
-  static _init(that, driver) {
-    that._promiseFactory.setFactoryMethods(function (asyncAction) {
+  _init(driver) {
+    this._promiseFactory.setFactoryMethods(function (asyncAction) {
       return driver.call(function () {
-        let deferred = Promise.defer();
-        asyncAction(deferred.resolve, deferred.reject);
-        return deferred.promise;
+        return new Promise(asyncAction);
       });
-    }, function () {
-      return Promise.defer();
-    });
+    }, null);
   }
 
 
-  * open(driver, appName, testName, viewportSize) {
-    let that = this;
-
-    Eyes._init(that, driver);
+  async open(driver, appName, testName, viewportSize) {
+    this._init(driver);
 
 
-    that._isProtractorLoaded = false;
-    that._logger.verbose("Running using Webdriverio module");
+    this._isProtractorLoaded = false;
+    this._logger.verbose("Running using Webdriverio module");
 
-    that._devicePixelRatio = Eyes.UNKNOWN_DEVICE_PIXEL_RATIO;
+    this._devicePixelRatio = Eyes.UNKNOWN_DEVICE_PIXEL_RATIO;
     // that._driver = driver;
-    that._driver = new EyesWebDriver(driver, that, that._logger, that._promiseFactory);
-    that.setStitchMode(that._stitchMode);
+    this._driver = new EyesWebDriver(driver, this, this._logger, this._promiseFactory);
+    this.setStitchMode(this._stitchMode);
 
     if (this._isDisabled) {
       return driver.execute(function () {
@@ -88,7 +87,7 @@ class Eyes extends EyesBase {
     }
 
     if (driver.isMobile) {
-      let status = yield driver.status();
+      let status = await driver.status();
       const platformVersion = status.value.os.version;
 
       let majorVersion;
@@ -99,34 +98,30 @@ class Eyes extends EyesBase {
       let isAndroid = driver.isAndroid;
       let isIOS = driver.isIOS;
       if (isAndroid) {
-        if (!that.getHostOS()) {
-          that.setHostOS('Android ' + majorVersion);
+        if (!this.getHostOS()) {
+          this.setHostOS('Android ' + majorVersion);
         }
       } else if (isIOS) {
-        if (!that.getHostOS()) {
-          that.setHostOS('iOS ' + majorVersion);
+        if (!this.getHostOS()) {
+          this.setHostOS('iOS ' + majorVersion);
         }
       }
 
       const orientation = driver.getOrientation();
       if (orientation && orientation.toUpperCase() === 'LANDSCAPE') {
-        that._isLandscape = true;
+        this._isLandscape = true;
       }
     }
 
-    return super.openBase(appName, testName, viewportSize, null);
+    return this.openBase(appName, testName, viewportSize, null);
   }
 
 
-  close(throwEx) {
+  end(throwEx=true) {
     let that = this;
 
-    if (throwEx === undefined) {
-      throwEx = true;
-    }
-
     return that._driver.call(function () {
-      return EyesBase.prototype.close.call(that, throwEx)
+      return this.close.call(that, throwEx)
         .then(function (results) {
           return results;
         }, function (err) {
@@ -146,7 +141,7 @@ class Eyes extends EyesBase {
   };
 
 
-  * check(name, target) {
+  async check(name, target) {
     ArgumentGuard.notNullOrEmpty(name, "Name");
     ArgumentGuard.notNull(target, "Target");
 
@@ -165,7 +160,7 @@ class Eyes extends EyesBase {
     if (target.getIgnoreObjects().length) {
       target.getIgnoreObjects().forEach(function (obj) {
         promise = promise.then(function () {
-          return Eyes.findElementByLocator(that, obj.element);
+          return this.findElementByLocator(obj.element);
         }).then(function (element) {
           if (!isElementObject(element)) {
             throw new Error("Unsupported ignore region type: " + typeof element);
@@ -182,7 +177,7 @@ class Eyes extends EyesBase {
     if (target.getFloatingObjects().length) {
       target.getFloatingObjects().forEach(function (obj) {
         promise = promise.then(function () {
-          return Eyes.findElementByLocator(that, obj.element);
+          return this.findElementByLocator(obj.element);
         }).then(function (element) {
           if (!isElementObject(element)) {
             throw new Error("Unsupported floating region type: " + typeof element);
@@ -214,7 +209,7 @@ class Eyes extends EyesBase {
     // If frame specified
     if (target.isUsingFrame()) {
       promise = promise.then(function () {
-        return Eyes.findElementByLocator(that, target.getFrame());
+        return this.findElementByLocator(target.getFrame());
       }).then(function (frame) {
         that._logger.verbose("Switching to frame...");
         return that._driver.switchTo().frame(frame);
@@ -237,60 +232,50 @@ class Eyes extends EyesBase {
     // todo
     // if region specified
     if (target.isUsingRegion()) {
-      promise = promise.then(function () {
-        return Eyes.findElementByLocator(that, target.getRegion());
-      }).then(function (region) {
-        regionObject = region;
 
-        if (isElementObject(regionObject)) {
-          let regionPromise;
-          if (target.getStitchContent()) {
-            that._checkFrameOrElement = true;
+      regionObject = await this.findElementByLocator(target.getRegion());
 
-            originalPositionProvider = that.getPositionProvider();
-            that.setPositionProvider(new ElementPositionProvider(that._logger, that._driver, regionObject, that._promiseFactory));
+      if (Eyes.isElementObject(regionObject)) {
+        let regionPromise, region;
+        if (target.getStitchContent()) { // todo
+          that._checkFrameOrElement = true;
 
-            // Set overflow to "hidden".
-            regionPromise = regionObject.getOverflow().then(function (value) {
-              originalOverflow = value;
-              return regionObject.setOverflow("hidden");
-            }).then(function () {
-              return getRegionProviderForElement(that, regionObject);
-            }).then(function (regionProvider) {
-              that._regionToCheck = regionProvider;
-            });
-          } else {
-            regionPromise = getRegionFromWebElement(regionObject);
-          }
+          originalPositionProvider = that.getPositionProvider();
+          that.setPositionProvider(new ElementPositionProvider(that._logger, that._driver, regionObject, that._promiseFactory));
 
-          return regionPromise.then(function (region) {
-            regionProvider = new EyesRegionProvider(that._logger, that._driver, region, CoordinatesType.CONTEXT_RELATIVE);
+          // Set overflow to "hidden".
+          regionPromise = regionObject.getOverflow().then(function (value) {
+            originalOverflow = value;
+            return regionObject.setOverflow("hidden");
+          }).then(function () {
+            return getRegionProviderForElement(that, regionObject);
+          }).then(function (regionProvider) {
+            that._regionToCheck = regionProvider;
           });
-        } else if (GeometryUtils.isRegion(regionObject)) {
-          // if regionObject is simple region
-          regionProvider = new EyesRegionProvider(that._logger, that._driver, regionObject, CoordinatesType.CONTEXT_AS_IS);
         } else {
-          throw new Error("Unsupported region type: " + typeof regionObject);
+          region = await Eyes.getRegionFromWebElement(regionObject);
         }
-      });
+
+        regionProvider = new EyesRegionProvider(that._logger, that._driver, region, CoordinatesType.CONTEXT_RELATIVE, that._promiseFactory);
+
+      } else if (GeometryUtils.isRegion(regionObject)) {
+        // if regionObject is simple region
+        regionProvider = new EyesRegionProvider(that._logger, that._driver, regionObject, CoordinatesType.CONTEXT_AS_IS);
+      } else {
+        throw new Error("Unsupported region type: " + typeof regionObject);
+      }
+
     } else {
-      regionProvider = new NullRegionProvider();
+      regionProvider = new NullRegionProvider(that._promiseFactory);
     }
 
     that._logger.verbose("Call to checkWindowBase...");
-    const imageMatchSettings = {
-      matchLevel: target.getMatchLevel(),
-      ignoreCaret: target.getIgnoreCaret(),
-      ignore: target.getIgnoreRegions(),
-      floating: target.getFloatingRegions(),
-      exact: null
-    };
 
-    let result = yield super.checkWindowBase(regionProvider, name, target.getIgnoreMismatch(), new CheckSettings(target.getTimeout()));
+    let result = await super.checkWindowBase(regionProvider, name, target.getIgnoreMismatch(), new CheckSettings(target.getTimeout()));
 
     that._logger.verbose("Processing results...");
     if (result.asExpected || !that._failureReportOverridden) {
-      return result;
+      // return result;
     } else {
       throw EyesBase.buildTestError(result, that._sessionStartInfo.scenarioIdOrName, that._sessionStartInfo.appIdOrName);
     }
@@ -326,8 +311,8 @@ class Eyes extends EyesBase {
     that._logger.verbose("Done!");
 
     // restore parent frame, if another frame was selected
+    // todo
     if (isFrameSwitched) {
-      throw new Error('Frame support is not implemented yet!');
       that._logger.verbose("Switching back to parent frame...");
       return that._driver.switchTo().parentFrame().then(function () {
         that._logger.verbose("Done!");
@@ -336,14 +321,12 @@ class Eyes extends EyesBase {
   }
 
 
-  static findElementByLocator(that, elementObject) {
-    return that._promiseFactory.makePromise(function (resolve) {
-      return resolve(that._driver.findElement(elementObject));
-    });
+  findElementByLocator(elementObject) {
+    return this._driver.findElement(elementObject);
   };
 
   static isElementObject(o) {
-    return o instanceof EyesRemoteWebElement;
+    return o instanceof EyesWebElement;
   };
 
   static isLocatorObject(o) {
@@ -356,14 +339,11 @@ class Eyes extends EyesBase {
   };
 
 
-  static getRegionFromWebElement(element) {
-    let elementSize;
-    return element.getSize().then(function (size) {
-      elementSize = size;
-      return element.getLocation();
-    }).then(function (point) {
-      return GeometryUtils.createRegionFromLocationAndSize(point, elementSize);
-    });
+  static async getRegionFromWebElement(element) {
+    let elementSize = await element.getSize();
+    let point = await element.getLocation();
+
+    return new Region(point.x, point.y, elementSize.width, elementSize.height);
   };
 
 
@@ -389,32 +369,30 @@ class Eyes extends EyesBase {
   };
 
 
-  getScreenshot() {
-    const that = this;
-    return that.updateScalingParams().then(scaleProviderFactory => {
-      return EyesWDIOUtils.getScreenshot(
-        that._driver,
-        that._promiseFactory,
-        that._viewportSize,
-        that._positionProvider,
-        scaleProviderFactory,
-        that._cutProviderHandler.get(),
-        that._forceFullPage,
-        that._hideScrollbars,
-        that._stitchMode === Eyes.StitchMode.CSS,
-        that._imageRotationDegrees,
-        that._automaticRotation,
-        that._os === 'Android' ? 90 : 270,
-        that._isLandscape,
-        that._waitBeforeScreenshots,
-        that._checkFrameOrElement,
-        that._regionToCheck,
-        that._saveDebugScreenshots,
-        that._debugScreenshotsPath
-      );
-    }).then(screenshot => {
-      return new EyesWDIOScreenshot(screenshot);
-    });
+  async getScreenshot() {
+    const scaleProviderFactory = await this.updateScalingParams();
+    const screenshot = await EyesWDIOUtils.getScreenshot(
+      this._driver,
+      this._promiseFactory,
+      this._viewportSize,
+      this._positionProvider,
+      scaleProviderFactory,
+      this._cutProviderHandler.get(),
+      this._forceFullPage,
+      this._hideScrollbars,
+      this._stitchMode === Eyes.StitchMode.CSS,
+      this._imageRotationDegrees,
+      this._automaticRotation,
+      this._os === 'Android' ? 90 : 270,
+      this._isLandscape,
+      this._waitBeforeScreenshots,
+      this._checkFrameOrElement,
+      this._regionToCheck,
+      this._saveDebugScreenshots,
+      this._debugScreenshotsPath
+    );
+
+    return new EyesWDIOScreenshot(screenshot);
   };
 
   static get StitchMode() {
@@ -484,7 +462,7 @@ class Eyes extends EyesBase {
 
 
   getBaseAgentId() {
-    return 'webdriverio/4.8.0';
+    return `eyes.webdriverio/${VERSION}`;
   };
 
 

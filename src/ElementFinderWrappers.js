@@ -1,7 +1,7 @@
 "use strict";
 
 const EyesUtils = require('eyes.utils'),
-  EyesRemoteWebElement = require('./EyesRemoteWebElement');
+  EyesRemoteWebElement = require('./EyesWebElement');
 const GeneralUtils = EyesUtils.GeneralUtils;
 
 /*

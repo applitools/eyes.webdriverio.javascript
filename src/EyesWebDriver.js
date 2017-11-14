@@ -5,7 +5,7 @@ const EyesUtils = require('eyes.utils');
 const Frame = require('./Frame');
 const FrameChain = require('./FrameChain');
 const EyesWDIOUtils = require('./EyesWDIOUtils');
-const EyesRemoteWebElement = require('./EyesRemoteWebElement');
+const EyesWebElement = require('./EyesWebElement');
 const ScrollPositionProvider = require('./ScrollPositionProvider');
 const EyesTargetLocator = require('./EyesTargetLocator');
 const GeneralUtils = EyesUtils.GeneralUtils;
@@ -73,26 +73,26 @@ class EyesWebDriver {
     return this._driver.executeScript('return navigator.userAgent');
   }
 
-  //noinspection JSCheckFunctionSignatures
+
   /**
-   * @param {webdriver.By|ProtractorBy} locator
-   * @return {EyesRemoteWebElement}
+   * @param {String} locator
+   * @return {EyesWebElement}
    */
-  findElement(locator) {
-    const that = this;
-    return new EyesRemoteWebElement(that._driver.findElement(locator), that, that._logger);
+  async findElement(locator) {
+    let element = await this._driver.element(locator);
+    return new EyesWebElement(element, this, this._logger);
   }
 
-  //noinspection JSCheckFunctionSignatures
+
   /**
    * @param {webdriver.By|ProtractorBy} locator
-   * @return {Promise.<EyesRemoteWebElement[]>}
+   * @return {Promise.<EyesWebElement[]>}
    */
   findElements(locator) {
     const that = this;
     return this._driver.findElements(locator).then(function (elements) {
       return elements.map(function (element) {
-        return new EyesRemoteWebElement(element, that, that._logger);
+        return new EyesWebElement(element, that, that._logger);
       });
     });
   }
@@ -174,7 +174,7 @@ class EyesWebDriver {
 
     /**
      * @param {EyesTargetLocator.TargetType} targetType
-     * @param {EyesRemoteWebElement|WebElement} targetFrame
+     * @param {EyesWebElement|WebElement} targetFrame
      * @returns {Promise<void>}
      */
     OnWillSwitch.willSwitchToFrame = function (targetType, targetFrame) {
@@ -240,7 +240,7 @@ class EyesWebDriver {
    */
   getDefaultContentViewportSize(forceQuery) {
     const that = this;
-    return this._promiseFactory.makePromise(function (resolve) {
+    return new Promise(function (resolve) {
       that._logger.verbose("getDefaultContentViewportSize()");
 
       if (that._defaultContentViewportSize !== null && !forceQuery) {

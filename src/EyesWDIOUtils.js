@@ -478,12 +478,13 @@ class EyesWDIOUtils {
    * @param {PromiseFactory} promiseFactory
    * @return {Promise<boolean>}
    */
-  static setBrowserSize(logger, browser, requiredSize, promiseFactory) {
-    return EyesWDIOUtils._setBrowserSize(logger, browser, requiredSize, 3, promiseFactory).then(function () {
-      return true;
-    }, function () {
-      return false;
-    });
+  static async setBrowserSize(logger, browser, requiredSize, promiseFactory) {
+    try {
+      await EyesWDIOUtils._setBrowserSize(logger, browser, requiredSize, 3, promiseFactory);
+      return Promise.resolve(true);
+    } catch (ignored) {
+      return Promise.resolve(false);
+    }
   }
 
   static _setBrowserSize(logger, browser, requiredSize, retries, promiseFactory) {
@@ -523,15 +524,18 @@ class EyesWDIOUtils {
    * @param {PromiseFactory} promiseFactory
    * @return {Promise<boolean>}
    */
-  static setBrowserSizeByViewportSize(logger, browser, actualViewportSize, requiredViewportSize, promiseFactory) {
-    return browser.windowHandleSize().then(function (browserSize) {
+  static async setBrowserSizeByViewportSize(logger, browser, actualViewportSize, requiredViewportSize, promiseFactory) {
+    try {
+      const browserSize = await browser.windowHandleSize();
       logger.verbose("Current browser size:", browserSize);
       const requiredBrowserSize = {
         width: browserSize.value.width + (requiredViewportSize.width - actualViewportSize.width),
         height: browserSize.value.height + (requiredViewportSize.height - actualViewportSize.height)
       };
       return EyesWDIOUtils.setBrowserSize(logger, browser, requiredBrowserSize, promiseFactory);
-    });
+    } catch (e) {
+      throw e;
+    }
   }
 
   /**
@@ -547,7 +551,7 @@ class EyesWDIOUtils {
     // First we will set the window size to the required size.
     // Then we'll check the viewport size and increase the window size accordingly.
     logger.verbose("setViewportSize(", requiredSize, ")");
-    return promiseFactory.makePromise(function (resolve, reject) {
+    return new Promise(function (resolve, reject) {
       try {
         let actualViewportSize;
         EyesWDIOUtils.getViewportSize(browser, promiseFactory).then(function (viewportSize) {
@@ -970,7 +974,7 @@ class EyesWDIOUtils {
       }
     }).then(function () {
       // step #5 - Take screenshot of the 0,0 tile / current viewport
-       return EyesWDIOUtils._captureViewport(browser, promiseFactory, viewportSize, scaleProviderFactory, cutProvider,
+      return EyesWDIOUtils._captureViewport(browser, promiseFactory, viewportSize, scaleProviderFactory, cutProvider,
         entirePageSize, pixelRatio, rotationDegrees, automaticRotation, automaticRotationDegrees, isLandscape,
         waitBeforeScreenshots, checkFrameOrElement ? regionInScreenshot : null, saveDebugScreenshots, debugScreenshotsPath)
         .then(function (image) {

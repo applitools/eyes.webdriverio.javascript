@@ -4,7 +4,7 @@
 const EyesUtils = require('eyes.utils'),
   FrameChain = require('./FrameChain'),
   ScrollPositionProvider = require('./ScrollPositionProvider'),
-  EyesRemoteWebElement = require('./EyesRemoteWebElement');
+  EyesRemoteWebElement = require('./EyesWebElement');
 const ArgumentGuard = EyesUtils.ArgumentGuard,
   GeneralUtils = EyesUtils.GeneralUtils;
 
@@ -26,7 +26,7 @@ class EyesTargetLocator {
   /**
    * A wrapper for an action to be performed before the actual switch is made.
    */
-  static get OnWillSwitch () {
+  static get OnWillSwitch() {
     return class {
       /**
        * Will be called before switching into a frame.

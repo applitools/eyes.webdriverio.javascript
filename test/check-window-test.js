@@ -18,19 +18,19 @@ test.before(() => {
   eyes.setLogHandler(new ConsoleLogHandler(true));
 });
 
-test.beforeEach(function* (t) {
+test.beforeEach(async (t) => {
   const testName = t.title.replace("beforeEach for ", "");
-  yield eyes.open(browser, appName, testName, {width: 800, height: 600});
+  await eyes.open(browser, appName, testName, {width: 800, height: 600});
 });
 
-test('Check window test!', function* main() {
+test('Check window test!', async () => {
   try {
-    yield browser.url('https://applitools.com/helloworld');
-    // yield browser.url('https://applitools.com/helloworld?diff1');
+    // await browser.url('https://applitools.com/helloworld');
+    await browser.url('https://applitools.com/helloworld?diff2');
 
-    yield eyes.checkWindow('Main Page');
+    await eyes.checkWindow('Main Page');
 
-    yield eyes.close();
+    await eyes.close();
   } finally {
     browser.end();
     eyes.abortIfNotClosed();

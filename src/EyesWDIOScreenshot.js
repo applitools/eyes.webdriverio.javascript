@@ -40,7 +40,7 @@ class EyesWDIOScreenshot extends EyesScreenshot {
         return this._image.getImagePart(subScreenshotRegion).then(subScreenshotImage => {
             // Notice that we need the bounds-relative coordinates as parameter for new sub-screenshot.
             const relativeSubScreenshotRegion = that.convertRegionLocation(subScreenshotRegion, CoordinatesType.SCREENSHOT_AS_IS, CoordinatesType.CONTEXT_RELATIVE);
-            return new EyesImagesScreenshot(subScreenshotImage, relativeSubScreenshotRegion.getLocation());
+            return new EyesWDIOScreenshot(subScreenshotImage, relativeSubScreenshotRegion.getLocation());
         });
     }
 
@@ -57,7 +57,7 @@ class EyesWDIOScreenshot extends EyesScreenshot {
         ArgumentGuard.notNull(from, "from");
         ArgumentGuard.notNull(to, "to");
 
-        const result = Location.fromLocation(location);
+        const result = Location.copy(location);
 
         if (from === to) {
             return result;

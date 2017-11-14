@@ -8,7 +8,7 @@ class Target {
    * @typedef {{left: number, top: number, width: number, height: number}} Region
    * @typedef {{left: number, top: number, width: number, height: number,
      *            maxLeftOffset: number, maxRightOffset: number, maxUpOffset: number, maxDownOffset: number}} FloatingRegion
-   * @typedef {{element: webdriver.WebElement|EyesRemoteWebElement|webdriver.By,
+   * @typedef {{element: EyesRemoteWebElement,
      *            maxLeftOffset: number, maxRightOffset: number, maxUpOffset: number, maxDownOffset: number}} FloatingElement
    */
 
@@ -206,7 +206,7 @@ class Target {
   };
 
   /**
-   * @returns {{element: (webdriver.WebElement|EyesRemoteWebElement|webdriver.By)}[]}
+   * @returns {{element: (EyesRemoteWebElement|webdriver.By)}[]}
    */
   getIgnoreObjects() {
     return this._ignoreObjects;
@@ -239,27 +239,26 @@ class Target {
   /**
    * Validate region (in current window or frame) using region's rect, element or element's locator
    *
-   * @param {Region|webdriver.WebElement|EyesRemoteWebElement|webdriver.By} region The region to validate.
-   * @param {webdriver.WebElement|EyesRemoteWebElement|String} [frame] The element which is the frame to switch to.
+   * @param {Region|EyesRemoteWebElement} region The region to validate.
+   * @param {EyesRemoteWebElement|String} [frame] The element which is the frame to switch to.
    * @return {Target}
    * @constructor
    */
-  region(region, frame) {
+  static region(region, frame) {
     return new Target(region, frame);
   };
 
   /**
    * Validate frame
    *
-   * @param {EyesRemoteWebElement|webdriver.WebElement|String} frame The element which is the frame to switch to.
+   * @param {EyesRemoteWebElement|String} frame The element which is the frame to switch to.
    * @return {Target}
    * @constructor
    */
-  frame(frame) {
+  static frame(frame) {
     return new Target(null, frame);
   };
 
 }
 
 module.exports = Target;
-
