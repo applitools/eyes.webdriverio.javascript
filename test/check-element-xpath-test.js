@@ -23,7 +23,7 @@ test.beforeEach(async (t) => {
   await eyes.open(browser, appName, testName, {width: 800, height: 600});
 });
 
-test('Check element test!', async() => {
+test('Check element by xpath test!', async() => {
   try {
     await browser.url('https://applitools.com/helloworld');
     // await browser.url('https://applitools.com/helloworld?diff2');

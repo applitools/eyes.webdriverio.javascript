@@ -1,6 +1,7 @@
 import test from 'ava';
 import * as webdriverio from 'webdriverio';
 import {Eyes, ConsoleLogHandler} from '../index';
+const {MatchLevel} = require('eyes.sdk');
 
 
 const appName = 'Hello World!';
@@ -23,13 +24,17 @@ test.beforeEach(async (t) => {
   await eyes.open(browser, appName, testName, {width: 800, height: 600});
 });
 
-test('Check element by selector test!', async() => {
+test('Check element by id test!', async () => {
   try {
-    await browser.url('https://applitools.com/helloworld');
-    // await browser.url('https://applitools.com/helloworld?diff2');
+    await browser.url('https://yuriieasternpeak.github.io/webdriver.io-test-html-pages/');
 
-    let elementToCheck = 'body > div > div:nth-child(1)';
-    await eyes.checkElement(elementToCheck, null, 'Header');
+    const defaultMatchSettings = eyes.getDefaultMatchSettings();
+    defaultMatchSettings.setMatchLevel(MatchLevel.Exact);
+    eyes.setDefaultMatchSettings(defaultMatchSettings);
+
+    let elementToCheck = '#overflowing-div'; // id
+    // let elementToCheck = '#overflowing-div1'; // id
+    await eyes.checkElement(elementToCheck, null, 'Text block');
 
     await eyes.close();
   } finally {
