@@ -1,5 +1,4 @@
 'use strict';
-// import {EyesBase, ContextBasedScaleProviderFactory, FixedScaleProviderFactory, ScaleProviderIdentityFactory} from 'eyes.sdk';
 
 const EyesSDK = require('eyes.sdk');
 const EyesUtils = require('eyes.utils');
@@ -131,13 +130,21 @@ class Eyes extends EyesBase {
   }
 
 
-  checkWindow(tag, matchTimeout) {
-    return this.check(tag, Target.window().timeout(matchTimeout));
+  async checkWindow(tag, matchTimeout) {
+    try {
+      return await this.check(tag, Target.window().timeout(matchTimeout));
+    } catch (e) {
+      throw e;
+    }
   };
 
 
-  checkElement(element, matchTimeout, tag) {
-    return this.check(tag, Target.region(element).timeout(matchTimeout));
+  async checkElement(element, matchTimeout, tag) {
+    try {
+      return await this.check(tag, Target.region(element).timeout(matchTimeout));
+    } catch (e) {
+      throw e;
+    }
   };
 
 
@@ -446,7 +453,7 @@ class Eyes extends EyesBase {
 
 
   setViewportSize(size) {
-    this._viewportSize = new RectangleSize(size.width, size.height);
+    this._viewportSize = new RectangleSize(size.getWidth(), size.getHeight());
     return EyesWDIOUtils.setViewportSize(this._logger, this._driver, size, this._promiseFactory);
   };
 

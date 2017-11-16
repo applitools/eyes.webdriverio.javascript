@@ -16,7 +16,7 @@ class EyesWDIOScreenshot extends EyesScreenshot {
 
         // The screenshot region in coordinates relative to the "entire screen"
         // (e.g., relative to the default content in case of a web page).
-        this._bounds = Region.fromLocationAndSize(location, new RectangleSize(image.getWidth(), image.getHeight()));
+        this._bounds = new Region(location.getX(), location.getY(), image.getWidth(), image.getHeight());
     }
 
     /**
@@ -57,7 +57,7 @@ class EyesWDIOScreenshot extends EyesScreenshot {
         ArgumentGuard.notNull(from, "from");
         ArgumentGuard.notNull(to, "to");
 
-        const result = Location.copy(location);
+        const result = new Location(location);
 
         if (from === to) {
             return result;

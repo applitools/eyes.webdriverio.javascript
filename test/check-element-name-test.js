@@ -39,7 +39,7 @@ test('Check element by name test!', async () => {
 
     await eyes.close();
   } finally {
-    browser.end();
-    eyes.abortIfNotClosed();
+    await browser.end();
+    await eyes.abortIfNotClosed();
   }
 });

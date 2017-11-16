@@ -529,8 +529,8 @@ class EyesWDIOUtils {
       const browserSize = await browser.windowHandleSize();
       logger.verbose("Current browser size:", browserSize);
       const requiredBrowserSize = {
-        width: browserSize.value.width + (requiredViewportSize.width - actualViewportSize.width),
-        height: browserSize.value.height + (requiredViewportSize.height - actualViewportSize.height)
+        width: browserSize.value.width + (requiredViewportSize._width - actualViewportSize.width),
+        height: browserSize.value.height + (requiredViewportSize._height - actualViewportSize.height)
       };
       return EyesWDIOUtils.setBrowserSize(logger, browser, requiredBrowserSize, promiseFactory);
     } catch (e) {
@@ -559,7 +559,7 @@ class EyesWDIOUtils {
           logger.verbose("Initial viewport size:", actualViewportSize);
 
           // If the viewport size is already the required size
-          if (actualViewportSize.width === requiredSize.width && actualViewportSize.height === requiredSize.height) {
+          if (actualViewportSize.width === requiredSize._width && actualViewportSize.height === requiredSize._height) {
             resolve();
             return;
           }
@@ -573,7 +573,7 @@ class EyesWDIOUtils {
           }).then(function () {
             return EyesWDIOUtils.getViewportSize(browser, promiseFactory);
           }).then(function (actualViewportSize) {
-            if (actualViewportSize.width === requiredSize.width && actualViewportSize.height === requiredSize.height) {
+            if (actualViewportSize.width === requiredSize._width && actualViewportSize.height === requiredSize._height) {
               resolve();
               return;
             }
@@ -587,16 +587,16 @@ class EyesWDIOUtils {
               actualViewportSize = viewportSize;
               logger.verbose("Current viewport size:", actualViewportSize);
 
-              if (actualViewportSize.width === requiredSize.width && actualViewportSize.height === requiredSize.height) {
+              if (actualViewportSize.width === requiredSize._width && actualViewportSize.height === requiredSize._height) {
                 resolve();
                 return;
               }
 
               return browser.windowHandleSize().then(function (browserSize) {
                 const MAX_DIFF = 3;
-                const widthDiff = actualViewportSize.width - requiredSize.width;
+                const widthDiff = actualViewportSize.width - requiredSize._width;
                 const widthStep = widthDiff > 0 ? -1 : 1; // -1 for smaller size, 1 for larger
-                const heightDiff = actualViewportSize.height - requiredSize.height;
+                const heightDiff = actualViewportSize.height - requiredSize._height;
                 const heightStep = heightDiff > 0 ? -1 : 1;
 
                 const currWidthChange = 0;
@@ -606,7 +606,7 @@ class EyesWDIOUtils {
                   logger.verbose("Trying workaround for zoom...");
                   const retriesLeft = Math.abs((widthDiff === 0 ? 1 : widthDiff) * (heightDiff === 0 ? 1 : heightDiff)) * 2;
                   const lastRequiredBrowserSize = null;
-                  return _setWindowSize(logger, browser, requiredSize, actualViewportSize, browserSize,
+                  return EyesWDIOUtils._setWindowSize(logger, browser, requiredSize, actualViewportSize, browserSize,
                     widthDiff, widthStep, heightDiff, heightStep, currWidthChange, currHeightChange,
                     retriesLeft, lastRequiredBrowserSize, promiseFactory).then(function () {
                     resolve();
@@ -664,11 +664,11 @@ class EyesWDIOUtils {
       logger.verbose("Retries left: " + retriesLeft);
       // We specifically use "<=" (and not "<"), so to give an extra resize attempt
       // in addition to reaching the diff, due to floating point issues.
-      if (Math.abs(currWidthChange) <= Math.abs(widthDiff) && actualViewportSize.width !== requiredSize.width) {
+      if (Math.abs(currWidthChange) <= Math.abs(widthDiff) && actualViewportSize.width !== requiredSize._width) {
         currWidthChange += widthStep;
       }
 
-      if (Math.abs(currHeightChange) <= Math.abs(heightDiff) && actualViewportSize.height !== requiredSize.height) {
+      if (Math.abs(currHeightChange) <= Math.abs(heightDiff) && actualViewportSize.height !== requiredSize._height) {
         currHeightChange += heightStep;
       }
 
@@ -690,13 +690,13 @@ class EyesWDIOUtils {
         return EyesWDIOUtils.getViewportSize(browser, promiseFactory);
       }).then(function (actualViewportSize) {
         logger.verbose("Current viewport size:", actualViewportSize);
-        if (actualViewportSize.width === requiredSize.width && actualViewportSize.height === requiredSize.height) {
+        if (actualViewportSize.width === requiredSize._width && actualViewportSize.height === requiredSize._height) {
           resolve();
           return;
         }
 
         if ((Math.abs(currWidthChange) <= Math.abs(widthDiff) || Math.abs(currHeightChange) <= Math.abs(heightDiff)) && (--retriesLeft > 0)) {
-          return _setWindowSize(logger, browser, requiredSize, actualViewportSize, browserSize,
+          return EyesWDIOUtils._setWindowSize(logger, browser, requiredSize, actualViewportSize, browserSize,
             widthDiff, widthStep, heightDiff, heightStep, currWidthChange, currHeightChange,
             retriesLeft, lastRequiredBrowserSize, promiseFactory).then(function () {
             resolve();

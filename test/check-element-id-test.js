@@ -1,6 +1,6 @@
-import test from 'ava';
-import * as webdriverio from 'webdriverio';
-import {By, Eyes, ConsoleLogHandler} from '../index';
+const test = require('ava');
+const webdriverio = require('webdriverio');
+const {By, Eyes, ConsoleLogHandler} = require('../index');
 const {MatchLevel} = require('eyes.sdk');
 
 
@@ -33,12 +33,14 @@ test('Check element by id test!', async () => {
     eyes.setDefaultMatchSettings(defaultMatchSettings);
 
     const id = '#overflowing-div'; // id
-    // const id = '#overflowing-div1'; // id
+    // const id = 'overflowing-div1'; // id
     await eyes.checkElement(By.id(id), null, 'Text block');
 
     await eyes.close();
+  } catch (e) {
+    console.error(e);
   } finally {
-    browser.end();
-    eyes.abortIfNotClosed();
+    await browser.end();
+    await eyes.abortIfNotClosed();
   }
 });
