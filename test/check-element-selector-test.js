@@ -1,6 +1,6 @@
 import test from 'ava';
 import * as webdriverio from 'webdriverio';
-import {Eyes, ConsoleLogHandler} from '../index';
+import {By, Eyes, ConsoleLogHandler} from '../index';
 
 
 const appName = 'Hello World!';
@@ -28,8 +28,8 @@ test('Check element by selector test!', async() => {
     await browser.url('https://applitools.com/helloworld');
     // await browser.url('https://applitools.com/helloworld?diff2');
 
-    let elementToCheck = 'body > div > div:nth-child(1)';
-    await eyes.checkElement(elementToCheck, null, 'Header');
+    let cssSelector = 'body > div > div:nth-child(1)';
+    await eyes.checkElement(By.cssSelector(cssSelector), null, 'Header');
 
     await eyes.close();
   } finally {

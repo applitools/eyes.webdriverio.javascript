@@ -2,6 +2,8 @@ import test from 'ava';
 import * as webdriverio from 'webdriverio';
 import {By, Eyes, ConsoleLogHandler} from '../index';
 
+const {MatchLevel} = require('eyes.sdk');
+
 
 const appName = 'Hello World!';
 let driver = null,
@@ -23,13 +25,17 @@ test.beforeEach(async (t) => {
   await eyes.open(browser, appName, testName, {width: 800, height: 600});
 });
 
-test('Check element by xpath test!', async() => {
+test('Check element by name test!', async () => {
   try {
-    await browser.url('https://applitools.com/helloworld');
-    // await browser.url('https://applitools.com/helloworld?diff2');
+    await browser.url('https://yuriieasternpeak.github.io/webdriver.io-test-html-pages/');
 
-    const xPath = '/html/body/div/div[1]';
-    await eyes.checkElement(By.xPath(xPath), null, 'Header');
+    const defaultMatchSettings = eyes.getDefaultMatchSettings();
+    defaultMatchSettings.setMatchLevel(MatchLevel.Exact);
+    eyes.setDefaultMatchSettings(defaultMatchSettings);
+
+    const name = 'frame1'; // name
+    // const name = 'frame2'; // name
+    await eyes.checkElement(By.name(name), null, 'Text block');
 
     await eyes.close();
   } finally {

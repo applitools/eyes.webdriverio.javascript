@@ -1,6 +1,6 @@
 import test from 'ava';
 import * as webdriverio from 'webdriverio';
-import {Eyes, ConsoleLogHandler} from '../index';
+import {By, Eyes, ConsoleLogHandler} from '../index';
 const {MatchLevel} = require('eyes.sdk');
 
 
@@ -32,9 +32,9 @@ test('Check element by id test!', async () => {
     defaultMatchSettings.setMatchLevel(MatchLevel.Exact);
     eyes.setDefaultMatchSettings(defaultMatchSettings);
 
-    let elementToCheck = '#overflowing-div'; // id
-    // let elementToCheck = '#overflowing-div1'; // id
-    await eyes.checkElement(elementToCheck, null, 'Text block');
+    const id = '#overflowing-div'; // id
+    // const id = '#overflowing-div1'; // id
+    await eyes.checkElement(By.id(id), null, 'Text block');
 
     await eyes.close();
   } finally {
