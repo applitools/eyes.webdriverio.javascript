@@ -551,10 +551,10 @@ class EyesWDIOUtils {
     // First we will set the window size to the required size.
     // Then we'll check the viewport size and increase the window size accordingly.
     logger.verbose("setViewportSize(", requiredSize, ")");
-    return new Promise(function (resolve, reject) {
-      try {
-        let actualViewportSize;
-        EyesWDIOUtils.getViewportSize(browser, promiseFactory).then(function (viewportSize) {
+    return promiseFactory.makePromise((resolve, reject) => {
+      let actualViewportSize;
+      EyesWDIOUtils.getViewportSize(browser, promiseFactory)
+        .then((viewportSize) => {
           actualViewportSize = viewportSize;
           logger.verbose("Initial viewport size:", actualViewportSize);
 
@@ -620,11 +620,8 @@ class EyesWDIOUtils {
             });
           });
         }).catch(function (err) {
-          reject(err);
-        });
-      } catch (err) {
-        reject(new Error(err));
-      }
+        reject(err);
+      });
     });
   }
 

@@ -11,7 +11,7 @@
   "dependencies": {
     "eyes.sdk": "file:../eyes.sdk.javascript1_es6/eyes.sdk.core.javascript",
     "eyes.utils": "0.0.25",
-    "webdriverio": "4.9.2"
+    "webdriverio": "4.9.8"
   },
   "devDependencies": {
     "ava": "0.18.0"

@@ -25,6 +25,7 @@ const ElementFinderWrapper = require('./ElementFinderWrappers').ElementFinderWra
 const ScrollPositionProvider = require('./ScrollPositionProvider');
 const EyesRegionProvider = require('./EyesRegionProvider');
 const Target = require('./Target');
+const {DiffsFoundError, NewTestError, TestFailedError, TestResultsStatus} = EyesSDK;
 const GeometryUtils = EyesUtils.GeometryUtils;
 
 const VERSION = require('../package.json').version;
@@ -59,8 +60,8 @@ class Eyes extends EyesBase {
 
 
   _init(driver) {
-    this._promiseFactory.setFactoryMethods(function (asyncAction) {
-      return driver.call(function () {
+    this._promiseFactory.setFactoryMethods(asyncAction => {
+      return driver.call(() => {
         return new Promise(asyncAction);
       });
     }, null);
@@ -116,17 +117,34 @@ class Eyes extends EyesBase {
   }
 
 
-  end(throwEx=true) {
-    let that = this;
-
-    return that._driver.call(function () {
-      return this.close.call(that, throwEx)
-        .then(function (results) {
-          return results;
-        }, function (err) {
-          throw err;
-        });
-    });
+  async close(throwEx = true) {
+    try {
+      const results = await super.close.call(this, false);
+      const status = results.getStatus();
+      if (throwEx && status !== TestResultsStatus.Passed) {
+        const status = results.getStatus();
+        const sessionResultsUrl = results.getUrl();
+        if (status === TestResultsStatus.Unresolved) {
+          if (results.getIsNew()) {
+            const instructions = "Please approve the new baseline at " + sessionResultsUrl;
+            const message = `'${this._sessionStartInfo.getScenarioIdOrName()}' of '${this._sessionStartInfo.getAppIdOrName()}'. ${instructions}`;
+            return Promise.reject(new NewTestError(results, message));
+          } else {
+            const instructions = `See details at ${sessionResultsUrl}`;
+            const message = `Test '${this._sessionStartInfo.getScenarioIdOrName()}' of '${this._sessionStartInfo.getAppIdOrName()} detected differences!'. ${instructions}`;
+            return Promise.reject(new DiffsFoundError(results, message));
+          }
+        } else if (status === TestResultsStatus.Failed) {
+          const instructions = `See details at ${sessionResultsUrl}`;
+          const message = `'${this._sessionStartInfo.getScenarioIdOrName()}' of '${this._sessionStartInfo.getAppIdOrName()}'. ${instructions}`;
+          return Promise.reject(new TestFailedError(results, message));
+        }
+      } else {
+        return Promise.resolve(results);
+      }
+    } catch (e) {
+      console.error(e);
+    }
   }
 
 
