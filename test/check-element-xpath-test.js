@@ -25,8 +25,8 @@ test.beforeEach(async (t) => {
 
 test('Check element by xpath test!', async() => {
   try {
-    // await browser.url('https://applitools.com/helloworld');
-    await browser.url('https://applitools.com/helloworld?diff2');
+    await browser.url('https://applitools.com/helloworld');
+    // await browser.url('https://applitools.com/helloworld?diff2');
 
     const xPath = '/html/body/div/div[1]';
     await eyes.checkElement(By.xPath(xPath), null, 'Header');

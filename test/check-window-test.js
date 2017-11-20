@@ -25,8 +25,8 @@ test.beforeEach(async (t) => {
 
 test('Check window test!', async () => {
   try {
-    // await browser.url('https://applitools.com/helloworld');
-    await browser.url('https://applitools.com/helloworld?diff2');
+    await browser.url('https://applitools.com/helloworld');
+    // await browser.url('https://applitools.com/helloworld?diff2');
 
     await eyes.checkWindow('Main Page');
 

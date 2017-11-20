@@ -32,8 +32,8 @@ test('Check element by id test!', async () => {
     defaultMatchSettings.setMatchLevel(MatchLevel.Exact);
     eyes.setDefaultMatchSettings(defaultMatchSettings);
 
-    // const id = 'overflowing-div'; // id
-    const id = 'overflowing-div1'; // id
+    const id = 'overflowing-div'; // id
+    // const id = 'overflowing-div1'; // id
     await eyes.checkElement(By.id(id), null, 'Text block');
 
     await eyes.close();

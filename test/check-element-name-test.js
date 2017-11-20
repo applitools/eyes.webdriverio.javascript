@@ -1,6 +1,6 @@
-import test from 'ava';
-import * as webdriverio from 'webdriverio';
-import {By, Eyes, ConsoleLogHandler} from '../index';
+const test = require('ava');
+const webdriverio = require('webdriverio');
+const {By, Eyes, ConsoleLogHandler} = require('../index');
 
 const {MatchLevel} = require('eyes.sdk');
 
@@ -27,14 +27,14 @@ test.beforeEach(async (t) => {
 
 test('Check element by name test!', async () => {
   try {
-    await browser.url('https://yuriieasternpeak.github.io/webdriver.io-test-html-pages/');
+    await browser.url('https://yuriieasternpeak.github.io/webdriver.io-test-html-pages/frame.html');
 
     const defaultMatchSettings = eyes.getDefaultMatchSettings();
     defaultMatchSettings.setMatchLevel(MatchLevel.Exact);
     eyes.setDefaultMatchSettings(defaultMatchSettings);
 
-    // const name = 'frame1'; // name
-    const name = 'frame2'; // name
+    const name = 'frame1'; // name
+    // const name = 'frame2'; // name
     await eyes.checkElement(By.name(name), null, 'Text block');
 
     await eyes.close();

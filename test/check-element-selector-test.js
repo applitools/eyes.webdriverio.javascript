@@ -25,8 +25,8 @@ test.beforeEach(async (t) => {
 
 test('Check element by selector test!', async() => {
   try {
-    // await browser.url('https://applitools.com/helloworld');
-    await browser.url('https://applitools.com/helloworld?diff2');
+    await browser.url('https://applitools.com/helloworld');
+    // await browser.url('https://applitools.com/helloworld?diff2');
 
     let cssSelector = 'body > div > div:nth-child(1)';
     await eyes.checkElement(By.cssSelector(cssSelector), null, 'Header');
