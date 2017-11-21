@@ -105,7 +105,7 @@ class EyesWDIOUtils {
   /**
    * Executes a script using the browser's executeScript function - and optionally waits a timeout.
    *
-   * @param {WebDriver} browser The driver using which to execute the script.
+   * @param {EyesWebDriver} browser The driver using which to execute the script.
    * @param {string} script The code to execute on the given driver.
    * @param {PromiseFactory} promiseFactory
    * @param {number|undefined} [stabilizationTimeMs] The amount of time to wait after script execution to
@@ -429,7 +429,7 @@ class EyesWDIOUtils {
   /**
    * Tries to get the viewport size using Javascript. If fails, gets the entire browser window size!
    *
-   * @param {WebDriver} browser The browser to use.
+   * @param {EyesWebDriver} browser The browser to use.
    * @param {PromiseFactory} promiseFactory
    * @return {Promise<{width: number, height: number}>} The viewport size.
    */
@@ -452,7 +452,7 @@ class EyesWDIOUtils {
 
   /**
    * @param {Logger} logger
-   * @param {WebDriver} browser The browser to use.
+   * @param {EyesWebDriver} browser The browser to use.
    * @param {PromiseFactory} promiseFactory
    * @return {Promise<{width: number, height: number}>} The viewport size of the current context, or the display size if the viewport size cannot be retrieved.
    */

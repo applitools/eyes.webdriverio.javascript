@@ -1,10 +1,9 @@
 "use strict";
 
-const EyesUtils = require('eyes.utils'),
-  EyesSDK = require('eyes.sdk'),
-  EyesWebDriverScreenshot = require('./EyesWebDriverScreenshot');
-const RegionProvider = EyesSDK.RegionProvider,
-  GeometryUtils = EyesUtils.GeometryUtils;
+const EyesUtils = require('eyes.utils');
+const EyesWebDriverScreenshot = require('./EyesWebDriverScreenshot');
+const {RegionProvider} = require('eyes.sdk');
+const GeometryUtils = EyesUtils.GeometryUtils;
 
 
 class EyesRegionProvider extends RegionProvider {

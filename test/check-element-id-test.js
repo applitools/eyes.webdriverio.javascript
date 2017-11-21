@@ -34,7 +34,7 @@ test('Check element by id test!', async () => {
 
     const id = 'overflowing-div'; // id
     // const id = 'overflowing-div1'; // id
-    await eyes.checkElement(By.id(id), null, 'Text block');
+    await eyes.checkElementBySelector(By.id(id), null, 'Text block');
 
     await eyes.close();
   } catch (e) {

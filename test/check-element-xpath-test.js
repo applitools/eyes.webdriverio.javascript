@@ -29,7 +29,7 @@ test('Check element by xpath test!', async() => {
     // await browser.url('https://applitools.com/helloworld?diff2');
 
     const xPath = '/html/body/div/div[1]';
-    await eyes.checkElement(By.xPath(xPath), null, 'Header');
+    await eyes.checkElementBySelector(By.xPath(xPath), null, 'Header');
 
     await eyes.close();
   } finally {

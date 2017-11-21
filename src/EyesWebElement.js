@@ -64,7 +64,7 @@ class EyesWebElement {
    * Constructor = initializes the module settings
    *
    * @constructor
-   * @param {WebElement} element
+   * @param {EyesWebElement} element
    * @param {EyesWebDriver} eyesDriver
    * @param {Logger} logger
    * @arguments WebElement

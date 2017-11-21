@@ -31,7 +31,6 @@ class EyesWebDriver {
    * @param {Eyes} eyes An instance of Eyes
    * @param {Object} logger
    * @param {PromiseFactory} promiseFactory
-   * @augments WebDriver
    **/
   constructor(remoteWebDriver, eyes, logger, promiseFactory) {
     this._eyesDriver = eyes;
@@ -39,8 +38,6 @@ class EyesWebDriver {
     this._promiseFactory = promiseFactory;
     this._defaultContentViewportSize = null;
     this._frameChain = new FrameChain(this._logger, null);
-    /** @type webdriver.By|ProtractorBy */
-    this._byFunctions = eyes._isProtractorLoaded ? global.by : webdriver.By;
     this.setRemoteWebDriver(remoteWebDriver);
   }
 
@@ -85,7 +82,7 @@ class EyesWebDriver {
 
 
   /**
-   * @param {webdriver.By|ProtractorBy} locator
+   * @param {String} locator
    * @return {Promise.<EyesWebElement[]>}
    */
   findElements(locator) {

@@ -1,6 +1,7 @@
-import test from 'ava';
-import * as webdriverio from 'webdriverio';
-import {By, Eyes, ConsoleLogHandler} from '../index';
+const test = require('ava');
+const webdriverio = require('webdriverio');
+const {Target, Eyes, ConsoleLogHandler} = require('../index');
+const {MatchLevel, Region} = require('eyes.sdk');
 
 
 const appName = 'Hello World!';
@@ -23,15 +24,19 @@ test.beforeEach(async (t) => {
   await eyes.open(browser, appName, testName, {width: 800, height: 600});
 });
 
-test('Check element by selector test!', async() => {
+test('Check element by region test!', async () => {
   try {
-    await browser.url('https://applitools.com/helloworld');
-    // await browser.url('https://applitools.com/helloworld?diff2');
+    await browser.url('https://yuriieasternpeak.github.io/webdriver.io-test-html-pages/');
 
-    let cssSelector = 'body > div > div:nth-child(1)';
-    await eyes.checkElementBySelector(By.cssSelector(cssSelector), null, 'Header');
+    const defaultMatchSettings = eyes.getDefaultMatchSettings();
+    defaultMatchSettings.setMatchLevel(MatchLevel.Exact);
+    eyes.setDefaultMatchSettings(defaultMatchSettings);
+
+    await eyes.check('Region by coordinates', Target.region(new Region(50, 50, 200, 200)));
 
     await eyes.close();
+  } catch (e) {
+    console.error(e);
   } finally {
     await browser.end();
     await eyes.abortIfNotClosed();

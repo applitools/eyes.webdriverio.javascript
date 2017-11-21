@@ -35,7 +35,7 @@ test('Check element by name test!', async () => {
 
     const name = 'frame1'; // name
     // const name = 'frame2'; // name
-    await eyes.checkElement(By.name(name), null, 'Text block');
+    await eyes.checkElementBySelector(By.name(name), null, 'Text block');
 
     await eyes.close();
   } finally {
