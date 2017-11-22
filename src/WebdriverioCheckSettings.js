@@ -1,6 +1,7 @@
 'use strict';
 
 const {CheckSettings, Region} = require('eyes.sdk');
+const By = require('./By');
 
 
 class WebdriverioCheckSettings extends CheckSettings {
@@ -8,8 +9,8 @@ class WebdriverioCheckSettings extends CheckSettings {
 
   /**
    *
-   * @param {Region} [region]
-   * @param {int|String} [frame]
+   * @param {Region|By} [region]
+   * @param {int|String|By} [frame]
    */
   constructor(region, frame) {
     super();
@@ -28,13 +29,13 @@ class WebdriverioCheckSettings extends CheckSettings {
 
   /**
    *
-   * @param {Region|string} region
+   * @param {Region|By} region
    * @returns {WebdriverioCheckSettings}
    */
   region(region) {
     if (region instanceof Region) {
       super.updateTargetRegion(region);
-    } else if (typeof region === 'string') {
+    } else if (region instanceof By) {
       this._targetSelector = region;
     } else {
       throw new TypeError("region method called with argument of unknown type!");

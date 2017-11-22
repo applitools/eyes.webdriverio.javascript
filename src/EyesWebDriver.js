@@ -7,7 +7,6 @@ const FrameChain = require('./FrameChain');
 const EyesWDIOUtils = require('./EyesWDIOUtils');
 const EyesWebElement = require('./EyesWebElement');
 const ScrollPositionProvider = require('./ScrollPositionProvider');
-const EyesTargetLocator = require('./EyesTargetLocator');
 const GeneralUtils = EyesUtils.GeneralUtils;
 
 /*
@@ -72,36 +71,28 @@ class EyesWebDriver {
 
 
   /**
-   * @param {String} locator
+   * @param {By} locator
    * @return {EyesWebElement}
    */
   async findElement(locator) {
-    let element = await this._driver.element(locator);
+    let element = await this._driver.element(locator.value);
     return new EyesWebElement(element, this, this._logger);
   }
 
 
   /**
-   * @param {String} locator
+   * @param {By} locator
    * @return {Promise.<EyesWebElement[]>}
    */
   findElements(locator) {
     const that = this;
-    return this._driver.findElements(locator).then(function (elements) {
+    return this._driver.findElements(locator.value).then(function (elements) {
       return elements.map(function (element) {
         return new EyesWebElement(element, that, that._logger);
       });
     });
   }
 
-  //noinspection JSUnusedGlobalSymbols
-  /**
-   * @param {string} cssSelector
-   * @return {EyesRemoteWebElement}
-   */
-  findElementByCssSelector(cssSelector) {
-    return this.findElement(this._byFunctions.css(cssSelector));
-  }
 
   //noinspection JSUnusedGlobalSymbols
   /**
@@ -148,88 +139,6 @@ class EyesWebDriver {
     return this.findElements(this._byFunctions.name(name));
   }
 
-//  EyesWebDriver.prototype.init = function () {
-//    return new Promise(function (resolve) {
-//      this._driver.getCapabilities().then(function (capabilities) {
-//        if (!capabilities.has(webdriver.Capability.TAKES_SCREENSHOT)) {
-//          this._screenshotTaker = new ScreenshotTaker();
-//        }
-//        resolve();
-//      }.bind(this));
-//    }.bind(this));
-//  };
-
-  /**
-   * @returns {EyesTargetLocator}
-   */
-  switchTo() {
-    const that = this;
-    this._logger.verbose("switchTo()");
-
-    const OnWillSwitch = function () {
-    };
-
-    /**
-     * @param {EyesTargetLocator.TargetType} targetType
-     * @param {EyesWebElement|WebElement} targetFrame
-     * @returns {Promise<void>}
-     */
-    OnWillSwitch.willSwitchToFrame = function (targetType, targetFrame) {
-      that._logger.verbose("willSwitchToFrame()");
-      switch (targetType) {
-        case EyesTargetLocator.TargetType.DEFAULT_CONTENT:
-          that._logger.verbose("Default content.");
-          that._frameChain.clear();
-          return that._promiseFactory.makePromise(function (resolve) {
-            resolve();
-          });
-        case EyesTargetLocator.TargetType.PARENT_FRAME:
-          that._logger.verbose("Parent frame.");
-          that._frameChain.pop();
-          return that._promiseFactory.makePromise(function (resolve) {
-            resolve();
-          });
-        default: // Switching into a frame
-          that._logger.verbose("Frame");
-
-          let frameId, pl, sp, size;
-          return targetFrame.getId()
-            .then(function (_id) {
-              frameId = _id;
-              return targetFrame.getLocation();
-            })
-            .then(function (_location) {
-              pl = _location;
-              return targetFrame.getSize();
-            })
-            .then(function (_size) {
-              size = _size;
-              return new ScrollPositionProvider(that._logger, that._driver, that._promiseFactory).getCurrentPosition();
-            })
-            .then(function (_scrollPosition) {
-              sp = _scrollPosition;
-
-              // Get the frame's content location.
-              return EyesWDIOUtils.getLocationWithBordersAddition(that._logger, targetFrame, pl, that._promiseFactory);
-            }).then(function (contentLocation) {
-              that._frameChain.push(new Frame(that._logger, targetFrame, frameId, contentLocation, size, sp));
-              that._logger.verbose("Done!");
-            });
-      }
-    };
-
-    //noinspection JSUnusedLocalSymbols
-    OnWillSwitch.willSwitchToWindow = function (nameOrHandle) {
-      that._logger.verbose("willSwitchToWindow()");
-      that._frameChain.clear();
-      that._logger.verbose("Done!");
-      return that._promiseFactory.makePromise(function (resolve) {
-        resolve();
-      });
-    };
-
-    return new EyesTargetLocator(this._logger, this, this._driver.switchTo(), OnWillSwitch, this._promiseFactory);
-  }
 
   /**
    * @param {boolean} forceQuery If true, we will perform the query even if we have a cached viewport size.

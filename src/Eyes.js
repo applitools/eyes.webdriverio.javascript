@@ -28,11 +28,11 @@ const {
 const CssTranslatePositionProvider = require('./CssTranslatePositionProvider');
 const ElementFinderWrapper = require('./ElementFinderWrappers').ElementFinderWrapper;
 const ScrollPositionProvider = require('./ScrollPositionProvider');
-const EyesRegionProvider = require('./EyesRegionProvider');
 const EyesWebDriver = require('./EyesWebDriver');
 const EyesWDIOScreenshot = require('./EyesWDIOScreenshot');
 const EyesWDIOUtils = require('./EyesWDIOUtils');
 const Target = require('./Target');
+const By = require('./By');
 const WebdriverioCheckSettings = require('./WebdriverioCheckSettings');
 
 const VERSION = require('../package.json').version;
@@ -162,7 +162,7 @@ class Eyes extends EyesBase {
 
   /**
    *
-   * @param {String} selector
+   * @param {By} selector
    * @param matchTimeout
    * @param tag
    * @returns {Promise.<*>}
@@ -206,11 +206,11 @@ class Eyes extends EyesBase {
 
   /**
    *
-   * @param {string} selector
+   * @param {By} locator
    * @returns {Region}
    */
-  async getRegionByLocator(selector) {
-    const element = await this._driver.findElement(selector);
+  async getRegionByLocator(locator) {
+    const element = await this._driver.findElement(locator);
 
     let elementSize = await element.getSize();
     let point = await element.getLocation();

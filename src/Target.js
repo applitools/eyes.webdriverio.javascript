@@ -1,6 +1,7 @@
 const EyesUtils = require('eyes.utils');
 const GeometryUtils = EyesUtils.GeometryUtils;
 
+const By = require('./By');
 const WebdriverioCheckSettings = require('./WebdriverioCheckSettings');
 
 
@@ -241,7 +242,7 @@ class Target {
   /**
    * Validate region (in current window or frame) using region's rect, element or element's locator
    *
-   * @param {Region|String} region The region to validate.
+   * @param {Region|By} region The region to validate.
    * @param {EyesRemoteWebElement|String} [frame] The element which is the frame to switch to.
    * @return {WebdriverioCheckSettings}
    * @constructor
