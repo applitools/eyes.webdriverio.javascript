@@ -1,9 +1,7 @@
 'use strict';
 
 const {
-  CheckSettings,
   ContextBasedScaleProviderFactory,
-  CoordinatesType,
   DiffsFoundError,
   EyesBase,
   FixedScaleProviderFactory,
@@ -20,20 +18,16 @@ const {
 } = require('eyes.sdk');
 const {
   ArgumentGuard,
-  GeometryUtils,
   SimplePropertyHandler
 } = require('eyes.utils');
 
 
 const CssTranslatePositionProvider = require('./CssTranslatePositionProvider');
-const ElementFinderWrapper = require('./ElementFinderWrappers').ElementFinderWrapper;
 const ScrollPositionProvider = require('./ScrollPositionProvider');
 const EyesWebDriver = require('./EyesWebDriver');
 const EyesWDIOScreenshot = require('./EyesWDIOScreenshot');
 const EyesWDIOUtils = require('./EyesWDIOUtils');
 const Target = require('./Target');
-const By = require('./By');
-const WebdriverioCheckSettings = require('./WebdriverioCheckSettings');
 
 const VERSION = require('../package.json').version;
 
@@ -78,8 +72,6 @@ class Eyes extends EyesBase {
   async open(driver, appName, testName, viewportSize) {
     this._init(driver);
 
-
-    this._isProtractorLoaded = false;
     this._logger.verbose("Running using Webdriverio module");
 
     this._devicePixelRatio = Eyes.UNKNOWN_DEVICE_PIXEL_RATIO;
