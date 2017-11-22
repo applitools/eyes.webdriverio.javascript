@@ -1,0 +1,25 @@
+{
+  "name": "eyes.webdriverio",
+  "version": "0.0.1",
+  "description": "Applitools Eyes SDK for Webdriverio ",
+  "main": "index.js",
+  "scripts": {
+    "test": "ava"
+  },
+  "author": "Applitools Team <team@applitools.com> (http://www.applitools.com/)",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "eyes.sdk": "file:../eyes.sdk.javascript1_es6/eyes.sdk.core.javascript",
+    "eyes.utils": "0.0.25",
+    "webdriverio": "4.9.8"
+  },
+  "devDependencies": {
+    "ava": "0.18.0"
+  },
+  "ava": {
+    "concurrency": 1
+  },
+  "engines": {
+    "node": ">=8"
+  }
+}
