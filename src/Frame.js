@@ -9,7 +9,7 @@ class Frame {
   /**
    * @constructor
    * @param {Object} logger A Logger instance.
-   * @param {WebElement} reference The web element for the frame, used as a reference to switch into the frame.
+   * @param {EyesWebElement} reference The web element for the frame, used as a reference to switch into the frame.
    * @param {string} frameId The id of the frame. Can be used later for comparing two frames.
    * @param {{x: number, y: number}} location The location of the frame within the current frame.
    * @param {{width: number, height: number}} size The frame element size (i.e., the size of the frame on the screen, not the internal document size).
@@ -34,37 +34,37 @@ class Frame {
   }
 
   /**
-   * @returns {WebElement}
+   * @returns {EyesWebElement}
    */
-  getReference() {
+  get reference() {
     return this._reference;
   }
 
   /**
    * @returns {string}
    */
-  getId() {
+  get id() {
     return this._id;
   }
 
   /**
    * @returns {{x: number, y: number}}
    */
-  getLocation() {
+  get location() {
     return this._location;
   }
 
   /**
    * @returns {{width: number, height: number}}
    */
-  getSize() {
+  get size() {
     return this._size;
   }
 
   /**
    * @returns {{x: number, y: number}}
    */
-  getParentScrollPosition() {
+  get parentScrollPosition() {
     return this._parentScrollPosition;
   }
 

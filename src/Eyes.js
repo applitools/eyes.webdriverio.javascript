@@ -4,32 +4,40 @@ const {
   ContextBasedScaleProviderFactory,
   DiffsFoundError,
   EyesBase,
+  EyesJsExecutor,
+  FailureReports,
   FixedScaleProviderFactory,
   NewTestError,
   NullScaleProvider,
   NullRegionProvider,
-  PromiseFactory,
   ScaleProviderIdentityFactory,
   RectangleSize,
   Region,
   RegionProvider,
   TestFailedError,
-  TestResultsStatus
+  TestResultsStatus,
+  UserAgent
 } = require('eyes.sdk');
 const {
   ArgumentGuard,
   SimplePropertyHandler
 } = require('eyes.utils');
 
-
 const CssTranslatePositionProvider = require('./CssTranslatePositionProvider');
 const ScrollPositionProvider = require('./ScrollPositionProvider');
 const EyesWebDriver = require('./EyesWebDriver');
-const EyesWDIOScreenshot = require('./EyesWDIOScreenshot');
+const EyesWDIOScreenshot = require('./capture/EyesWDIOScreenshot');
 const EyesWDIOUtils = require('./EyesWDIOUtils');
+const StitchMode = require('./StitchMode');
 const Target = require('./Target');
+const WDIOJSExecutor = require('./WDIOJSExecutor');
 
 const VERSION = require('../package.json').version;
+
+
+const DEFAULT_STITCHING_OVERLAP = 50; // px
+const DEFAULT_WAIT_BEFORE_SCREENSHOTS = 100; // Milliseconds
+const DEFAULT_WAIT_SCROLL_STABILIZATION = 200; // Milliseconds
 
 
 class Eyes extends EyesBase {
@@ -42,77 +50,89 @@ class Eyes extends EyesBase {
     return 1;
   }
 
-  constructor(serverUrl) {
-    let promiseFactory = new PromiseFactory((asyncAction) => {
-      return new Promise(asyncAction);
-    }, null);
 
-    super(promiseFactory, serverUrl || EyesBase.DEFAULT_EYES_SERVER);
+  /**
+   * Creates a new (possibly disabled) Eyes instance that interacts with the Eyes Server at the specified url.
+   *
+   * @param {String} [serverUrl=EyesBase.DEFAULT_EYES_SERVER] The Eyes server URL.
+   * @param {Boolean} [isDisabled=false] Set to true to disable Applitools Eyes and use the webdriver directly.
+   * @param {PromiseFactory} [promiseFactory] If not specified will be created using `Promise` object
+   **/
+  constructor(serverUrl = EyesBase.DEFAULT_EYES_SERVER, isDisabled = false, promiseFactory) {
+    super(serverUrl, isDisabled, promiseFactory);
 
-    this._forceFullPage = false;
+    /** @type {EyesWebDriver} */
+    this._driver = undefined;
+    /** @type {boolean} */
+    this._forceFullPageScreenshot = false;
     this._imageRotationDegrees = 0;
     this._automaticRotation = true;
+    /** @type {boolean} */
     this._isLandscape = false;
     this._hideScrollbars = null;
     this._checkFrameOrElement = false;
-
-    // this._promiseFactory = promiseFactory;
+    /** @type {EyesJsExecutor} */
+    this._jsExecutor = undefined;
+    this._rotation = undefined;
+    /** @type {StitchMode} */
+    this._stitchMode = StitchMode.SCROLL;
+    /** @type {ImageProvider} */
+    this._imageProvider = undefined;
+    /** @type {RegionPositionCompensation} */
+    this._regionPositionCompensation = undefined;
+    /** @type {number} */
+    this._devicePixelRatio = Eyes.UNKNOWN_DEVICE_PIXEL_RATIO;
   }
 
 
-  _init(driver) {
-    this._promiseFactory.setFactoryMethods(asyncAction => {
+  // noinspection JSUnusedGlobalSymbols
+  /**
+   *
+   * @param {Object} driver
+   * @param {String} appName
+   * @param {String} testName
+   * @param {RectangleSize|{width: number, height: number}} viewportSize
+   * @returns {Promise.<*>}
+   */
+  async open(driver, appName, testName, viewportSize = null, sessionType = null) {
+    ArgumentGuard.notNull(driver, "driver");
+
+    this.getPromiseFactory().setFactoryMethod(asyncAction => {
       return driver.call(() => {
         return new Promise(asyncAction);
       });
     }, null);
-  }
-
-
-  async open(driver, appName, testName, viewportSize) {
-    this._init(driver);
 
     this._logger.verbose("Running using Webdriverio module");
 
-    this._devicePixelRatio = Eyes.UNKNOWN_DEVICE_PIXEL_RATIO;
-    // that._driver = driver;
-    this._driver = new EyesWebDriver(driver, this, this._logger, this._promiseFactory);
-    this.setStitchMode(this._stitchMode);
-
     if (this._isDisabled) {
-      return driver.execute(function () {
-        return driver;
-      });
+      this._logger.verbose("Ignored");
+      return this.getPromiseFactory().resolve(driver);
     }
 
-    if (driver.isMobile) {
-      let status = await driver.status();
-      const platformVersion = status.value.os.version;
+    this._driver = new EyesWebDriver(driver, this, this._logger);
 
-      let majorVersion;
-      if (!platformVersion || platformVersion.length < 1) {
-        return;
-      }
-      majorVersion = platformVersion.split('.', 2)[0];
-      let isAndroid = driver.isAndroid;
-      let isIOS = driver.isIOS;
-      if (isAndroid) {
-        if (!this.getHostOS()) {
-          this.setHostOS('Android ' + majorVersion);
+    /*
+        const userAgentString = await this._driver.getUserAgent();
+        if (userAgentString) {
+          this._userAgent = UserAgent.parseUserAgentString(userAgentString, true);
         }
-      } else if (isIOS) {
-        if (!this.getHostOS()) {
-          this.setHostOS('iOS ' + majorVersion);
-        }
-      }
 
-      const orientation = driver.getOrientation();
-      if (orientation && orientation.toUpperCase() === 'LANDSCAPE') {
-        this._isLandscape = true;
-      }
-    }
+        this._imageProvider = ImageProviderFactory.getImageProvider(this._userAgent, this, this._logger, this._driver);
+        this._regionPositionCompensation = RegionPositionCompensationFactory.getRegionPositionCompensation(this._userAgent, this, this._logger);
+    */
 
-    return this.openBase(appName, testName, viewportSize, null);
+    this._jsExecutor = new WDIOJSExecutor(this._driver);
+
+    await this.openBase(appName, testName, viewportSize, sessionType);
+
+    this._devicePixelRatio = Eyes.UNKNOWN_DEVICE_PIXEL_RATIO;
+
+    this._initPositionProvider();
+
+    this._driver.rotation = this._rotation;
+
+    return this._driver;
   }
 
 
@@ -211,40 +231,70 @@ class Eyes extends EyesBase {
   };
 
 
-  setStitchMode(mode) {
+  // noinspection JSUnusedGlobalSymbols
+  /**
+   *
+   * @param {StitchMode} mode
+   */
+  set stitchMode(mode) {
+    this._logger.verbose(`setting stitch mode to ${mode}`);
     this._stitchMode = mode;
     if (this._driver) {
-      switch (mode) {
-        case Eyes.StitchMode.CSS:
-          this.setPositionProvider(new CssTranslatePositionProvider(this._logger, this._driver, this._promiseFactory));
-          break;
-        default:
-          this.setPositionProvider(new ScrollPositionProvider(this._logger, this._driver, this._promiseFactory));
-      }
+      this._initPositionProvider();
     }
   };
+
+
+  /** @private */
+  _initPositionProvider() {
+    // Setting the correct position provider.
+    const stitchMode = this.stitchMode;
+    this._logger.verbose("initializing position provider. stitchMode: " + stitchMode);
+    switch (stitchMode) {
+      case StitchMode.CSS:
+        this.setPositionProvider(new CssTranslatePositionProvider(this._logger, this._jsExecutor, this.getPromiseFactory()));
+        break;
+      default:
+        this.setPositionProvider(new ScrollPositionProvider(this._logger, this._jsExecutor, this.getPromiseFactory()));
+    }
+  }
+
 
   /**
    * Get the stitch mode.
    * @return {StitchMode} The currently set StitchMode.
    */
-  getStitchMode() {
+  get stitchMode() {
     return this._stitchMode;
   };
 
 
+  /**
+   * Get jsExecutor
+   * @return {EyesJsExecutor}
+   */
+  get jsExecutor() {
+    return this._jsExecutor;
+  }
+
+
+  // noinspection JSUnusedGlobalSymbols
+  /**
+   *
+   * @returns {Promise.<EyesWDIOScreenshot>}
+   * @override
+   */
   async getScreenshot() {
     const scaleProviderFactory = await this.updateScalingParams();
     const screenshot = await EyesWDIOUtils.getScreenshot(
       this._driver,
-      this._promiseFactory,
       this._viewportSize,
       this._positionProvider,
       scaleProviderFactory,
       this._cutProviderHandler.get(),
-      this._forceFullPage,
+      this._forceFullPageScreenshot,
       this._hideScrollbars,
-      this._stitchMode === Eyes.StitchMode.CSS,
+      this._stitchMode === StitchMode.CSS,
       this._imageRotationDegrees,
       this._automaticRotation,
       this._os === 'Android' ? 90 : 270,
@@ -259,16 +309,6 @@ class Eyes extends EyesBase {
     return new EyesWDIOScreenshot(screenshot);
   };
 
-  static get StitchMode() {
-    return {
-      // Uses scrolling to get to the different parts of the page.
-      Scroll: 'Scroll',
-
-      // Uses CSS transitions to get to the different parts of the page.
-      CSS: 'CSS'
-    };
-  }
-
 
   updateScalingParams() {
     const that = this;
@@ -277,7 +317,7 @@ class Eyes extends EyesBase {
         let factory, enSize, vpSize;
         that._logger.verbose("Trying to extract device pixel ratio...");
 
-        return EyesWDIOUtils.getDevicePixelRatio(that._driver, that._promiseFactory).then(function (ratio) {
+        return EyesWDIOUtils.getDevicePixelRatio(that.jsExecutor).then(function (ratio) {
           that._devicePixelRatio = ratio;
         }, function (err) {
           that._logger.verbose("Failed to extract device pixel ratio! Using default.", err);
@@ -287,11 +327,11 @@ class Eyes extends EyesBase {
           that._logger.verbose("Setting scale provider..");
           return that._positionProvider.getEntireSize();
         }).then(function (entireSize) {
-          enSize = new RectangleSize(entireSize.width, entireSize.height);
+          enSize = new RectangleSize(entireSize.getWidth(), entireSize.getHeight());
           return that.getViewportSize();
         }).then(function (viewportSize) {
           vpSize = new RectangleSize(viewportSize.width, viewportSize.height);
-          factory = new ContextBasedScaleProviderFactory(that._logger, enSize, vpSize, that._devicePixelRatio, that._driver.getRemoteWebDriver().isMobile, that._scaleProviderHandler);
+          factory = new ContextBasedScaleProviderFactory(that._logger, enSize, vpSize, that._devicePixelRatio, that._driver.remoteWebDriver.isMobile, that._scaleProviderHandler);
         }, function (err) {
           // This can happen in Appium for example.
           that._logger.verbose("Failed to set ContextBasedScaleProvider.", err);
@@ -309,54 +349,81 @@ class Eyes extends EyesBase {
   };
 
 
+  // noinspection JSUnusedGlobalSymbols
   setViewportSize(size) {
-    this._viewportSize = new RectangleSize(size.getWidth(), size.getHeight());
-    return EyesWDIOUtils.setViewportSize(this._logger, this._driver, size, this._promiseFactory);
+    this._viewportSize = size;
+    return EyesWDIOUtils.setViewportSize(this._logger, this._driver, size);
   };
 
 
-  getInferredEnvironment() {
-    let res = 'useragent:';
-    return this._driver.execute('return navigator.userAgent').then(function (userAgent) {
-      return res + userAgent;
-    }, function () {
+  // noinspection JSUnusedGlobalSymbols
+  async getInferredEnvironment() {
+    const res = 'useragent:';
+    try {
+      const userAgent = await this.jsExecutor.executeScript('return navigator.userAgent');
+      return res + userAgent.value;
+    } catch (e) {
       return res;
-    });
+    }
   };
 
 
+  // noinspection JSUnusedGlobalSymbols
+  /**
+   * @override
+   */
   getBaseAgentId() {
     return `eyes.webdriverio/${VERSION}`;
   };
 
 
+  //noinspection JSUnusedGlobalSymbols
+  /**
+   * Set the failure report.
+   * @param {FailureReports} mode Use one of the values in FailureReports.
+   */
   setFailureReport(mode) {
-    if (mode === EyesBase.FailureReport.Immediate) {
+    if (mode === FailureReports.IMMEDIATE) {
       this._failureReportOverridden = true;
-      mode = EyesBase.FailureReport.OnClose;
+      mode = FailureReports.ON_CLOSE;
     }
 
-    EyesBase.prototype.setFailureReport.call(this, mode);
+    super.setFailureReport(mode);
   };
 
 
+  // noinspection JSUnusedGlobalSymbols
   getAUTSessionId() {
     if (!this._driver) {
       return undefined;
     }
 
-    return Promise.resolve(this._driver.getRemoteWebDriver().requestHandler.sessionID);
-  };
-
-
-  _waitTimeout(ms) {
-    return this._driver.timeouts(ms);
+    return Promise.resolve(this._driver.remoteWebDriver.requestHandler.sessionID);
   };
 
 
   getTitle() {
     return this._driver.getTitle();
   };
+
+
+  // noinspection JSUnusedGlobalSymbols
+  /**
+   * Forces a full page screenshot (by scrolling and stitching) if the browser only supports viewport screenshots).
+   *
+   * @param {boolean} shouldForce Whether to force a full page screenshot or not.
+   */
+  setForceFullPageScreenshot(shouldForce) {
+    this._forceFullPageScreenshot = shouldForce;
+  }
+
+  //noinspection JSUnusedGlobalSymbols
+  /**
+   * @return {boolean} Whether Eyes should force a full page screenshot.
+   */
+  getForceFullPageScreenshot() {
+    return this._forceFullPageScreenshot;
+  }
 
 
 }

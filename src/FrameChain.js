@@ -25,12 +25,12 @@ class FrameChain {
       const l = other.size();
       for (; i < l; i++) {
         this._frames.push(new Frame(logger,
-          other.getFrames()[i].getReference(),
-          other.getFrames()[i].getId(),
-          other.getFrames()[i].getLocation(),
-          other.getFrames()[i].getSize(),
-          other.getFrames()[i].getParentScrollPosition())
-        );
+          other.frames[i].reference,
+          other.frames[i].id,
+          other.frames[i].location,
+          other.frames[i].size,
+          other.frames[i].parentScrollPosition
+        ));
       }
       this._logger.verbose("Done!");
     } else {
@@ -38,6 +38,7 @@ class FrameChain {
     }
   }
 
+  // noinspection JSUnusedGlobalSymbols
   /**
    * Compares two frame chains.
    * @param {FrameChain} c1 Frame chain to be compared against c2.
@@ -49,12 +50,12 @@ class FrameChain {
     const lc2 = c2.size();
 
     // different chains size means different frames
-    if (lc1 != lc2) {
+    if (lc1 !== lc2) {
       return false;
     }
 
     for (let i = 0; i < lc1; ++i) {
-      if (c1.getFrames()[i].getId() != c1.getFrames()[i].getId()) {
+      if (c1.frames[i].reference !== c2.frames[i].reference) {
         return false;
       }
     }
@@ -65,10 +66,11 @@ class FrameChain {
   /**
    * @return {Array.<Frame>} frames stored in chain
    */
-  getFrames() {
+  get frames() {
     return this._frames;
   }
 
+  // noinspection JSUnusedGlobalSymbols
   /**
    * @param {int} index Index of needed frame
    * @return {Frame} frame by index in array
@@ -89,6 +91,7 @@ class FrameChain {
     return this._frames.length;
   }
 
+  // noinspection JSUnusedGlobalSymbols
   /**
    * Removes all current frames in the frame chain.
    */
@@ -96,6 +99,7 @@ class FrameChain {
     return this._frames = [];
   }
 
+  // noinspection JSUnusedGlobalSymbols
   /**
    * Removes the last inserted frame element. Practically means we switched
    * back to the parent of the current frame
@@ -104,6 +108,7 @@ class FrameChain {
     return this._frames.pop();
   }
 
+  // noinspection JSUnusedGlobalSymbols
   /**
    * Appends a frame to the frame chain.
    * @param {Frame} frame The frame to be added.
@@ -112,6 +117,7 @@ class FrameChain {
     return this._frames.push(frame);
   }
 
+  // noinspection JSUnusedGlobalSymbols
   /**
    * @return {{x: number, y: number}} The location of the current frame in the page.
    */
@@ -121,28 +127,30 @@ class FrameChain {
     let i = 0;
     const l = this._frames.length;
     for (; i < l; i++) {
-      result = GeometryUtils.locationOffset(result, this._frames[i].getLocation());
+      result = GeometryUtils.locationOffset(result, this._frames[i].location);
     }
 
     return result;
   }
 
+  // noinspection JSUnusedGlobalSymbols
   /**
    * @return {{x: number, y: number}} The outermost frame's location, or NoFramesException.
    */
   getDefaultContentScrollPosition() {
-    if (this._frames.length == 0) {
+    if (this._frames.length === 0) {
       throw new Error("No frames in frame chain");
     }
-    return this._frames[0].getParentScrollPosition();
+    return this._frames[0].parentScrollPosition;
   }
 
+  // noinspection JSUnusedGlobalSymbols
   /**
    * @return {{width: number, height: number}} The size of the current frame.
    */
   getCurrentFrameSize() {
     this._logger.verbose("getCurrentFrameSize()");
-    const result = this._frames[this._frames.length - 1].getSize();
+    const result = this._frames[this._frames.length - 1].size;
     this._logger.verbose("Done!");
     return result;
   }

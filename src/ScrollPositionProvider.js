@@ -1,88 +1,88 @@
 'use strict';
 
-const EyesUtils = require('eyes.utils');
-const EyesSDK = require('eyes.sdk');
-const EyesWDIOUtils = require('./EyesWDIOUtils');
-const PositionProvider = EyesSDK.PositionProvider,
-  ArgumentGuard = EyesUtils.ArgumentGuard;
+const {ArgumentGuard, PositionProvider, Location, EyesError} = require('eyes.sdk');
 
+const EyesWDIOUtils = require('./EyesWDIOUtils');
+const ScrollPositionMemento = require('./ScrollPositionMemento');
 
 class ScrollPositionProvider extends PositionProvider {
 
-
   /**
-   * @constructor
    * @param {Logger} logger A Logger instance.
-   * @param {EyesWebDriver} executor
-   * @param {PromiseFactory} promiseFactory
-   * @augments PositionProvider
+   * @param {EyesJsExecutor} executor
    */
-  constructor(logger, executor, promiseFactory) {
+  constructor(logger, executor) {
     super();
 
     ArgumentGuard.notNull(logger, "logger");
     ArgumentGuard.notNull(executor, "executor");
 
     this._logger = logger;
-    this._driver = executor;
-    this._promiseFactory = promiseFactory;
+    this._executor = executor;
+
+    this._logger.verbose("creating ScrollPositionProvider");
   }
 
-
   /**
-   * @returns {Promise<{x: number, y: number}>} The scroll position of the current frame.
+   * @override
+   * @inheritDoc
    */
-  getCurrentPosition () {
+  getCurrentPosition() {
+    this._logger.verbose("ScrollPositionProvider - getCurrentPosition()");
+
     const that = this;
-    that._logger.verbose("getCurrentScrollPosition()");
-    return EyesWDIOUtils.getCurrentScrollPosition(this._driver, this._promiseFactory).then(function (result) {
-      that._logger.verbose("Current position: ", result);
+    return EyesWDIOUtils.getCurrentScrollPosition(this._executor).catch(err => {
+      throw new EyesError("Failed to extract current scroll position!", err);
+    }).then(result => {
+      that._logger.verbose(`Current position: ${result}`);
       return result;
     });
   }
 
   /**
-   * Go to the specified location.
-   * @param {{x: number, y: number}} location The position to scroll to.
-   * @returns {Promise<void>}
+   * @override
+   * @inheritDoc
    */
-  setPosition (location) {
+  async setPosition(location) {
     const that = this;
-    that._logger.verbose("Scrolling to:", location);
-    return EyesWDIOUtils.scrollTo(this._driver, location, this._promiseFactory).then(function () {
-      that._logger.verbose("Done scrolling!");
-    });
+    that._logger.verbose(`ScrollPositionProvider - Scrolling to ${location}`);
+    await EyesWDIOUtils.setCurrentScrollPosition(this._executor, location);
+    that._logger.verbose("ScrollPositionProvider - Done scrolling!");
   }
 
   /**
-   * @returns {Promise<{width: number, height: number}>} The entire size of the container which the position is relative to.
+   * @override
+   * @inheritDoc
    */
-  getEntireSize () {
+  async getEntireSize() {
     const that = this;
-    return EyesWDIOUtils.getEntirePageSize(this._driver, this._promiseFactory).then(function (result) {
-      that._logger.verbose("Entire size: ", result);
-      return result;
-    });
+    const result = await EyesWDIOUtils.getCurrentFrameContentEntireSize(this._executor);
+    that._logger.verbose(`ScrollPositionProvider - Entire size: ${result}`);
+    return result;
   }
 
   /**
-   * @returns {Promise<{x: number, y: number}>}
+   * @override
+   * @return {Promise.<ScrollPositionMemento>}
    */
-  getState () {
-    return this.getCurrentPosition();
+  async getState() {
+    const position = await this.getCurrentPosition();
+    return new ScrollPositionMemento(position);
   }
 
+  // noinspection JSCheckFunctionSignatures
   /**
-   * @param {{x: number, y: number}} state The initial state of position
-   * @returns {Promise<void>}
+   * @override
+   * @param {ScrollPositionMemento} state The initial state of position
+   * @return {Promise}
    */
-  restoreState (state) {
-    const that = this;
-    return this.setPosition(state).then(function () {
-      that._logger.verbose("Position restored.");
-    });
+  async restoreState(state) {
+    try {
+      return await this.setPosition(new Location(state.x, state.y));
+    } finally {
+      this._logger.verbose("Position restored.");
+    }
   }
-
 }
 
 module.exports = ScrollPositionProvider;

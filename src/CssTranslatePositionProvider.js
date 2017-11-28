@@ -1,93 +1,96 @@
 'use strict';
 
-const EyesSDK = require('eyes.sdk'),
-  EyesUtils = require('eyes.utils'),
-  EyesWDIOUtils = require('./EyesWDIOUtils');
-const PositionProvider = EyesSDK.PositionProvider,
-  ArgumentGuard = EyesUtils.ArgumentGuard;
+const {PositionProvider, ArgumentGuard} = require('eyes.sdk');
 
+const EyesWDIOUtils = require('./EyesWDIOUtils');
+const CssTranslatePositionMemento = require('./CssTranslatePositionMemento');
 
+/**
+ * A {@link PositionProvider} which is based on CSS translates. This is
+ * useful when we want to stitch a page which contains fixed position elements.
+ */
 class CssTranslatePositionProvider extends PositionProvider {
 
   /**
-   * @constructor
    * @param {Logger} logger A Logger instance.
-   * @param {EyesWebDriver} executor
+   * @param {WDIOJSExecutor} executor
    * @param {PromiseFactory} promiseFactory
-   * @augments PositionProvider
    */
   constructor(logger, executor, promiseFactory) {
     super();
-
     ArgumentGuard.notNull(logger, "logger");
     ArgumentGuard.notNull(executor, "executor");
+    ArgumentGuard.notNull(promiseFactory, "promiseFactory");
 
     this._logger = logger;
-    this._driver = executor;
+    this._executor = executor;
     this._promiseFactory = promiseFactory;
-    this._lastSetPosition = null;
+    this._lastSetPosition = undefined;
+
+    this._logger.verbose("creating CssTranslatePositionProvider");
   }
 
-
   /**
-   * @returns {Promise<{x: number, y: number}>} The scroll position of the current frame.
+   * @override
+   * @inheritDoc
    */
   getCurrentPosition() {
-    const that = this;
-    return that._promiseFactory.makePromise(function (resolve) {
-      that._logger.verbose("getCurrentPosition()");
-      that._logger.verbose("position to return: ", that._lastSetPosition);
-      resolve(that._lastSetPosition);
-    });
+    this._logger.verbose("position to return: ", this._lastSetPosition);
+    return this._promiseFactory.resolve(this._lastSetPosition);
   }
 
   /**
-   * Go to the specified location.
-   * @param {{x: number, y: number}} location The position to scroll to.
-   * @returns {Promise<void>}
+   * @override
+   * @inheritDoc
    */
   setPosition(location) {
+    ArgumentGuard.notNull(location, "location");
+
     const that = this;
-    that._logger.verbose("Setting position to:", location);
-    return EyesWDIOUtils.translateTo(this._driver, location, this._promiseFactory).then(function () {
+    this._logger.verbose(`CssTranslatePositionProvider - Setting position to: ${location}`);
+    return EyesWDIOUtils.translateTo(this._executor, location).then(() => {
       that._logger.verbose("Done!");
       that._lastSetPosition = location;
     });
   }
 
   /**
-   * @returns {Promise<{width: number, height: number}>} The entire size of the container which the position is relative to.
+   * @override
+   * @inheritDoc
    */
   getEntireSize() {
     const that = this;
-    return EyesWDIOUtils.getEntirePageSize(this._driver, this._promiseFactory).then(function (result) {
-      that._logger.verbose("Entire size: ", result);
-      return result;
+    return EyesWDIOUtils.getCurrentFrameContentEntireSize(this._executor).then(entireSize => {
+      that._logger.verbose(`CssTranslatePositionProvider - Entire size: ${entireSize}`);
+      return entireSize;
     });
   }
 
   /**
-   * @returns {Promise<object.<string, string>>}
+   * @override
+   * @return {Promise.<CssTranslatePositionMemento>}
    */
   getState() {
     const that = this;
-    return EyesWDIOUtils.getCurrentTransform(this._driver, this._promiseFactory).then(function (transforms) {
+    return EyesWDIOUtils.getCurrentTransform(this._executor).then(transforms => {
       that._logger.verbose("Current transform", transforms);
-      return transforms;
+      return new CssTranslatePositionMemento(transforms, that._lastSetPosition);
     });
   }
 
+  // noinspection JSCheckFunctionSignatures
   /**
-   * @param {object.<string, string>} state The initial state of position
-   * @returns {Promise<void>}
+   * @override
+   * @param {CssTranslatePositionMemento} state The initial state of position
+   * @return {Promise}
    */
   restoreState(state) {
     const that = this;
-    return EyesWDIOUtils.setTransforms(this._driver, state, this._promiseFactory).then(function () {
+    return EyesWDIOUtils.setTransforms(this._executor, state.getTransform()).then(() => {
       that._logger.verbose("Transform (position) restored.");
+      that._lastSetPosition = state.getPosition();
     });
   }
-
 }
 
 module.exports = CssTranslatePositionProvider;

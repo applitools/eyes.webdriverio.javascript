@@ -1,7 +1,6 @@
 const EyesUtils = require('eyes.utils');
 const GeometryUtils = EyesUtils.GeometryUtils;
 
-const By = require('./By');
 const WebdriverioCheckSettings = require('./WebdriverioCheckSettings');
 
 
@@ -11,7 +10,7 @@ class Target {
    * @typedef {{left: number, top: number, width: number, height: number}} Region
    * @typedef {{left: number, top: number, width: number, height: number,
      *            maxLeftOffset: number, maxRightOffset: number, maxUpOffset: number, maxDownOffset: number}} FloatingRegion
-   * @typedef {{element: EyesRemoteWebElement,
+   * @typedef {{element: EyesWebElement,
      *            maxLeftOffset: number, maxRightOffset: number, maxUpOffset: number, maxDownOffset: number}} FloatingElement
    */
 
@@ -93,8 +92,8 @@ class Target {
   };
 
   /**
-   * @param {...(Region|webdriver.WebElement|EyesRemoteWebElement|webdriver.By|
-     *          {element: (webdriver.WebElement|EyesRemoteWebElement|webdriver.By)})} ignoreRegion
+   * @param {...(Region|EyesWebElement|By|
+     *          {element: (EyesWebElement|By)})} ignoreRegion
    * @return {Target}
    */
   ignore(ignoreRegion) {
