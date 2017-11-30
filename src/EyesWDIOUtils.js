@@ -1,16 +1,11 @@
 "use strict";
 
-const EyesSDK = require('eyes.sdk');
-const EyesUtils = require('eyes.utils');
-const RectangleSize = EyesSDK.RectangleSize;
-const MutableImage = EyesSDK.MutableImage;
-const CoordinatesType = EyesSDK.CoordinatesType;
-const Location = EyesSDK.Location;
-const EyesError = EyesSDK.EyesError;
-const GeneralUtils = EyesUtils.GeneralUtils;
-const GeometryUtils = EyesUtils.GeometryUtils;
-const ImageUtils = EyesUtils.ImageUtils;
+const {Location, RectangleSize, ArgumentGuard} = require('eyes.sdk');
 
+const EyesUtils = require('eyes.utils');
+const GeneralUtils = EyesUtils.GeneralUtils;
+
+const EyesDriverOperationError = require('./errors/EyesDriverOperationError');
 
 /*
  ---
@@ -93,6 +88,7 @@ class EyesWDIOUtils {
   }
 
 
+  // noinspection JSUnusedGlobalSymbols
   /**
    * @return {string}
    */
@@ -215,7 +211,7 @@ class EyesWDIOUtils {
       const result = await executor.executeScript(EyesWDIOUtils.JS_GET_CONTENT_ENTIRE_SIZE);
       return new RectangleSize(parseInt(result[0], 10) || 0, parseInt(result[1], 10) || 0);
     } catch (e) {
-      throw new EyesError("Failed to extract entire size!", e);
+      throw new EyesDriverOperationError("Failed to extract entire size!", e);
     }
   }
 
@@ -227,7 +223,7 @@ class EyesWDIOUtils {
    * @param {String} value The overflow value to set.
    * @return {Promise.<String>} The previous value of overflow (could be {@code null} if undefined).
    */
-  static setOverflow(executor, value) {
+  static async setOverflow(executor, value) {
     let script;
     if (value) {
       script =
@@ -241,12 +237,15 @@ class EyesWDIOUtils {
         "return origOverflow";
     }
 
-    return executor.executeScript(script).catch(err => {
-      throw new EyesError('Failed to set overflow', err);
-    });
+    try {
+      return executor.executeScript(script);
+    } catch (e) {
+      throw new EyesDriverOperationError('Failed to set overflow', e);
+    }
   }
 
 
+  // noinspection JSUnusedGlobalSymbols
   /**
    * Updates the document's body "overflow" value
    *
@@ -254,7 +253,7 @@ class EyesWDIOUtils {
    * @param {String} overflowValue The values of the overflow to set.
    * @return {Promise.<String>} A promise which resolves to the original overflow of the document.
    */
-  static setBodyOverflow(executor, overflowValue) {
+  static async setBodyOverflow(executor, overflowValue) {
     let script;
     if (overflowValue === null) {
       script =
@@ -268,9 +267,11 @@ class EyesWDIOUtils {
         "return origOverflow";
     }
 
-    return executor.executeScript(script).catch(err => {
-      throw new EyesError('Failed to set body overflow', err);
-    });
+    try {
+      return executor.executeScript(script);
+    } catch (e) {
+      throw new EyesDriverOperationError('Failed to set body overflow', e);
+    }
   }
 
 
@@ -298,14 +299,14 @@ class EyesWDIOUtils {
    */
   static async getViewportSize(executor) {
     const result = await executor.executeScript(EyesWDIOUtils.JS_GET_VIEWPORT_SIZE);
-    // const result = await executor.executeScript('return [1,1]');
+    // await browser.getViewportSize()
     return new RectangleSize(parseInt(result.value[0], 10) || 0, parseInt(result.value[1], 10) || 0);
   }
 
   /**
    * @param {Logger} logger
    * @param {EyesJsExecutor} executor The executor to use.
-   * @return {RectangleSize} The viewport size of the current context, or the display size if the viewport size cannot be retrieved.
+   * @return {Promise.RectangleSize} The viewport size of the current context, or the display size if the viewport size cannot be retrieved.
    */
   static async getViewportSizeOrDisplaySize(logger, executor) {
     try {
@@ -330,7 +331,7 @@ class EyesWDIOUtils {
    */
   static async setBrowserSize(logger, browser, requiredSize) {
     try {
-      await EyesWDIOUtils._setBrowserSize(logger, browser, requiredSize);
+      await EyesWDIOUtils._setBrowserSizeLoop(logger, browser, requiredSize);
       return Promise.resolve(true);
     } catch (ignored) {
       return Promise.resolve(false);
@@ -358,7 +359,7 @@ class EyesWDIOUtils {
    * @param {number} retries
    * @return {Promise<boolean>}
    */
-  static async _setBrowserSize(logger, browser, requiredSize, sleep = 1000, retries = 3) {
+  static async _setBrowserSizeLoop(logger, browser, requiredSize, sleep = 1000, retries = 3) {
     try {
       logger.verbose("Trying to set browser size to:", requiredSize);
 
@@ -379,7 +380,7 @@ class EyesWDIOUtils {
         return browser.eyes.getPromiseFactory().reject("Failed to set browser size: retries is out.");
       }
 
-      return await EyesWDIOUtils._setBrowserSize(logger, browser, requiredSize, sleep, retries - 1);
+      return await EyesWDIOUtils._setBrowserSizeLoop(logger, browser, requiredSize, sleep, retries - 1);
     } catch (e) {
       throw new Error(e);
     }
@@ -415,6 +416,8 @@ class EyesWDIOUtils {
    * @returns {Promise<void>}
    */
   static async setViewportSize(logger, browser, requiredSize) {
+    ArgumentGuard.notNull(requiredSize, "requiredSize");
+
     // First we will set the window size to the required size.
     // Then we'll check the viewport size and increase the window size accordingly.
     logger.verbose("setViewportSize(", requiredSize, ")");
@@ -470,16 +473,13 @@ class EyesWDIOUtils {
       logger.verbose("Trying workaround for zoom...");
       const retriesLeft = Math.abs((widthDiff === 0 ? 1 : widthDiff) * (heightDiff === 0 ? 1 : heightDiff)) * 2;
       const lastRequiredBrowserSize = null;
-      try {
-        await EyesWDIOUtils._setWindowSize(logger, browser, requiredSize, actualViewportSize, browserSize,
-          widthDiff, widthStep, heightDiff, heightStep, currWidthChange, currHeightChange,
-          retriesLeft, lastRequiredBrowserSize);
-        return browser.eyes.getPromiseFactory().resolve();
-      } catch (e) {
-        throw new EyesError("Failed to set viewport size: zoom workaround failed.");
-      }
+
+      await EyesWDIOUtils._setViewportSizeLoop(logger, browser, requiredSize, actualViewportSize, browserSize,
+        widthDiff, widthStep, heightDiff, heightStep, currWidthChange, currHeightChange,
+        retriesLeft, lastRequiredBrowserSize);
+      return browser.eyes.getPromiseFactory().resolve();
     } else {
-      throw new EyesError("Failed to set viewport size!");
+      throw new Error("Failed to set viewport size!");
     }
   }
 
@@ -500,19 +500,19 @@ class EyesWDIOUtils {
    * @param {RectangleSize} lastRequiredBrowserSize
    * @return {Promise<void>}
    */
-  static async _setWindowSize(logger,
-                              browser,
-                              requiredSize,
-                              actualViewportSize,
-                              browserSize,
-                              widthDiff,
-                              widthStep,
-                              heightDiff,
-                              heightStep,
-                              currWidthChange,
-                              currHeightChange,
-                              retriesLeft,
-                              lastRequiredBrowserSize) {
+  static async _setViewportSizeLoop(logger,
+                                    browser,
+                                    requiredSize,
+                                    actualViewportSize,
+                                    browserSize,
+                                    widthDiff,
+                                    widthStep,
+                                    heightDiff,
+                                    heightStep,
+                                    currWidthChange,
+                                    currHeightChange,
+                                    retriesLeft,
+                                    lastRequiredBrowserSize) {
     logger.verbose("Retries left: " + retriesLeft);
     // We specifically use "<=" (and not "<"), so to give an extra resize attempt
     // in addition to reaching the diff, due to floating point issues.
@@ -543,351 +543,14 @@ class EyesWDIOUtils {
     }
 
     if ((Math.abs(currWidthChange) <= Math.abs(widthDiff) || Math.abs(currHeightChange) <= Math.abs(heightDiff)) && (--retriesLeft > 0)) {
-      return EyesWDIOUtils._setWindowSize(logger, browser, requiredSize, actualViewportSize, browserSize,
+      return EyesWDIOUtils._setViewportSizeLoop(logger, browser, requiredSize, actualViewportSize, browserSize,
         widthDiff, widthStep, heightDiff, heightStep, currWidthChange, currHeightChange,
         retriesLeft, lastRequiredBrowserSize);
     }
 
-    throw new EyesError("Failed to set window size!");
+    throw new Error("EyesError: failed to set window size! Zoom workaround failed.");
   }
 
-  /**
-   * @private
-   * @param {{left: number, top: number, width: number, height: number}} part
-   * @param {Array<{position: {x: number, y: number}, size: {width: number, height: number}, image: Buffer}>} parts
-   * @param {{imageBuffer: Buffer, width: number, height: number}} imageObj
-   * @param {EyesWebDriver} browser
-   * @param {Promise<void>} promise
-   * @param {PromiseFactory} promiseFactory
-   * @param {{width: number, height: number}} viewportSize
-   * @param {PositionProvider} positionProvider
-   * @param {ScaleProviderFactory} scaleProviderFactory
-   * @param {CutProvider} cutProvider
-   * @param {{width: number, height: number}} entirePageSize
-   * @param {number} pixelRatio
-   * @param {number} rotationDegrees
-   * @param {boolean} automaticRotation
-   * @param {number} automaticRotationDegrees
-   * @param {boolean} isLandscape
-   * @param {int} waitBeforeScreenshots
-   * @param {{left: number, top: number, width: number, height: number}} regionInScreenshot
-   * @param {boolean} [saveDebugScreenshots=false]
-   * @param {string} [debugScreenshotsPath=null]
-   * @return {Promise<void>}
-   */
-  static _processPart(part, parts, imageObj, browser, promise, promiseFactory, viewportSize, positionProvider,
-                      scaleProviderFactory, cutProvider, entirePageSize, pixelRatio, rotationDegrees,
-                      automaticRotation, automaticRotationDegrees, isLandscape, waitBeforeScreenshots,
-                      regionInScreenshot, saveDebugScreenshots, debugScreenshotsPath) {
-    return promise.then(function () {
-      return promiseFactory.makePromise(function (resolve) {
-        // Skip 0,0 as we already got the screenshot
-        if (part.left === 0 && part.top === 0) {
-          parts.push({
-            image: imageObj.imageBuffer,
-            size: {width: imageObj.width, height: imageObj.height},
-            position: {x: 0, y: 0}
-          });
-
-          resolve();
-          return;
-        }
-
-        const partPosition = {x: part.left, y: part.top};
-        return positionProvider.setPosition(partPosition).then(function () {
-          return positionProvider.getCurrentPosition();
-        }).then(function (currentPosition) {
-          return EyesWDIOUtils._captureViewport(browser, viewportSize, scaleProviderFactory, cutProvider, entirePageSize,
-            pixelRatio, rotationDegrees, automaticRotation, automaticRotationDegrees, isLandscape,
-            waitBeforeScreenshots, regionInScreenshot, saveDebugScreenshots, debugScreenshotsPath).then(function (partImage) {
-            return partImage.asObject();
-          }).then(function (partObj) {
-            parts.push({
-              image: partObj.imageBuffer,
-              size: {width: partObj.width, height: partObj.height},
-              position: {x: currentPosition.x, y: currentPosition.y}
-            });
-
-            resolve();
-          });
-        });
-      });
-    });
-  }
-
-  /**
-   * @private
-   * @param {EyesWebDriver} browser
-   * @param {{width: number, height: number}} viewportSize
-   * @param {ScaleProviderFactory} scaleProviderFactory
-   * @param {CutProvider} cutProvider
-   * @param {{width: number, height: number}} entirePageSize
-   * @param {number} pixelRatio
-   * @param {number} rotationDegrees
-   * @param {boolean} automaticRotation
-   * @param {number} automaticRotationDegrees
-   * @param {boolean} isLandscape
-   * @param {int} waitBeforeScreenshots
-   * @param {{left: number, top: number, width: number, height: number}} [regionInScreenshot]
-   * @param {boolean} [saveDebugScreenshots=false]
-   * @param {string} [debugScreenshotsPath=null]
-   * @return {Promise<MutableImage>}
-   */
-  static _captureViewport(browser,
-                          viewportSize,
-                          scaleProviderFactory,
-                          cutProvider,
-                          entirePageSize,
-                          pixelRatio,
-                          rotationDegrees,
-                          automaticRotation,
-                          automaticRotationDegrees,
-                          isLandscape,
-                          waitBeforeScreenshots,
-                          regionInScreenshot,
-                          saveDebugScreenshots,
-                          debugScreenshotsPath) {
-    const promiseFactory = browser.eyes.getPromiseFactory();
-
-    let mutableImage, scaleRatio = 1;
-    return GeneralUtils.sleep(waitBeforeScreenshots, promiseFactory).then(function () {
-      return Promise.resolve(browser.remoteWebDriver.saveScreenshot()).then(function (screenshot64) {
-        return new MutableImage(new Buffer(screenshot64, 'base64'), promiseFactory);
-      }).then(function (image) {
-        mutableImage = image;
-        if (saveDebugScreenshots) {
-          const filename = "screenshot " + (new Date()).getTime() + " original.png";
-          return mutableImage.saveImage(debugScreenshotsPath + filename.replace(/ /g, '_'));
-        }
-      }).then(function () {
-        if (cutProvider) {
-          return cutProvider.cut(mutableImage).then(function (image) {
-            mutableImage = image;
-          });
-        }
-      }).then(function () {
-        return mutableImage.getSize();
-      }).then(function (imageSize) {
-        if (isLandscape && automaticRotation && imageSize.getHeight() > imageSize.getWidth()) {
-          rotationDegrees = automaticRotationDegrees;
-        }
-
-        if (scaleProviderFactory) {
-          const scaleProvider = scaleProviderFactory.getScaleProvider(imageSize.getWidth());
-          scaleRatio = scaleProvider.getScaleRatio();
-        }
-
-        // todo
-        if (regionInScreenshot) {
-          const scaledRegion = GeometryUtils.scaleRegion(regionInScreenshot, 1 / scaleRatio);
-          return mutableImage.cropImage(scaledRegion);
-        }
-      }).then(function () {
-        if (saveDebugScreenshots) {
-          const filename = "screenshot " + (new Date()).getTime() + " cropped.png";
-          return mutableImage.saveImage(debugScreenshotsPath + filename.replace(/ /g, '_'));
-        }
-      }).then(function () {
-        if (scaleRatio !== 1) {
-          return mutableImage.scale(scaleRatio);
-        }
-      }).then(function () {
-        if (saveDebugScreenshots) {
-          const filename = "screenshot " + (new Date()).getTime() + " scaled.png";
-          return mutableImage.saveImage(debugScreenshotsPath + filename.replace(/ /g, '_'));
-        }
-      }).then(function () {
-        if (rotationDegrees !== 0) {
-          return mutableImage.rotateImage(rotationDegrees);
-        }
-      }).then(function () {
-        return mutableImage.getSize();
-      }).then(function (imageSize) {
-        // If the image is a viewport screenshot, we want to save the current scroll position (we'll need it for check region).
-        if (imageSize.getWidth() <= viewportSize.getWidth() && imageSize.getHeight() <= viewportSize.getHeight()) {
-          return EyesWDIOUtils.getCurrentScrollPosition(browser, promiseFactory).then(function (scrollPosition) {
-            return mutableImage.setCoordinates(scrollPosition);
-          }, function () {
-            // Failed to get Scroll position, setting coordinates to default.
-            return mutableImage.setCoordinates(new Location(0, 0));
-          });
-        }
-      }).then(function () {
-        return mutableImage;
-      });
-    });
-  }
-
-  /**
-   * Capture screenshot from given driver
-   *
-   * @param {EyesWebDriver} browser
-   * @param {{width: number, height: number}} viewportSize
-   * @param {PositionProvider} positionProvider
-   * @param {ScaleProviderFactory} scaleProviderFactory
-   * @param {CutProvider} cutProvider
-   * @param {boolean} fullPage
-   * @param {boolean} hideScrollbars
-   * @param {boolean} useCssTransition
-   * @param {number} rotationDegrees
-   * @param {boolean} automaticRotation
-   * @param {number} automaticRotationDegrees
-   * @param {boolean} isLandscape
-   * @param {int} waitBeforeScreenshots
-   * @param {boolean} checkFrameOrElement
-   * @param {RegionProvider} [regionProvider]
-   * @param {boolean} [saveDebugScreenshots=false]
-   * @param {string} [debugScreenshotsPath=null]
-   * @returns {Promise<MutableImage>}
-   */
-  static getScreenshot(browser, viewportSize, positionProvider, scaleProviderFactory,
-                       cutProvider, fullPage, hideScrollbars, useCssTransition, rotationDegrees, automaticRotation,
-                       automaticRotationDegrees, isLandscape,
-                       waitBeforeScreenshots, checkFrameOrElement,
-                       regionProvider, saveDebugScreenshots, debugScreenshotsPath) {
-    const promiseFactory = browser.eyes.getPromiseFactory();
-    const jsExecutor = browser.eyes.jsExecutor;
-
-    const MIN_SCREENSHOT_PART_HEIGHT = 10,
-      MAX_SCROLLBAR_SIZE = 50;
-    let originalPosition,
-      originalOverflow,
-      originalBodyOverflow,
-      entirePageSize,
-      regionInScreenshot,
-      pixelRatio,
-      imageObject,
-      screenshot;
-
-    hideScrollbars = hideScrollbars === null ? useCssTransition : hideScrollbars;
-
-    // step #1 - get entire page size for future use (scaling and stitching)
-    return positionProvider.getEntireSize().then(function (pageSize) {
-      entirePageSize = pageSize;
-    }, function () {
-      // Couldn't get entire page size, using viewport size as default.
-      entirePageSize = viewportSize;
-    }).then(function () {
-      // step #2 - get the device pixel ratio (scaling)
-      return EyesWDIOUtils.getDevicePixelRatio(jsExecutor).then(function (ratio) {
-        pixelRatio = ratio;
-      }, function () {
-        // Couldn't get pixel ratio, using 1 as default.
-        pixelRatio = 1;
-      });
-    }).then(function () {
-      // step #3 - hide the scrollbars if instructed
-      if (hideScrollbars) {
-        return EyesWDIOUtils.setOverflow(jsExecutor, "hidden").then(function (originalVal) {
-          originalOverflow = originalVal;
-
-          if (useCssTransition) {
-            return jsExecutor.executeScript(EyesWDIOUtils.JS_GET_IS_BODY_OVERFLOW_HIDDEN).then(function (isBodyOverflowHidden) {
-              if (isBodyOverflowHidden) {
-                return EyesWDIOUtils.setBodyOverflow(jsExecutor, "initial").then(function (originalBodyVal) {
-                  originalBodyOverflow = originalBodyVal;
-                });
-              }
-            });
-          }
-        });
-      }
-    }).then(function () {
-      // step #4 - if this is a full page screenshot we need to scroll to position 0,0 before taking the first
-      if (fullPage) {
-        return positionProvider.getState().then(function (state) {
-          originalPosition = state;
-          return positionProvider.setPosition(new Location({x: 0, y: 0}));
-        }).then(function () {
-          return positionProvider.getCurrentPosition();
-        }).then(function (location) {
-          if (location.getX() !== 0 || location.getY() !== 0) {
-            throw new Error("Could not scroll to the x/y corner of the screen");
-          }
-        });
-      }
-    }).then(function () {
-      if (regionProvider) {
-        return EyesWDIOUtils._captureViewport(browser, viewportSize, scaleProviderFactory, cutProvider, entirePageSize, pixelRatio,
-          rotationDegrees, automaticRotation, automaticRotationDegrees, isLandscape, waitBeforeScreenshots).then(function (image) {
-          return regionProvider.getRegionInLocation(image, CoordinatesType.SCREENSHOT_AS_IS, promiseFactory);
-        }).then(function (region) {
-          regionInScreenshot = region;
-        });
-      }
-    }).then(function () {
-      // step #5 - Take screenshot of the 0,0 tile / current viewport
-      return EyesWDIOUtils._captureViewport(browser, viewportSize, scaleProviderFactory, cutProvider,
-        entirePageSize, pixelRatio, rotationDegrees, automaticRotation, automaticRotationDegrees, isLandscape,
-        waitBeforeScreenshots, checkFrameOrElement ? regionInScreenshot : null, saveDebugScreenshots, debugScreenshotsPath)
-        .then(function (image) {
-          screenshot = image;
-          return screenshot.asObject();
-        }).then(function (imageObj) {
-          imageObject = imageObj;
-        });
-    }).then(function () {
-      return promiseFactory.makePromise(function (resolve) {
-        if (!fullPage && !checkFrameOrElement) {
-          resolve();
-          return;
-        }
-        // IMPORTANT This is required! Since when calculating the screenshot parts for full size,
-        // we use a screenshot size which is a bit smaller (see comment below).
-        if (imageObject.width >= entirePageSize.getWidth() && imageObject.height >= entirePageSize.getHeight()) {
-          resolve();
-          return;
-        }
-
-        // We use a smaller size than the actual screenshot size in order to eliminate duplication
-        // of bottom scroll bars, as well as footer-like elements with fixed position.
-        const screenshotPartSize = {
-          width: imageObject.width,
-          height: Math.max(imageObject.height - MAX_SCROLLBAR_SIZE, MIN_SCREENSHOT_PART_HEIGHT)
-        };
-
-        const screenshotParts = GeometryUtils.getSubRegions({
-          left: 0, top: 0, width: entirePageSize.width,
-          height: entirePageSize.height
-        }, screenshotPartSize, false);
-
-        const parts = [];
-        let promise = promiseFactory.makePromise(function (resolve) {
-          resolve();
-        });
-
-        screenshotParts.forEach(function (part) {
-          promise = EyesWDIOUtils._processPart(part, parts, imageObject, browser, promise, promiseFactory,
-            viewportSize, positionProvider, scaleProviderFactory, cutProvider, entirePageSize, pixelRatio, rotationDegrees, automaticRotation,
-            automaticRotationDegrees, isLandscape, waitBeforeScreenshots, checkFrameOrElement ? regionInScreenshot : null, saveDebugScreenshots, debugScreenshotsPath);
-        });
-        promise.then(function () {
-          return ImageUtils.stitchImage(entirePageSize, parts, promiseFactory).then(function (stitchedBuffer) {
-            screenshot = new MutableImage(stitchedBuffer, promiseFactory);
-            resolve();
-          });
-        });
-      });
-    }).then(function () {
-      if (hideScrollbars) {
-        return EyesWDIOUtils.setOverflow(jsExecutor, originalOverflow);
-      }
-    }).then(function () {
-      if (originalBodyOverflow) {
-        return EyesWDIOUtils.setBodyOverflow(jsExecutor, originalBodyOverflow);
-      }
-    }).then(function () {
-      if (fullPage) {
-        return positionProvider.restoreState(originalPosition);
-      }
-    }).then(function () {
-      if (!checkFrameOrElement && regionInScreenshot) {
-        return screenshot.cropImage(regionInScreenshot);
-      }
-    }).then(function () {
-      return screenshot;
-    });
-  }
 
 }
 

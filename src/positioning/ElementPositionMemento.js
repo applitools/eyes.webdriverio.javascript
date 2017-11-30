@@ -3,9 +3,9 @@
 const {PositionMemento, Location} = require('eyes.sdk');
 
 /**
- * Encapsulates state for {@link ScrollPositionProvider} instances.
+ * Encapsulates state for {@link ElementPositionProvider} instances.
  */
-class ScrollPositionMemento extends PositionMemento {
+class ElementPositionMemento extends PositionMemento {
 
     /**
      * @param {Location} position The current location to be saved.
@@ -19,16 +19,16 @@ class ScrollPositionMemento extends PositionMemento {
     /**
      * @return {int}
      */
-    get x() {
+    getX() {
         return this._position.getX();
     }
 
     /**
      * @return {int}
      */
-    get y() {
+    getY() {
         return this._position.getY();
     }
 }
 
-module.exports = ScrollPositionMemento;
+module.exports = ElementPositionMemento;

@@ -1,7 +1,9 @@
 'use strict';
 
-const FrameChain = require('./FrameChain');
+const FrameChain = require('../frames/FrameChain');
 const EyesWebElement = require('./EyesWebElement');
+const EyesTargetLocator = require('./EyesTargetLocator');
+const WebElement = require('./WebElement');
 
 /*
  ---
@@ -63,10 +65,19 @@ class EyesWebDriver {
     this._rotation = rotation;
   }
 
+
+  /**
+   * @return {PromiseFactory}
+   */
+  getPromiseFactory() {
+    return this._eyes.getPromiseFactory();
+  }
+
+
   //noinspection JSUnusedGlobalSymbols
-  getUserAgent() {
+  async getUserAgent() {
     try {
-      let userAgent = this._driver.executeScript('return navigator.userAgent');
+      let {value: userAgent} = await this._driver.execute('return navigator.userAgent');
       this._logger.verbose("user agent: " + userAgent);
       return userAgent;
     } catch (e) {
@@ -77,9 +88,23 @@ class EyesWebDriver {
 
 
   // noinspection JSUnusedGlobalSymbols
+  /**
+   * @returns {FrameChain}
+   */
   get frameChain() {
     return this._frameChain;
   }
+
+
+  /**
+   * @override
+   * @return {EyesTargetLocator} The target locator interface for this instance.
+   */
+  switchTo() {
+    this._logger.verbose("switchTo()");
+    return new EyesTargetLocator(this._logger, this);
+  }
+
 
   /**
    * @param {By} locator
@@ -87,7 +112,7 @@ class EyesWebDriver {
    */
   async findElement(locator) {
     let element = await this._driver.element(locator.value);
-    return new EyesWebElement(element, this, this._logger);
+    return new EyesWebElement(this._logger, this, new WebElement(this._driver, element));
   }
 
 

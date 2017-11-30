@@ -1,9 +1,8 @@
 'use strict';
 
+const {ArgumentGuard, Location} = require('eyes.sdk');
 const Frame = require('./Frame');
-const EyesUtils = require('eyes.utils');
-const ArgumentGuard = EyesUtils.ArgumentGuard;
-const GeometryUtils = EyesUtils.GeometryUtils;
+const NoFramesError = require('./../errors/NoFramesError');
 
 
 class FrameChain {
@@ -108,6 +107,13 @@ class FrameChain {
     return this._frames.pop();
   }
 
+  /**
+   * @return {Frame} Returns the top frame in the chain.
+   */
+  peek() {
+    return this._frames[this._frames.length - 1];
+  }
+
   // noinspection JSUnusedGlobalSymbols
   /**
    * Appends a frame to the frame chain.
@@ -119,29 +125,26 @@ class FrameChain {
 
   // noinspection JSUnusedGlobalSymbols
   /**
-   * @return {{x: number, y: number}} The location of the current frame in the page.
+   * @return {Location} The location of the current frame in the page.
    */
   getCurrentFrameOffset() {
-    let result = {x: 0, y: 0};
+    let result = new Location(0, 0);
 
-    let i = 0;
-    const l = this._frames.length;
-    for (; i < l; i++) {
-      result = GeometryUtils.locationOffset(result, this._frames[i].location);
-    }
+    this._frames.forEach(frame => {
+      result = result.offsetByLocation(frame.getLocation());
+    });
 
     return result;
   }
 
-  // noinspection JSUnusedGlobalSymbols
   /**
-   * @return {{x: number, y: number}} The outermost frame's location, or NoFramesException.
+   * @return {Location} The outermost frame's location, or NoFramesException.
    */
   getDefaultContentScrollPosition() {
     if (this._frames.length === 0) {
-      throw new Error("No frames in frame chain");
+      throw new NoFramesError("No frames in frame chain");
     }
-    return this._frames[0].parentScrollPosition;
+    return new Location(this._frames[0].getOriginalLocation());
   }
 
   // noinspection JSUnusedGlobalSymbols

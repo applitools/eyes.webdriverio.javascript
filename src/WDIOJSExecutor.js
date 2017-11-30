@@ -1,17 +1,25 @@
 'use strict';
 
-const {EyesJsExecutor} = require('eyes.sdk');
+const {ArgumentGuard, EyesJsExecutor} = require('eyes.sdk');
 
 class WDIOJSExecutor extends EyesJsExecutor {
 
   /**
    * @param {EyesWebDriver} driver
+   * @param {PromiseFactory} [promiseFactory]
    */
-  constructor(driver) {
+  constructor(driver, promiseFactory) {
     super();
 
     /** @type {EyesWebDriver} */
     this._executor = driver;
+
+    if (!promiseFactory && !driver.getPromiseFactory()) {
+      ArgumentGuard.notNull(promiseFactory, 'promiseFactory')
+    }
+
+    /** @type {PromiseFactory} */
+    this._promiseFactory = promiseFactory || driver.getPromiseFactory();
   }
 
   /**
@@ -39,7 +47,7 @@ class WDIOJSExecutor extends EyesJsExecutor {
    * @return {PromiseFactory}
    */
   getPromiseFactory() {
-    return this._executor.getPromiseFactory();
+    return this._executor.eyes.getPromiseFactory();
   }
 }
 

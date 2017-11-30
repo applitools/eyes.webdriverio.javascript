@@ -2,7 +2,7 @@
 
 const {PositionProvider, ArgumentGuard} = require('eyes.sdk');
 
-const EyesWDIOUtils = require('./EyesWDIOUtils');
+const EyesWDIOUtils = require('../EyesWDIOUtils');
 const CssTranslatePositionMemento = require('./CssTranslatePositionMemento');
 
 /**
@@ -13,18 +13,15 @@ class CssTranslatePositionProvider extends PositionProvider {
 
   /**
    * @param {Logger} logger A Logger instance.
-   * @param {WDIOJSExecutor} executor
-   * @param {PromiseFactory} promiseFactory
+   * @param {EyesJsExecutor} executor
    */
-  constructor(logger, executor, promiseFactory) {
+  constructor(logger, executor) {
     super();
     ArgumentGuard.notNull(logger, "logger");
     ArgumentGuard.notNull(executor, "executor");
-    ArgumentGuard.notNull(promiseFactory, "promiseFactory");
 
     this._logger = logger;
     this._executor = executor;
-    this._promiseFactory = promiseFactory;
     this._lastSetPosition = undefined;
 
     this._logger.verbose("creating CssTranslatePositionProvider");
@@ -36,7 +33,7 @@ class CssTranslatePositionProvider extends PositionProvider {
    */
   getCurrentPosition() {
     this._logger.verbose("position to return: ", this._lastSetPosition);
-    return this._promiseFactory.resolve(this._lastSetPosition);
+    return this._executor.getPromiseFactory().resolve(this._lastSetPosition);
   }
 
   /**

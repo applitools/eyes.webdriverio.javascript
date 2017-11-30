@@ -2,34 +2,34 @@
 
 const {EyesScreenshotFactory} = require('eyes.sdk');
 
-const EyesWDIOScreenshot = require('./EyesWDIOScreenshot');
+const EyesWebDriverScreenshot = require('./EyesWDIOScreenshot');
 
 /**
- * Encapsulates the instantiation of an {@link EyesWDIOScreenshot} .
+ * Encapsulates the instantiation of an {@link EyesWebDriverScreenshot} .
  */
-class EyesWDIOScreenshotFactory extends EyesScreenshotFactory {
+class EyesWebDriverScreenshotFactory extends EyesScreenshotFactory {
 
-    /**
-     * @param {Logger} logger
-     * @param {EyesWebDriver} driver
-     * @param {PromiseFactory} promiseFactory
-     */
-    constructor(logger, driver, promiseFactory) {
-        super();
+  /**
+   * @param {Logger} logger
+   * @param {EyesWebDriver} driver
+   * @param {PromiseFactory} promiseFactory
+   */
+  constructor(logger, driver, promiseFactory) {
+    super();
 
-        this._logger = logger;
-        this._executor = driver;
-        this._promiseFactory = promiseFactory;
-    }
+    this._logger = logger;
+    this._executor = driver;
+    this._promiseFactory = promiseFactory;
+  }
 
-    /**
-     * @override
-     * @inheritDoc
-     */
-    makeScreenshot(image) {
-        const result = new EyesWDIOScreenshot(this._logger, this._executor, image, this._promiseFactory);
-        return result.init();
-    }
+  /**
+   * @override
+   * @inheritDoc
+   */
+  makeScreenshot(image) {
+    const result = new EyesWebDriverScreenshot(this._logger, this._executor, image, this._promiseFactory);
+    return result.init();
+  }
 }
 
-module.exports = EyesWDIOScreenshotFactory;
+module.exports = EyesWebDriverScreenshotFactory;
