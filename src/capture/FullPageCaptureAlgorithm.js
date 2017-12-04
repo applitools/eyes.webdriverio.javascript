@@ -15,7 +15,7 @@ class FullPageCaptureAlgorithm {
      */
     constructor(logger, userAgent, promiseFactory) {
         ArgumentGuard.notNull(logger, "logger");
-        ArgumentGuard.notNull(userAgent, "userAgent");
+        // ArgumentGuard.notNull(userAgent, "userAgent");
         ArgumentGuard.notNull(promiseFactory, "promiseFactory");
 
         this._logger = logger;

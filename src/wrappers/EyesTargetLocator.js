@@ -7,11 +7,12 @@ const FrameChain = require('../frames/FrameChain');
 const ScrollPositionProvider = require('../positioning/ScrollPositionProvider');
 const WDIOJSExecutor = require('../WDIOJSExecutor');
 const EyesWebElement = require('./EyesWebElement');
+const TargetLocator = require('../TargetLocator');
 
 /**
  * Wraps a target locator so we can keep track of which frames have been switched to.
  */
-class EyesTargetLocator {
+class EyesTargetLocator extends TargetLocator {
 
   /**
    * Initialized a new EyesTargetLocator object.
@@ -23,9 +24,9 @@ class EyesTargetLocator {
   constructor(logger, driver, targetLocator = null) {
     ArgumentGuard.notNull(logger, "logger");
     ArgumentGuard.notNull(driver, "driver");
-    // ArgumentGuard.notNull(targetLocator, "targetLocator");
+    ArgumentGuard.notNull(targetLocator, "targetLocator");
 
-    // super(driver.remoteWebDriver);
+    super(driver.webDriver);
 
     this._logger = logger;
     this._driver = driver;
@@ -72,7 +73,7 @@ class EyesTargetLocator {
         return that.willSwitchToFrame(frames[frameIndex]);
       }).then(() => {
         that._logger.verbose("Done! Switching to frame...");
-        return that._driver.remoteWebDriver.frame(frameIndex);
+        return that._driver.webDriver.frame(frameIndex);
       }).then(() => {
         that._logger.verbose("Done!");
         return that._driver;
@@ -109,7 +110,7 @@ class EyesTargetLocator {
         if (frameElement instanceof EyesWebElement) {
           frameElement = frameElement.getWebElement();
         }
-        return that._driver.remoteWebDriver.frame(frameElement);
+        return that._driver.webDriver.frame(frameElement);
       }).then(() => {
         that._logger.verbose("Done!");
         return that._driver;
@@ -124,7 +125,7 @@ class EyesTargetLocator {
       if (frameElement instanceof EyesWebElement) {
         frameElement = frameElement.getWebElement();
       }
-      return that._driver.remoteWebDriver.frame(frameElement);
+      return that._driver.webDriver.frame(frameElement);
     }).then(() => {
       that._logger.verbose("Done!");
       return that._driver;
@@ -173,7 +174,7 @@ class EyesTargetLocator {
           return that._scrollPosition.setPosition(frameLocation);
         }).then(() => {
           that._logger.verbose("Done! Switching to frame...");
-          return that._driver.remoteWebDriver.frame(frame.reference);
+          return that._driver.webDriver.frame(frame.reference);
         }).then(() => {
           that._logger.verbose("Done!");
         });
@@ -233,7 +234,7 @@ class EyesTargetLocator {
       this._logger.verbose("EyesTargetLocator.window()");
       this._driver.frameChain.clear();
       this._logger.verbose("Done! Switching to window...");
-      await this._driver.remoteWebDriver.window(nameOrHandle);
+      await this._driver.webDriver.window(nameOrHandle);
       return this._driver;
     } finally {
       this._logger.verbose("Done!");
@@ -253,7 +254,7 @@ class EyesTargetLocator {
       this._logger.verbose("Making preparations...");
       this._driver.frameChain.clear();
       this._logger.verbose("Done! Switching to default content...");
-      await this._driver.remoteWebDriver.frame();
+      await this._targetLocator.defaultContent();
       this._logger.verbose("Done!");
     }
     return this._driver.getPromiseFactory().resolve(this._driver);

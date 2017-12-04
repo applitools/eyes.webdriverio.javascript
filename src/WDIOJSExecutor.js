@@ -14,7 +14,7 @@ class WDIOJSExecutor extends EyesJsExecutor {
     /** @type {EyesWebDriver} */
     this._executor = driver;
 
-    if (!promiseFactory && !driver.getPromiseFactory()) {
+    if (!driver.getPromiseFactory()) {
       ArgumentGuard.notNull(promiseFactory, 'promiseFactory')
     }
 
@@ -39,7 +39,7 @@ class WDIOJSExecutor extends EyesJsExecutor {
    * @inheritDoc
    */
   sleep(millis) { // todo
-    return this._executor.remoteWebDriver.sleep(millis);
+    return this._executor.webDriver.sleep(millis);
   }
 
 

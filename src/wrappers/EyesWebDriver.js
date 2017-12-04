@@ -4,6 +4,8 @@ const FrameChain = require('../frames/FrameChain');
 const EyesWebElement = require('./EyesWebElement');
 const EyesTargetLocator = require('./EyesTargetLocator');
 const WebElement = require('./WebElement');
+const WebDriver = require('./WebDriver');
+const EyesWDIOUtils = require('../EyesWDIOUtils');
 
 /*
  ---
@@ -22,7 +24,7 @@ class EyesWebDriver {
    * C'tor = initializes the module settings
    *
    * @constructor
-   * @param {Object} remoteWebDriver
+   * @param {WebDriver} remoteWebDriver
    * @param {Eyes} eyes An instance of Eyes
    * @param {Object} logger
    **/
@@ -47,8 +49,12 @@ class EyesWebDriver {
   }
 
   //noinspection JSUnusedGlobalSymbols
-  get remoteWebDriver() {
+  get webDriver() {
     return this._driver;
+  }
+
+  get remoteWebDriver() {
+    return this._driver.remoteWebDriver;
   }
 
   /**
@@ -71,6 +77,46 @@ class EyesWebDriver {
    */
   getPromiseFactory() {
     return this._eyes.getPromiseFactory();
+  }
+
+
+  /**
+   * @param {boolean} [forceQuery=false] If true, we will perform the query even if we have a cached viewport size.
+   * @return {Promise.<RectangleSize>} The viewport size of the default content (outer most frame).
+   */
+  getDefaultContentViewportSize(forceQuery = false) {
+    const that = this;
+    that._logger.verbose("getDefaultContentViewportSize()");
+    if (that._defaultContentViewportSize && !forceQuery) {
+      that._logger.verbose("Using cached viewport size: ", that._defaultContentViewportSize);
+      return that.getPromiseFactory().resolve(that._defaultContentViewportSize);
+    }
+
+    const switchTo = that.switchTo();
+    const currentFrames = new FrameChain(that._logger, that.getFrameChain());
+
+    let promise = that.getPromiseFactory().resolve();
+
+    // Optimization
+    if (currentFrames.size() > 0) {
+      promise = promise.then(() => switchTo.defaultContent());
+    }
+
+    promise = promise.then(() => {
+      that._logger.verbose("Extracting viewport size...");
+      return EyesWDIOUtils.getViewportSizeOrDisplaySize(that._logger, that._driver);
+    }).then(defaultContentViewportSize => {
+      that._defaultContentViewportSize = defaultContentViewportSize;
+      that._logger.verbose("Done! Viewport size: ", that._defaultContentViewportSize);
+    });
+
+    if (currentFrames.size() > 0) {
+      promise = promise.then(() => switchTo.frames(currentFrames));
+    }
+
+    return promise.then(() => {
+      return that._defaultContentViewportSize;
+    });
   }
 
 
@@ -102,7 +148,7 @@ class EyesWebDriver {
    */
   switchTo() {
     this._logger.verbose("switchTo()");
-    return new EyesTargetLocator(this._logger, this);
+    return new EyesTargetLocator(this._logger, this, this._driver.switchTo());
   }
 
 
@@ -111,7 +157,7 @@ class EyesWebDriver {
    * @return {EyesWebElement}
    */
   async findElement(locator) {
-    let element = await this._driver.element(locator.value);
+    let element = await this.remoteWebDriver.element(locator.value);
     return new EyesWebElement(this._logger, this, new WebElement(this._driver, element));
   }
 
@@ -122,16 +168,34 @@ class EyesWebDriver {
    * @return {Promise.<EyesWebElement[]>}
    */
   async findElements(locator) {
-    const elements = await this._driver.elements(locator.value);
+    const elements = await this.remoteWebDriver.elements(locator.value);
     return elements.map(function (element) {
       return new EyesWebElement(element, this, this._logger);
     });
   }
 
 
-  /** @override */
+  /**
+   *
+   * @param {String} script
+   * @param var_args
+   * @returns {*}
+   */
+  async executeScript(script, ...var_args) {
+    try {
+      return await this.remoteWebDriver.execute(script, ...var_args);
+    } catch (e) {
+      this._logger.verbose("WARNING: getComputedStyle error: " + e);
+      throw e;
+    } finally {
+      this._logger.verbose('Done!');
+    }
+  }
+
+
+    /** @override */
   getTitle() {
-    return this._driver.getTitle();
+    return this.remoteWebDriver.getTitle();
   }
 
 

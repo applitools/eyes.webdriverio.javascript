@@ -79,33 +79,25 @@ class EyesWDIOScreenshot extends EyesScreenshot {
    * @param {Location} [frameLocationInScreenshot[ The current frame's location in the screenshot.
    * @return {Promise.<EyesWDIOScreenshot>}
    */
-  init(screenshotType, frameLocationInScreenshot) {
-    const that = this;
-    return that._updateScreenshotType(screenshotType, that._image).then(screenshotType => {
-      that._screenshotType = screenshotType;
+  async init(screenshotType, frameLocationInScreenshot) {
+    this._screenshotType = await this._updateScreenshotType(screenshotType, this._image);
 
-      const positionProvider = that._driver.eyes.getPositionProvider();
+    this._frameChain = this._driver.frameChain;
 
-      that._frameChain = that._driver.frameChain;
-      return that._getFrameSize(positionProvider).then(frameSize => {
-        return EyesWDIOScreenshot.getUpdatedScrollPosition(positionProvider).then(currentFrameScrollPosition => {
-          that._currentFrameScrollPosition = currentFrameScrollPosition;
-          return that._getUpdatedFrameLocationInScreenshot(frameLocationInScreenshot);
-        }).then(frameLocationInScreenshot => {
-          that._frameLocationInScreenshot = frameLocationInScreenshot;
+    const positionProvider = this._driver.eyes.getPositionProvider();
+    const frameSize = await this._getFrameSize(positionProvider);
+    this._currentFrameScrollPosition = await EyesWDIOScreenshot.getUpdatedScrollPosition(positionProvider);
+    this._frameLocationInScreenshot = await this._getUpdatedFrameLocationInScreenshot(frameLocationInScreenshot);
 
-          that._logger.verbose("Calculating frame window...");
-          that._frameWindow = new Region(frameLocationInScreenshot, frameSize);
-          that._frameWindow.intersect(new Region(0, 0, that._image.getWidth(), that._image.getHeight()));
-          if (that._frameWindow.getWidth() <= 0 || that._frameWindow.getHeight() <= 0) {
-            throw new Error("Got empty frame window for screenshot!");
-          }
+    this._logger.verbose("Calculating frame window...");
+    this._frameWindow = new Region(this._frameLocationInScreenshot, frameSize);
+    this._frameWindow.intersect(new Region(0, 0, this._image.getWidth(), this._image.getHeight()));
+    if (this._frameWindow.getWidth() <= 0 || this._frameWindow.getHeight() <= 0) {
+      throw new Error("Got empty frame window for screenshot!");
+    }
 
-          that._logger.verbose("Done!");
-          return that;
-        });
-      });
-    });
+    this._logger.verbose("Done!");
+    return this;
   }
 
   /**
@@ -204,7 +196,7 @@ class EyesWDIOScreenshot extends EyesScreenshot {
    * @param {PositionProvider} positionProvider
    * @return {Promise.<RectangleSize>}
    */
-  _getFrameSize(positionProvider) {
+  async _getFrameSize(positionProvider) {
     if (this._frameChain.size() === 0) {
       // get entire page size might throw an exception for applications which don't support Javascript (e.g., Appium).
       // In that case we'll use the viewport size as the frame's size.

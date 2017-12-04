@@ -2,6 +2,8 @@
 
 const {RectangleSize} = require('eyes.sdk');
 
+const WebElement = require('./WebElement');
+
 
 const {Region, MouseTrigger, ArgumentGuard, CoordinatesType} = require('eyes.sdk');
 
@@ -54,7 +56,7 @@ const JS_SET_OVERFLOW_FORMATTED_STR = function getScript(overflow) {
 /**
  * Wraps a Webdriverio Web Element.
  */
-class EyesWebElement {
+class EyesWebElement extends WebElement {
 
   /**
    * @param {Logger} logger
@@ -66,6 +68,8 @@ class EyesWebElement {
     ArgumentGuard.notNull(logger, "logger");
     ArgumentGuard.notNull(eyesDriver, "eyesDriver");
     ArgumentGuard.notNull(webElement, "webElement");
+
+    super(eyesDriver.webDriver);
 
     this._logger = logger;
     /** @type {EyesWebDriver}*/
@@ -112,24 +116,35 @@ class EyesWebElement {
    * @return {Promise.<String>} The value of the style property of the element, or {@code null}.
    */
   async getComputedStyle(propStyle) {
-    const {value} = await this._eyesDriver.eyes.jsExecutor.executeScript(JS_GET_COMPUTED_STYLE_FORMATTED_STR(propStyle));
-    return value;
+    try {
+      const {value} = await this._executeScript(JS_GET_COMPUTED_STYLE_FORMATTED_STR(propStyle));
+      return value;
+    } catch (e) {
+      this._logger.verbose("WARNING: getComputedStyle error: " + e);
+      throw e;
+    }
   }
+
 
   /**
    * @param {String} propStyle The style property which value we would like to extract.
    * @return {Promise.<int>} The integer value of a computed style.
    */
   async getComputedStyleInteger(propStyle) {
-    const value = await this.getComputedStyle(propStyle);
-    return Math.round(parseFloat(value.trim().replace("px", "")));
+    try {
+      const value = await this.getComputedStyle(propStyle);
+      return Math.round(parseFloat(value.trim().replace("px", "")));
+    } catch (e) {
+      this._logger.log("WARNING: getComputedStyleInteger error: " + e);
+      throw e;
+    }
   }
 
   /**
    * @return {Promise.<int>} The value of the scrollLeft property of the element.
    */
   async getScrollLeft() {
-    const {value} = await this._eyesDriver.eyes.jsExecutor.executeScript(JS_GET_SCROLL_LEFT);
+    const {value} = await this._executeScript(JS_GET_SCROLL_LEFT);
     return Math.ceil(parseFloat(value));
   }
 
@@ -137,7 +152,7 @@ class EyesWebElement {
    * @return {Promise.<int>} The value of the scrollTop property of the element.
    */
   async getScrollTop() {
-    const {value} = await this._eyesDriver.eyes.jsExecutor.executeScript(JS_GET_SCROLL_TOP);
+    const {value} = await this._executeScript(JS_GET_SCROLL_TOP);
     return Math.ceil(parseFloat(value));
   }
 
@@ -145,7 +160,7 @@ class EyesWebElement {
    * @return {Promise.<int>} The value of the scrollWidth property of the element.
    */
   async getScrollWidth() {
-    const {value} = await this._eyesDriver.eyes.jsExecutor.executeScript(JS_GET_SCROLL_WIDTH);
+    const {value} = await this._executeScript(JS_GET_SCROLL_WIDTH);
     return Math.ceil(parseFloat(value));
   }
 
@@ -153,7 +168,7 @@ class EyesWebElement {
    * @return {Promise.<int>} The value of the scrollHeight property of the element.
    */
   async getScrollHeight() {
-    const {value} = await this._eyesDriver.eyes.jsExecutor.executeScript(JS_GET_SCROLL_HEIGHT);
+    const {value} = await this._executeScript(JS_GET_SCROLL_HEIGHT);
     return Math.ceil(parseFloat(value));
   }
 
@@ -235,8 +250,7 @@ class EyesWebElement {
    * @returns {Promise} The result returned from the script
    */
   executeScript(script) {
-    // noinspection JSValidateTypes
-    return this._eyesDriver.executeScript(script, this._webElement);
+    return this._executeScript(script);
   }
 
   /**
@@ -408,20 +422,20 @@ class EyesWebElement {
 
   // noinspection JSUnusedGlobalSymbols
   /**
-   * @return {EyesWebDriver}
-   */
-  getRemoteWebDriver() {
-    return this._eyesDriver;
-  }
-
-  // noinspection JSUnusedGlobalSymbols
-  /**
    * @return {WebElement} The original element object
    */
   getWebElement() {
     return this._webElement;
   }
+
+  /**
+   * @param {String} script
+   * @returns {Promise<T>}
+   * @private
+   */
+  _executeScript(script) {
+    return this._eyesDriver.executeScript(script, this._webElement._element.value);
+  }
 }
 
 module.exports = EyesWebElement;
-

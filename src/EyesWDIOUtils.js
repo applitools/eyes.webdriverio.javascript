@@ -88,7 +88,6 @@ class EyesWDIOUtils {
   }
 
 
-  // noinspection JSUnusedGlobalSymbols
   /**
    * @return {string}
    */
@@ -208,8 +207,8 @@ class EyesWDIOUtils {
     // While scrollWidth is the maximum between an element's width and its content width,
     // scrollHeight might be smaller (!) than the clientHeight, which is why we take the maximum between them.
     try {
-      const result = await executor.executeScript(EyesWDIOUtils.JS_GET_CONTENT_ENTIRE_SIZE);
-      return new RectangleSize(parseInt(result[0], 10) || 0, parseInt(result[1], 10) || 0);
+      const {value} = await executor.executeScript(EyesWDIOUtils.JS_GET_CONTENT_ENTIRE_SIZE);
+      return new RectangleSize(parseInt(value[0], 10) || 0, parseInt(value[1], 10) || 0);
     } catch (e) {
       throw new EyesDriverOperationError("Failed to extract entire size!", e);
     }
@@ -241,6 +240,19 @@ class EyesWDIOUtils {
       return executor.executeScript(script);
     } catch (e) {
       throw new EyesDriverOperationError('Failed to set overflow', e);
+    }
+  }
+
+
+  /**
+   * @param {EyesJsExecutor} executor The executor to use.
+   * @return {Promise.<Boolean>} A promise which resolves to the {@code true} if body overflow is hidden, {@code false} otherwise.
+   */
+   static async isBodyOverflowHidden(executor) {
+    try {
+      return executor.executeScript(EyesWDIOUtils.JS_GET_IS_BODY_OVERFLOW_HIDDEN);
+    } catch (e) {
+      throw new EyesDriverOperationError('Failed to get state of body overflow', e);
     }
   }
 

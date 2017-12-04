@@ -158,6 +158,16 @@ class FrameChain {
     return result;
   }
 
+  /**
+   * @return {RectangleSize} The inner size of the current frame.
+   */
+  getCurrentFrameInnerSize() {
+    this._logger.verbose("getCurrentFrameInnerSize()");
+    const result = this._frames[this._frames.length - 1].getInnerSize();
+    this._logger.verbose("Done!");
+    return result;
+  }
+
 }
 
 module.exports = FrameChain;

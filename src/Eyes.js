@@ -41,6 +41,7 @@ const ElementPositionProvider = require('./positioning/ElementPositionProvider')
 const StitchMode = require('./StitchMode');
 const Target = require('./fluent/Target');
 const WDIOJSExecutor = require('./WDIOJSExecutor');
+const WebDriver = require('./wrappers/WebDriver');
 
 const VERSION = require('../package.json').version;
 
@@ -131,7 +132,7 @@ class Eyes extends EyesBase {
       return this.getPromiseFactory().resolve(driver);
     }
 
-    this._driver = new EyesWebDriver(driver, this, this._logger);
+    this._driver = new EyesWebDriver(new WebDriver(driver), this, this._logger);
 
     const userAgentString = await this._driver.getUserAgent();
     if (userAgentString) {
@@ -166,19 +167,19 @@ class Eyes extends EyesBase {
           if (results.getIsNew()) {
             const instructions = 'Please approve the new baseline at ' + sessionResultsUrl;
             const message = `'${this._sessionStartInfo.getScenarioIdOrName()}' of '${this._sessionStartInfo.getAppIdOrName()}'. ${instructions}`;
-            return Promise.reject(new NewTestError(results, message));
+            return this.getPromiseFactory().reject(new NewTestError(results, message));
           } else {
             const instructions = `See details at ${sessionResultsUrl}`;
             const message = `Test '${this._sessionStartInfo.getScenarioIdOrName()}' of '${this._sessionStartInfo.getAppIdOrName()} detected differences!'. ${instructions}`;
-            return Promise.reject(new DiffsFoundError(results, message));
+            return this.getPromiseFactory().reject(new DiffsFoundError(results, message));
           }
         } else if (status === TestResultsStatus.Failed) {
           const instructions = `See details at ${sessionResultsUrl}`;
           const message = `'${this._sessionStartInfo.getScenarioIdOrName()}' of '${this._sessionStartInfo.getAppIdOrName()}'. ${instructions}`;
-          return Promise.reject(new TestFailedError(results, message));
+          return this.getPromiseFactory().reject(new TestFailedError(results, message));
         }
       } else {
-        return Promise.resolve(results);
+        return this.getPromiseFactory().resolve(results);
       }
     } catch (e) {
       console.error(e);
@@ -199,13 +200,13 @@ class Eyes extends EyesBase {
    * @returns {Promise.<*>}
    */
   checkElementBySelector(selector, matchTimeout, tag) {
-    return this.check(tag, Target.region(selector).timeout(matchTimeout).fully());
+    return this.check(tag, Target.region(selector).timeout(matchTimeout));
   }
 
   /**
    *
    * @param name
-   * @param {WebdriverioCheckSettings} checkSettings
+   * @param {CheckSettings} checkSettings
    * @returns {Promise.<*>}
    */
   async check(name, checkSettings) {
@@ -225,9 +226,7 @@ class Eyes extends EyesBase {
 
       if (targetRegion) {
         result = await super.checkWindowBase(new RegionProvider(targetRegion, this.getPromiseFactory()), name, false, checkSettings);
-      }
-
-      if (checkSettings) {
+      } else if (checkSettings) {
         const targetSelector = checkSettings.targetSelector;
         let targetElement = checkSettings.targetElement;
         if (!targetElement && targetSelector) {
@@ -253,36 +252,6 @@ class Eyes extends EyesBase {
       }
 
       return result;
-      /*
-            if (targetRegion) {
-              return super.checkWindowBase(new RegionProvider(targetRegion, this.getPromiseFactory()), name, false, checkSettings);
-            }
-            if (checkSettings) {
-              const targetSelector = checkSettings.targetSelector;
-              let targetElement = checkSettings.targetElement;
-              if (!targetElement && targetSelector) {
-                targetElement = await this._driver.findElement(targetSelector);
-              }
-
-              if (targetElement) {
-                this._targetElement = targetElement instanceof EyesWebElement ? targetElement : new EyesWebElement(this._logger, this._driver, targetElement);
-                if (this._stitchContent) {
-                  return this._checkElement(name, checkSettings);
-                } else {
-                  return this._checkRegion(name, checkSettings);
-                }
-              } else if (checkSettings.frameChain.length > 0) {
-                if (this._stitchContent) {
-                  return this._checkFullFrameOrElement(name, checkSettings);
-                } else {
-                  return this._checkFrameFluent(name, checkSettings);
-                }
-              } else {
-                return super.checkWindowBase(new NullRegionProvider(this.getPromiseFactory()), name, false, checkSettings);
-              }
-
-            }
-      */
     } finally {
       this._targetElement = null;
       await this._switchToParentFrame(switchedToFrameCount);
@@ -596,10 +565,18 @@ class Eyes extends EyesBase {
     const scaleProviderFactory = await this.updateScalingParams();
 
 
-    let originalOverflow;
+    let originalOverflow, originalBodyOverflow;
     if (this._hideScrollbars) {
       try {
         originalOverflow = EyesWDIOUtils.hideScrollbars(this.jsExecutor, DEFAULT_WAIT_SCROLL_STABILIZATION);
+
+        if (this._stitchMode === StitchMode.CSS) {
+          const isBodyOverflowHidden = await EyesWDIOUtils.isBodyOverflowHidden(this._jsExecutor);
+          if (isBodyOverflowHidden) {
+            originalBodyOverflow = await EyesWDIOUtils.setBodyOverflow(this._jsExecutor, "initial");
+          }
+        }
+
       } catch (e) {
         this._logger.verbose('WARNING: Failed to hide scrollbars! Error: ', e);
       }
@@ -682,6 +659,9 @@ class Eyes extends EyesBase {
           this._logger.log("WARNING: Failed to revert overflow! Error: " + e);
         }
       }
+      if (originalBodyOverflow) {
+        await EyesWDIOUtils.setBodyOverflow(this._jsExecutor, originalBodyOverflow);
+      }
       this._logger.verbose("Done!");
     }
   }
@@ -712,7 +692,7 @@ class Eyes extends EyesBase {
         const viewportSize = await this.getViewportSize();
 
         const vpSize = new RectangleSize(viewportSize.getWidth(), viewportSize.getHeight());
-        factory = new ContextBasedScaleProviderFactory(this._logger, enSize, vpSize, this._devicePixelRatio, this._driver.remoteWebDriver.isMobile, this._scaleProviderHandler);
+        factory = new ContextBasedScaleProviderFactory(this._logger, enSize, vpSize, this._devicePixelRatio, this._driver.webDriver.isMobile, this._scaleProviderHandler);
       } catch (e) {
         // This can happen in Appium for example.
         this._logger.verbose('Failed to set ContextBasedScaleProvider.', e);
@@ -757,7 +737,7 @@ class Eyes extends EyesBase {
 
       elementLocation = new Location(p.x, p.y);
 
-      if (originalFC.size() > 0 && !element.equals(originalFC.peek().reference)) {
+      if (originalFC.size() > 0 && !EyesWebElement.equals(element, originalFC.peek().reference)) {
         return switchTo.frames(originalFC);
       }
 
@@ -837,6 +817,23 @@ class Eyes extends EyesBase {
     super.setFailureReport(mode);
   };
 
+  /**
+   * Set the image rotation degrees.
+   * @param degrees The amount of degrees to set the rotation to.
+   * @deprecated use {@link setRotation} instead
+   */
+  setForcedImageRotation(degrees) {
+    this.setRotation(new ImageRotation(degrees))
+  }
+
+  /**
+   * Get the rotation degrees.
+   * @return {number} The rotation degrees.
+   * @deprecated use {@link getRotation} instead
+   */
+  getForcedImageRotation() {
+    return this.getRotation().getRotation();
+  }
 
   // noinspection JSUnusedGlobalSymbols
   getAUTSessionId() {
@@ -844,7 +841,7 @@ class Eyes extends EyesBase {
       return undefined;
     }
 
-    return Promise.resolve(this._driver.remoteWebDriver.requestHandler.sessionID);
+    return this.getPromiseFactory().resolve(this.getRemoteWebDriver().requestHandler.sessionID);
   };
 
 
@@ -852,6 +849,9 @@ class Eyes extends EyesBase {
     return this._driver.getTitle();
   };
 
+  getRemoteWebDriver() {
+    return this._driver.webDriver.remoteWebDriver;
+  }
 
   // noinspection JSUnusedGlobalSymbols
   /**
