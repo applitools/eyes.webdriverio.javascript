@@ -32,7 +32,7 @@ class ScrollPositionProvider extends PositionProvider {
     let result;
     try {
       this._logger.verbose("ScrollPositionProvider - getCurrentPosition()");
-      result = EyesWDIOUtils.getCurrentScrollPosition(this._executor);
+      result = await EyesWDIOUtils.getCurrentScrollPosition(this._executor);
       return result;
     } catch (e) {
       throw new EyesDriverOperationError("Failed to extract current scroll position!", e);

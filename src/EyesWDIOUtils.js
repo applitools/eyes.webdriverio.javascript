@@ -190,9 +190,9 @@ class EyesWDIOUtils {
    * @return {Promise.<Location>} The current scroll position of the current frame.
    */
   static async getCurrentScrollPosition(executor) {
-    const result = await executor.executeScript(EyesWDIOUtils.JS_GET_CURRENT_SCROLL_POSITION);
+    const {value} = await executor.executeScript(EyesWDIOUtils.JS_GET_CURRENT_SCROLL_POSITION);
     // If we can't find the current scroll position, we use 0 as default.
-    return new Location(Math.ceil(result[0]) || 0, Math.ceil(result[1]) || 0);
+    return new Location(Math.ceil(value[0]) || 0, Math.ceil(value[1]) || 0);
   }
 
 
@@ -310,9 +310,9 @@ class EyesWDIOUtils {
    * @return {RectangleSize} The viewport size.
    */
   static async getViewportSize(executor) {
-    const result = await executor.executeScript(EyesWDIOUtils.JS_GET_VIEWPORT_SIZE);
+    const {value} = await executor.executeScript(EyesWDIOUtils.JS_GET_VIEWPORT_SIZE);
     // await browser.getViewportSize()
-    return new RectangleSize(parseInt(result.value[0], 10) || 0, parseInt(result.value[1], 10) || 0);
+    return new RectangleSize(parseInt(value[0], 10) || 0, parseInt(value[1], 10) || 0);
   }
 
   /**

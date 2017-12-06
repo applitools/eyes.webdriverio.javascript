@@ -609,7 +609,7 @@ class Eyes extends EyesBase {
         this._logger.verbose("Full page screenshot requested.");
 
         // Save the current frame path.
-        const originalFramePosition = originalFrameChain.size() > 0 ? originalFrameChain.getDefaultContentScrollPosition() : new Location(0, 0);
+        const originalFramePosition = originalFrameChain.size() > 0 ? originalFrameChain.getDefaultContentScrollPosition() : Location.ZERO;
 
         await switchTo.defaultContent();
 

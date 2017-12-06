@@ -4,13 +4,16 @@
 class TargetLocator {
 
 
+  /**
+   * @param {WebDriver} driver
+   */
   constructor(driver) {
     this._driver = driver;
   }
 
 
   defaultContent() {
-    return this._driver.frame();
+    return this._driver.remoteWebDriver.frame();
   }
 
 
