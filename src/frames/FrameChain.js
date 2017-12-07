@@ -1,9 +1,8 @@
 'use strict';
 
+const {ArgumentGuard, Location} = require('eyes.sdk');
 const Frame = require('./Frame');
-const EyesUtils = require('eyes.utils');
-const ArgumentGuard = EyesUtils.ArgumentGuard;
-const GeometryUtils = EyesUtils.GeometryUtils;
+const NoFramesError = require('./../errors/NoFramesError');
 
 
 class FrameChain {
@@ -25,12 +24,12 @@ class FrameChain {
       const l = other.size();
       for (; i < l; i++) {
         this._frames.push(new Frame(logger,
-          other.getFrames()[i].getReference(),
-          other.getFrames()[i].getId(),
-          other.getFrames()[i].getLocation(),
-          other.getFrames()[i].getSize(),
-          other.getFrames()[i].getParentScrollPosition())
-        );
+          other.frames[i].reference,
+          other.frames[i].id,
+          other.frames[i].location,
+          other.frames[i].size,
+          other.frames[i].parentScrollPosition
+        ));
       }
       this._logger.verbose("Done!");
     } else {
@@ -38,6 +37,7 @@ class FrameChain {
     }
   }
 
+  // noinspection JSUnusedGlobalSymbols
   /**
    * Compares two frame chains.
    * @param {FrameChain} c1 Frame chain to be compared against c2.
@@ -49,12 +49,12 @@ class FrameChain {
     const lc2 = c2.size();
 
     // different chains size means different frames
-    if (lc1 != lc2) {
+    if (lc1 !== lc2) {
       return false;
     }
 
     for (let i = 0; i < lc1; ++i) {
-      if (c1.getFrames()[i].getId() != c1.getFrames()[i].getId()) {
+      if (c1.frames[i].reference !== c2.frames[i].reference) {
         return false;
       }
     }
@@ -65,10 +65,11 @@ class FrameChain {
   /**
    * @return {Array.<Frame>} frames stored in chain
    */
-  getFrames() {
+  get frames() {
     return this._frames;
   }
 
+  // noinspection JSUnusedGlobalSymbols
   /**
    * @param {int} index Index of needed frame
    * @return {Frame} frame by index in array
@@ -89,6 +90,7 @@ class FrameChain {
     return this._frames.length;
   }
 
+  // noinspection JSUnusedGlobalSymbols
   /**
    * Removes all current frames in the frame chain.
    */
@@ -96,6 +98,7 @@ class FrameChain {
     return this._frames = [];
   }
 
+  // noinspection JSUnusedGlobalSymbols
   /**
    * Removes the last inserted frame element. Practically means we switched
    * back to the parent of the current frame
@@ -105,6 +108,14 @@ class FrameChain {
   }
 
   /**
+   * @return {Frame} Returns the top frame in the chain.
+   */
+  peek() {
+    return this._frames[this._frames.length - 1];
+  }
+
+  // noinspection JSUnusedGlobalSymbols
+  /**
    * Appends a frame to the frame chain.
    * @param {Frame} frame The frame to be added.
    */
@@ -112,37 +123,47 @@ class FrameChain {
     return this._frames.push(frame);
   }
 
+  // noinspection JSUnusedGlobalSymbols
   /**
-   * @return {{x: number, y: number}} The location of the current frame in the page.
+   * @return {Location} The location of the current frame in the page.
    */
   getCurrentFrameOffset() {
-    let result = {x: 0, y: 0};
+    let result = Location.ZERO;
 
-    let i = 0;
-    const l = this._frames.length;
-    for (; i < l; i++) {
-      result = GeometryUtils.locationOffset(result, this._frames[i].getLocation());
-    }
+    this._frames.forEach(frame => {
+      result = result.offsetByLocation(frame.getLocation());
+    });
 
     return result;
   }
 
   /**
-   * @return {{x: number, y: number}} The outermost frame's location, or NoFramesException.
+   * @return {Location} The outermost frame's location, or NoFramesException.
    */
   getDefaultContentScrollPosition() {
-    if (this._frames.length == 0) {
-      throw new Error("No frames in frame chain");
+    if (this._frames.length === 0) {
+      throw new NoFramesError("No frames in frame chain");
     }
-    return this._frames[0].getParentScrollPosition();
+    return new Location(this._frames[0].getOriginalLocation());
   }
 
+  // noinspection JSUnusedGlobalSymbols
   /**
    * @return {{width: number, height: number}} The size of the current frame.
    */
   getCurrentFrameSize() {
     this._logger.verbose("getCurrentFrameSize()");
-    const result = this._frames[this._frames.length - 1].getSize();
+    const result = this._frames[this._frames.length - 1].size;
+    this._logger.verbose("Done!");
+    return result;
+  }
+
+  /**
+   * @return {RectangleSize} The inner size of the current frame.
+   */
+  getCurrentFrameInnerSize() {
+    this._logger.verbose("getCurrentFrameInnerSize()");
+    const result = this._frames[this._frames.length - 1].getInnerSize();
     this._logger.verbose("Done!");
     return result;
   }
