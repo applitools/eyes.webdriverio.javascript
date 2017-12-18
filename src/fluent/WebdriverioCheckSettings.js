@@ -85,6 +85,18 @@ class WebdriverioCheckSettings extends CheckSettings {
 
 
   /**
+   * Defines that the screenshot will contain the entire element or region, even if it's outside the view.
+   *
+   * @override
+   * @return {WebdriverioCheckSettings} This instance of the settings object.
+   */
+  fully() {
+    super.fully();
+    return this;
+  }
+
+
+  /**
    * @returns {By}
    */
   get targetSelector() {

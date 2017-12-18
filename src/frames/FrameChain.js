@@ -9,31 +9,27 @@ class FrameChain {
 
   /**
    * Creates a new frame chain.
-   * @param {Object} logger A Logger instance.
+   * @param {Logger} logger A Logger instance.
    * @param {FrameChain} other A frame chain from which the current frame chain will be created.
    */
   constructor(logger, other) {
     ArgumentGuard.notNull(logger, "logger");
 
     this._logger = logger;
+    this._frames = [];
 
-    if (other && other instanceof FrameChain) {
+    if (other) {
       this._logger.verbose("Frame chain copy constructor (size " + other.size() + ")");
-      this._frames = [];
-      let i = 0;
-      const l = other.size();
-      for (; i < l; i++) {
+      for(const otherFrame of other.frames) {
         this._frames.push(new Frame(logger,
-          other.frames[i].reference,
-          other.frames[i].id,
-          other.frames[i].location,
-          other.frames[i].size,
-          other.frames[i].parentScrollPosition
+          otherFrame.getReference(),
+          otherFrame.getLocation(),
+          otherFrame.getSize(),
+          otherFrame.getInnerSize(),
+          otherFrame.getOriginalLocation()
         ));
       }
       this._logger.verbose("Done!");
-    } else {
-      this._frames = [];
     }
   }
 

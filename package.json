@@ -4,7 +4,7 @@
   "description": "Applitools Eyes SDK for Webdriverio ",
   "main": "index.js",
   "scripts": {
-    "test": "ava"
+    "test": "mocha ./test/Test*.js -t 300000"
   },
   "author": "Applitools Team <team@applitools.com> (http://www.applitools.com/)",
   "license": "Apache-2.0",
@@ -14,10 +14,15 @@
     "webdriverio": "4.9.8"
   },
   "devDependencies": {
-    "ava": "0.18.0"
+    "chai": "^4.1.2",
+    "mocha": "^4.0.1"
   },
   "ava": {
-    "concurrency": 1
+    "concurrency": 1,
+    "files": [
+      "**/Test*.js",
+      "!**/lib/TestSetup.js"
+    ]
   },
   "engines": {
     "node": ">=8"
