@@ -450,33 +450,27 @@ class Eyes extends EyesBase {
     const RegionProviderImpl = class RegionProviderImpl extends RegionProvider {
       // noinspection JSUnusedGlobalSymbols
       /** @override */
-      getRegion() {
+      async getRegion() {
         if (that._checkFrameOrElement) {
-          return that._ensureFrameVisible().then(fc => {
-            // FIXME - Scaling should be handled in a single place instead
-            // noinspection JSUnresolvedFunction
-            return that._updateScalingParams().then(scaleProviderFactory => {
-              let screenshotImage;
-              return that._imageProvider.getImage().then(screenshotImage_ => {
-                screenshotImage = screenshotImage_;
-                return that._debugScreenshotsProvider.save(screenshotImage_, "checkFullFrameOrElement");
-              }).then(() => {
-                const scaleProvider = scaleProviderFactory.getScaleProvider(screenshotImage.getWidth());
-                // TODO: do we need to scale image?
-                return screenshotImage.scale(scaleProvider.getScaleRatio());
-              }).then(screenshotImage_ => {
-                screenshotImage = screenshotImage_;
-                const switchTo = that._driver.switchTo();
-                return switchTo.frames(fc);
-              }).then(() => {
-                const screenshot = new EyesWDIOScreenshot(that._logger, that._driver, screenshotImage, that.getPromiseFactory());
-                return screenshot.init();
-              }).then(screenshot => {
-                that._logger.verbose("replacing regionToCheck");
-                that.regionToCheck = screenshot.getFrameWindow();
-              });
-            });
-          });
+          const fc = await that._ensureFrameVisible();
+          // FIXME - Scaling should be handled in a single place instead
+          // noinspection JSUnresolvedFunction
+          const scaleProviderFactory = await that._updateScalingParams();
+          let screenshotImage = await that._imageProvider.getImage();
+          await that._debugScreenshotsProvider.save(screenshotImage, "checkFullFrameOrElement");
+
+          const scaleProvider = scaleProviderFactory.getScaleProvider(screenshotImage.getWidth());
+          // TODO: do we need to scale image?
+          screenshotImage = await screenshotImage.scale(scaleProvider.getScaleRatio());
+
+          const switchTo = that._driver.switchTo();
+          await switchTo.frames(fc);
+
+          let screenshot = new EyesWDIOScreenshot(that._logger, that._driver, screenshotImage, that.getPromiseFactory());
+          screenshot = await screenshot.init();
+
+          that._logger.verbose("replacing regionToCheck");
+          that.regionToCheck = screenshot.getFrameWindow();
         }
 
         return that.getPromiseFactory().resolve(Region.EMPTY);
@@ -484,7 +478,7 @@ class Eyes extends EyesBase {
     };
 
     try {
-      return super.checkWindowBase(new RegionProviderImpl(), name, false, checkSettings)
+      return await super.checkWindowBase(new RegionProviderImpl(), name, false, checkSettings);
     } finally {
       that._checkFrameOrElement = false;
     }
