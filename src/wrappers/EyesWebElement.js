@@ -1,6 +1,6 @@
 'use strict';
 
-const {RectangleSize} = require('eyes.sdk');
+const {Location, RectangleSize} = require('eyes.sdk');
 
 const WebElement = require('./WebElement');
 
@@ -351,18 +351,22 @@ class EyesWebElement extends WebElement {
     return this._webElement.getText();
   }
 
+  // noinspection JSCheckFunctionSignatures
   /**
    * @override
    * @inheritDoc
+   * @returns {RectangleSize}
    */
   async getSize() {
     let {value: {width}, value: {height}} = await this._webElement.getSize();
     return new RectangleSize(width, height);
   }
 
+  // noinspection JSCheckFunctionSignatures
   /**
    * @override
    * @inheritDoc
+   * @returns {Location}
    */
   async getLocation() {
     // The workaround is similar to Java one, but in js we always get raw data with decimal value which we should round up.
@@ -370,7 +374,7 @@ class EyesWebElement extends WebElement {
     let {value: {x = 0}, value: {y = 0}} = await super.getLocation();
     x = Math.ceil(x);
     y = Math.ceil(y);
-    return {x, y};
+    return new Location(x, y);
   }
 
   /**

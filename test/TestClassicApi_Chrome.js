@@ -2,7 +2,7 @@
 
 // const test = require('ava');
 const webdriverio = require('webdriverio');
-const {By, Eyes, StitchMode} = require('../index');
+const {By, Eyes, StitchMode, Target} = require('../index');
 const {ConsoleLogHandler, RectangleSize} = require('eyes.sdk');
 
 const assert = require('assert');

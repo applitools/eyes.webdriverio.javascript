@@ -166,7 +166,7 @@ class EyesTargetLocator extends TargetLocator {
       const frameLocation = frame.getLocation();
       await this._scrollPosition.setPosition(frameLocation);
       this._logger.verbose("Done! Switching to frame...");
-      await this._targetLocator.frame(frame.reference);
+      await this._driver.switchTo().frame(frame.getReference());
       this._logger.verbose("Done!");
     }
     this._logger.verbose("Done switching into nested frames!");
@@ -179,32 +179,26 @@ class EyesTargetLocator extends TargetLocator {
    * @param {FrameChain|string[]} obj The path to the frame to switch to. Or the path to the frame to check. This is a list of frame names/IDs (where each frame is nested in the previous frame).
    * @return {Promise.<EyesWebDriver>} The WebDriver with the switched context.
    */
-  frames(obj) {
-    const that = this;
+  async frames(obj) {
     if (obj instanceof FrameChain) {
       const frameChain = obj;
-      that._logger.verbose("EyesTargetLocator.frames(frameChain)");
-      return that._driver.switchTo().defaultContent().then(() => {
-        return frameChain.frames.reduce((promise, frame) => {
-          return promise.then(() => that._driver.switchTo().frame(frame.reference));
-        }, that._driver.getPromiseFactory().resolve());
-      }).then(() => {
-        that._logger.verbose("Done switching into nested frames!");
-        return that._driver;
-      });
+      this._logger.verbose("EyesTargetLocator.frames(frameChain)");
+      await this._driver.switchTo().defaultContent();
+      for (const frame of  frameChain.frames) {
+        await this._driver.switchTo().frame(frame.getReference());
+      }
+      this._logger.verbose("Done switching into nested frames!");
+      return this._driver;
     } else if (Array.isArray(obj)) {
-      that._logger.verbose("EyesTargetLocator.frames(framesPath)");
-      return obj.reduce((promise, frameNameOrId) => {
-        return promise.then(() => {
-          that._logger.verbose("Switching to frame...");
-          return that._driver.switchTo().frame(frameNameOrId);
-        }).then(() => {
-          that._logger.verbose("Done!");
-        });
-      }, that._driver.getPromiseFactory().resolve()).then(() => {
-        that._logger.verbose("Done switching into nested frames!");
-        return that._driver;
-      });
+      this._logger.verbose("EyesTargetLocator.frames(framesPath)");
+      for (const frameNameOrId of obj) {
+        this._logger.verbose("Switching to frame...");
+        await this._driver.switchTo().frame(frameNameOrId);
+        this._logger.verbose("Done!");
+      }
+
+      this._logger.verbose("Done switching into nested frames!");
+      return this._driver;
     }
   }
 

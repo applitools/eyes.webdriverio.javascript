@@ -169,7 +169,7 @@ class EyesWebDriver {
    * @return {EyesWebElement}
    */
   async findElement(locator) {
-    let element = await this.remoteWebDriver.element(locator.value);
+    let {value: element} = await this.remoteWebDriver.element(locator.value);
     return new EyesWebElement(this._logger, this, new WebElement(this._driver, element));
   }
 

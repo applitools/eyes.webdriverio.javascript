@@ -555,8 +555,8 @@ class Eyes extends EyesBase {
       return true;
     }
 
-    if (frameLocator.getFrameSelector()) { // todo
-      const frameElement = this._driver.findElement(frameLocator.getFrameSelector());
+    if (frameLocator.getFrameSelector()) {
+      const frameElement = await this._driver.findElement(frameLocator.getFrameSelector());
       if (frameElement) {
         await switchTo.frame(frameElement);
         return true;
@@ -1063,17 +1063,15 @@ class Eyes extends EyesBase {
  * @param promiseFactory
  * @return {Promise}
  */
-function ensureFrameVisibleLoop(positionProvider, frameChain, switchTo, promiseFactory) {
-  return promiseFactory.resolve().then(() => {
-    if (frameChain.size() > 0) {
-      return switchTo.parentFrame().then(() => {
-        const frame = frameChain.pop();
-        return positionProvider.setPosition(frame.getLocation());
-      }).then(() => {
-        return ensureFrameVisibleLoop(positionProvider, frameChain, switchTo, promiseFactory);
-      });
-    }
-  });
+async function ensureFrameVisibleLoop(positionProvider, frameChain, switchTo, promiseFactory) {
+  await promiseFactory.resolve();
+  if (frameChain.size() > 0) {
+    await switchTo.parentFrame();
+    const frame = frameChain.pop();
+    await positionProvider.setPosition(frame.getLocation());
+
+    return ensureFrameVisibleLoop(positionProvider, frameChain, switchTo, promiseFactory);
+  }
 }
 
 module.exports = Eyes;
