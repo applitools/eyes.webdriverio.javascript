@@ -240,6 +240,21 @@ class Eyes extends EyesBase {
   }
 
 
+  /**
+   * Switches into the given frame, takes a snapshot of the application under test and matches a region specified by the given selector.
+   *
+   * @param {String} frameNameOrId The name or id of the frame to switch to. (as would be used in a call to driver.switchTo().frame()).
+   * @param {By} locator A Selector specifying the region to check.
+   * @param {int|null} matchTimeout The amount of time to retry matching. (Milliseconds)
+   * @param {String} tag An optional tag to be associated with the snapshot.
+   * @param {boolean} stitchContent If {@code true}, stitch the internal content of the region (i.e., perform {@link #checkElement(By, int, String)} on the region.
+   * @return {Promise} A promise which is resolved when the validation is finished.
+   */
+  checkRegionInFrame(frameNameOrId, locator, matchTimeout = USE_DEFAULT_MATCH_TIMEOUT, tag, stitchContent) {
+    return this.check(tag, Target.region(locator, frameNameOrId).timeout(matchTimeout).stitchContent(stitchContent));
+  }
+
+
   // noinspection JSUnusedGlobalSymbols
   /**
    *
@@ -367,7 +382,7 @@ class Eyes extends EyesBase {
 
       const borderLeftWidth = await eyesElement.getComputedStyleInteger("border-left-width");
       const borderTopWidth = await eyesElement.getComputedStyleInteger("border-top-width");
-      elementLocation = new Location(pl.x + borderLeftWidth, pl.y + borderTopWidth);
+      elementLocation = new Location(pl.getX() + borderLeftWidth, pl.getY() + borderTopWidth);
 
       const elementRegion = new Region(elementLocation, elementSize, CoordinatesType.CONTEXT_RELATIVE);
 
@@ -568,11 +583,73 @@ class Eyes extends EyesBase {
 
 
   /**
+   * Use this method only if you made a previous call to {@link #open(WebDriver, String, String)} or one of its variants.
    *
-   * @return {Promise.<RectangleSize>} The viewport size of the current context, or the display size if the viewport size cannot be retrieved.
+   * @override
+   * @inheritDoc
    */
   getViewportSize() {
-    return EyesWDIOUtils.getViewportSizeOrDisplaySize(this._logger, this.jsExecutor);
+    let viewportSize = this._viewportSizeHandler.get();
+    if (viewportSize) {
+      return this.getPromiseFactory().resolve(viewportSize);
+    }
+
+    return this._driver.getDefaultContentViewportSize();
+  }
+
+  // noinspection JSUnusedGlobalSymbols
+  /**
+   * Use this method only if you made a previous call to {@link #open(WebDriver, String, String)} or one of its variants.
+   *
+   * @protected
+   * @override
+   */
+  setViewportSize(viewportSize) {
+    if (this._viewportSizeHandler instanceof ReadOnlyPropertyHandler) {
+      this._logger.verbose("Ignored (viewport size given explicitly)");
+      return;
+    }
+
+    ArgumentGuard.notNull(viewportSize, "viewportSize");
+
+    const that = this;
+    const originalFrame = this._driver.getFrameChain();
+    return this._driver.switchTo().defaultContent().then(() => {
+      return EyesWDIOUtils.setViewportSize(that._logger, that._driver, new RectangleSize(viewportSize)).catch(err => {
+        // Just in case the user catches that error
+        return that._driver.switchTo().frames(originalFrame).then(() => {
+          throw new TestFailedError("Failed to set the viewport size", err);
+        });
+      });
+    }).then(() => {
+      return that._driver.switchTo().frames(originalFrame);
+    }).then(() => {
+      that._viewportSizeHandler.set(new RectangleSize(viewportSize));
+    });
+  }
+
+
+  /**
+   * @param {EyesJsExecutor} executor The executor to use.
+   * @return {Promise.<RectangleSize>} The viewport size of the current context, or the display size if the viewport size cannot be retrieved.
+   */
+  static getViewportSize(executor) {
+    return EyesWDIOUtils.getViewportSizeOrDisplaySize(this._logger, executor);
+  }
+
+
+  /**
+   * Set the viewport size using the driver. Call this method if for some reason you don't want to call {@link #open(WebDriver, String, String)} (or one of its variants) yet.
+   *
+   * @param {EyesWebDriver} driver The driver to use for setting the viewport.
+   * @param {RectangleSize} viewportSize The required viewport size.
+   * @return {Promise}
+   */
+  static setViewportSize(driver, viewportSize) {
+    ArgumentGuard.notNull(driver, "driver");
+    ArgumentGuard.notNull(viewportSize, "viewportSize");
+
+    return EyesWDIOUtils.setViewportSize(this._logger, driver, new RectangleSize(viewportSize));
   }
 
 
@@ -870,8 +947,8 @@ class Eyes extends EyesBase {
   async getInferredEnvironment() {
     const res = 'useragent:';
     try {
-      const userAgent = await this.jsExecutor.executeScript('return navigator.userAgent');
-      return res + userAgent.value;
+      const {value: userAgent} = await this.jsExecutor.executeScript('return navigator.userAgent');
+      return res + userAgent;
     } catch (e) {
       return res;
     }

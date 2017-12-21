@@ -97,6 +97,17 @@ class WebdriverioCheckSettings extends CheckSettings {
 
 
   /**
+   * @override
+   * @param {Boolean} [stitchContent=true]
+   * @return {WebdriverioCheckSettings}
+   */
+  stitchContent(stitchContent = true) {
+    super.stitchContent(stitchContent);
+    return this;
+  }
+
+
+  /**
    * @returns {By}
    */
   get targetSelector() {

@@ -370,7 +370,6 @@ class EyesWebElement extends WebElement {
    */
   async getLocation() {
     // The workaround is similar to Java one, but in js we always get raw data with decimal value which we should round up.
-    console.log(1);
     let {value: {x = 0}, value: {y = 0}} = await super.getLocation();
     x = Math.ceil(x);
     y = Math.ceil(y);

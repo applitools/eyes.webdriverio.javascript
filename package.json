@@ -14,6 +14,7 @@
     "webdriverio": "4.9.8"
   },
   "devDependencies": {
+    "ava": "^0.24.0",
     "chai": "^4.1.2",
     "mocha": "^4.0.1"
   },
