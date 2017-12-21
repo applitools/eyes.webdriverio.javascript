@@ -130,7 +130,7 @@ class EyesWDIOScreenshot extends EyesScreenshot {
    * @return {Promise.<Location>}
    */
   static async calcFrameLocationInScreenshot(logger, driver, frameChain, screenshotType) {
-    const windowScroll = EyesWDIOScreenshot.getDefaultContentScrollPosition(logger, frameChain, driver);
+    const windowScroll = await EyesWDIOScreenshot.getDefaultContentScrollPosition(logger, frameChain, driver);
     logger.verbose("Getting first frame...");
     const firstFrame = frameChain.getFrame(0);
     logger.verbose("Done!");

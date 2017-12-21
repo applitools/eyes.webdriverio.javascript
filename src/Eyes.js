@@ -49,6 +49,7 @@ const VERSION = require('../package.json').version;
 const DEFAULT_STITCHING_OVERLAP = 50; // px
 const DEFAULT_WAIT_BEFORE_SCREENSHOTS = 100; // Milliseconds
 const DEFAULT_WAIT_SCROLL_STABILIZATION = 200; // Milliseconds
+const USE_DEFAULT_MATCH_TIMEOUT = -1;
 
 
 class Eyes extends EyesBase {
@@ -114,6 +115,7 @@ class Eyes extends EyesBase {
    * @param {String} appName
    * @param {String} testName
    * @param {RectangleSize|{width: number, height: number}} viewportSize
+   * @param {SessionType} [sessionType=null] The type of test (e.g.,  standard test / visual performance test).
    * @returns {Promise.<*>}
    */
   async open(driver, appName, testName, viewportSize = null, sessionType = null) {
@@ -123,7 +125,7 @@ class Eyes extends EyesBase {
       return driver.call(() => {
         return new Promise(asyncAction);
       });
-    }, null);
+    });
 
     this._logger.verbose('Running using Webdriverio module');
 
@@ -187,11 +189,58 @@ class Eyes extends EyesBase {
   }
 
 
-  checkWindow(tag, matchTimeout) {
+  /**
+   * @private
+   * @return {Promise<ScaleProviderFactory>}
+   */
+  async _getScaleProviderFactory() {
+    const that = this;
+    return this._positionProvider.getEntireSize().then(entireSize => {
+      return new ContextBasedScaleProviderFactory(that._logger, entireSize, that._viewportSizeHandler.get(), that._devicePixelRatio, false, that._scaleProviderHandler);
+    });
+  }
+
+
+  /**
+   * Takes a snapshot of the application under test and matches it with the expected output.
+   *
+   * @param {String} tag An optional tag to be associated with the snapshot.
+   * @param {int} matchTimeout The amount of time to retry matching (Milliseconds).
+   * @return {Promise} A promise which is resolved when the validation is finished.
+   */
+  checkWindow(tag, matchTimeout = USE_DEFAULT_MATCH_TIMEOUT) {
     return this.check(tag, Target.window().timeout(matchTimeout));
   }
 
 
+  /**
+   * Matches the frame given as parameter, by switching into the frame and using stitching to get an image of the frame.
+   *
+   * @param {Integer|String|By|WebElement|EyesWebElement} element The element which is the frame to switch to. (as
+   * would be used in a call to driver.switchTo().frame() ).
+   * @param {int|null} matchTimeout The amount of time to retry matching (milliseconds).
+   * @param {String} tag An optional tag to be associated with the match.
+   * @return {Promise} A promise which is resolved when the validation is finished.
+   */
+  checkFrame(element, matchTimeout = USE_DEFAULT_MATCH_TIMEOUT, tag) {
+    return this.check(tag, Target.frame(element).timeout(matchTimeout).fully());
+  }
+
+
+  /**
+   * Visually validates a region in the screenshot.
+   *
+   * @param {By} by The WebDriver selector used for finding the region to validate.
+   * @param {String} tag An optional tag to be associated with the screenshot.
+   * @param {int} matchTimeout The amount of time to retry matching.
+   * @return {Promise} A promise which is resolved when the validation is finished.
+   */
+  checkRegionBy(by, tag, matchTimeout = USE_DEFAULT_MATCH_TIMEOUT) {
+    return this.check(tag, Target.region(by).timeout(matchTimeout).fully());
+  }
+
+
+  // noinspection JSUnusedGlobalSymbols
   /**
    *
    * @param {By} selector
@@ -206,7 +255,7 @@ class Eyes extends EyesBase {
   /**
    *
    * @param name
-   * @param {CheckSettings} checkSettings
+   * @param {WebdriverioCheckSettings} checkSettings
    * @returns {Promise.<*>}
    */
   async check(name, checkSettings) {
@@ -327,11 +376,10 @@ class Eyes extends EyesBase {
       this._logger.verbose("replacing regionToCheck");
       this._regionToCheck = elementRegion;
 
-      await super.checkWindowBase(new NullRegionProvider(this.getPromiseFactory()), name, false, checkSettings);
+      return await super.checkWindowBase(new NullRegionProvider(this.getPromiseFactory()), name, false, checkSettings);
     } catch (e) {
       error = e;
     } finally {
-
 
       if (originalOverflow) {
         await eyesElement.setOverflow(originalOverflow);
@@ -353,10 +401,47 @@ class Eyes extends EyesBase {
 
 
   /**
+   * Updates the state of scaling related parameters.
+   *
+   * @protected
+   * @return {Promise.<ScaleProviderFactory>}
+   */
+  _updateScalingParams() {
+    // Update the scaling params only if we haven't done so yet, and the user hasn't set anything else manually.
+    if (this._devicePixelRatio === Eyes.UNKNOWN_DEVICE_PIXEL_RATIO && this._scaleProviderHandler.get() instanceof NullScaleProvider) {
+      this._logger.verbose("Trying to extract device pixel ratio...");
+
+      const that = this;
+      return EyesWDIOUtils.getDevicePixelRatio(that._jsExecutor).then(ratio => {
+        that._devicePixelRatio = ratio;
+      }).catch(err => {
+        that._logger.verbose("Failed to extract device pixel ratio! Using default.", err);
+        that._devicePixelRatio = Eyes.DEFAULT_DEVICE_PIXEL_RATIO;
+      }).then(() => {
+        that._logger.verbose(`Device pixel ratio: ${that._devicePixelRatio}`);
+        that._logger.verbose("Setting scale provider...");
+        return that._getScaleProviderFactory();
+      }).catch(err => {
+        that._logger.verbose("Failed to set ContextBasedScaleProvider.", err);
+        that._logger.verbose("Using FixedScaleProvider instead...");
+        return new FixedScaleProviderFactory(1 / that._devicePixelRatio, that._scaleProviderHandler);
+      }).then(factory => {
+        that._logger.verbose("Done!");
+        return factory;
+      });
+    }
+
+    // If we already have a scale provider set, we'll just use it, and pass a mock as provider handler.
+    const nullProvider = new SimplePropertyHandler();
+    return this.getPromiseFactory().resolve(new ScaleProviderIdentityFactory(this._scaleProviderHandler.get(), nullProvider));
+  }
+
+
+  /**
    * @private
    * @return {Promise}
    */
-  _checkFullFrameOrElement(name, checkSettings) {
+  async _checkFullFrameOrElement(name, checkSettings) {
     this._checkFrameOrElement = true;
 
     const that = this;
@@ -365,42 +450,38 @@ class Eyes extends EyesBase {
     const RegionProviderImpl = class RegionProviderImpl extends RegionProvider {
       // noinspection JSUnusedGlobalSymbols
       /** @override */
-      getRegion() {
+      async getRegion() {
         if (that._checkFrameOrElement) {
-          return that._ensureFrameVisible().then(fc => {
-            // FIXME - Scaling should be handled in a single place instead
-            // noinspection JSUnresolvedFunction
-            return that._updateScalingParams().then(scaleProviderFactory => {
-              let screenshotImage;
-              return that._imageProvider.getImage().then(screenshotImage_ => {
-                screenshotImage = screenshotImage_;
-                return that._debugScreenshotsProvider.save(screenshotImage_, "checkFullFrameOrElement");
-              }).then(() => {
-                const scaleProvider = scaleProviderFactory.getScaleProvider(screenshotImage.getWidth());
-                // TODO: do we need to scale image?
-                return screenshotImage.scale(scaleProvider.getScaleRatio());
-              }).then(screenshotImage_ => {
-                screenshotImage = screenshotImage_;
-                const switchTo = that._driver.switchTo();
-                return switchTo.frames(fc);
-              }).then(() => {
-                const screenshot = new EyesWDIOScreenshot(that._logger, that._driver, screenshotImage, that.getPromiseFactory());
-                return screenshot.init();
-              }).then(screenshot => {
-                that._logger.verbose("replacing regionToCheck");
-                that.regionToCheck = screenshot.getFrameWindow();
-              });
-            });
-          });
+          const fc = await that._ensureFrameVisible();
+          // FIXME - Scaling should be handled in a single place instead
+          // noinspection JSUnresolvedFunction
+          const scaleProviderFactory = await that._updateScalingParams();
+          let screenshotImage = await that._imageProvider.getImage();
+          await that._debugScreenshotsProvider.save(screenshotImage, "checkFullFrameOrElement");
+
+          const scaleProvider = scaleProviderFactory.getScaleProvider(screenshotImage.getWidth());
+          // TODO: do we need to scale image?
+          screenshotImage = await screenshotImage.scale(scaleProvider.getScaleRatio());
+
+          const switchTo = that._driver.switchTo();
+          await switchTo.frames(fc);
+
+          let screenshot = new EyesWDIOScreenshot(that._logger, that._driver, screenshotImage, that.getPromiseFactory());
+          screenshot = await screenshot.init();
+
+          that._logger.verbose("replacing regionToCheck");
+          that.regionToCheck = screenshot.getFrameWindow();
         }
 
         return that.getPromiseFactory().resolve(Region.EMPTY);
       }
     };
 
-    return super.checkWindowBase(new RegionProviderImpl(), name, false, checkSettings).then(() => {
+    try {
+      return await super.checkWindowBase(new RegionProviderImpl(), name, false, checkSettings);
+    } finally {
       that._checkFrameOrElement = false;
-    });
+    }
   }
 
 
@@ -410,12 +491,12 @@ class Eyes extends EyesBase {
    */
   async _checkFrameFluent(name, checkSettings) {
     try {
-      const frameChain = new FrameChain(this._logger, this._driver.getFrameChain());
+      const frameChain = new FrameChain(this._logger, this._driver.frameChain);
       const targetFrame = frameChain.pop();
-      this._targetElement = targetFrame.reference;
+      this._targetElement = targetFrame.getReference();
 
       await this._driver.switchTo().framesDoScroll(frameChain);
-      return this._checkRegion(name, checkSettings);
+      return await this._checkRegion(name, checkSettings);
     } finally {
       this._targetElement = null;
     }
@@ -430,7 +511,7 @@ class Eyes extends EyesBase {
     if (switchedToFrameCount > 0) {
       await this._driver.switchTo().parentFrame();
       switchedToFrameCount--;
-      return this._switchToParentFrame(switchedToFrameCount);
+      return await this._switchToParentFrame(switchedToFrameCount);
     }
 
     return this.getPromiseFactory().resolve();
@@ -447,14 +528,13 @@ class Eyes extends EyesBase {
 
     const frameChain = checkSettings.frameChain;
     let switchedToFrameCount = 0;
-    frameChain.reduce(async (promise, frameLocator) => {
-      await promise;
+    for (const frameLocator of frameChain) {
       const isSuccess = await this._switchToFrameLocator(frameLocator);
       if (isSuccess) {
         switchedToFrameCount++;
       }
-      return switchedToFrameCount;
-    }, this.getPromiseFactory().resolve());
+    }
+    return switchedToFrameCount;
   }
 
 
@@ -462,37 +542,41 @@ class Eyes extends EyesBase {
    * @private
    * @return {Promise.<boolean>}
    */
-  _switchToFrameLocator(frameLocator) {
+  async _switchToFrameLocator(frameLocator) {
     const switchTo = this._driver.switchTo();
 
-    if (frameLocator.getFrameIndex()) {
-      return switchTo.frame(frameLocator.getFrameIndex()).then(() => true);
+    if (frameLocator.getFrameIndex()) { // todo
+      await switchTo.frame(frameLocator.getFrameIndex());
+      return true;
     }
 
     if (frameLocator.getFrameNameOrId()) {
-      return switchTo.frame(frameLocator.getFrameNameOrId()).then(() => true);
+      await switchTo.frame(frameLocator.getFrameNameOrId());
+      return true;
     }
 
     if (frameLocator.getFrameSelector()) {
-      const frameElement = this._driver.findElement(frameLocator.getFrameSelector());
+      const frameElement = await this._driver.findElement(frameLocator.getFrameSelector());
       if (frameElement) {
-        return switchTo.frame(frameElement).then(() => true);
+        await switchTo.frame(frameElement);
+        return true;
       }
     }
 
-    return this.getPromiseFactory().resolve(false);
+    return false;
   }
 
 
   /**
    *
-   * @return {Promise.RectangleSize} The viewport size of the current context, or the display size if the viewport size cannot be retrieved.
+   * @return {Promise.<RectangleSize>} The viewport size of the current context, or the display size if the viewport size cannot be retrieved.
    */
   getViewportSize() {
     return EyesWDIOUtils.getViewportSizeOrDisplaySize(this._logger, this.jsExecutor);
   }
 
 
+  // noinspection JSUnusedGlobalSymbols
   /**
    *
    * @param {By} locator
@@ -750,8 +834,8 @@ class Eyes extends EyesBase {
    * @return {Promise.<FrameChain>}
    */
   async _ensureFrameVisible() {
-    const originalFC = new FrameChain(this._logger, this._driver.getFrameChain());
-    const fc = new FrameChain(this._logger, this._driver.getFrameChain());
+    const originalFC = new FrameChain(this._logger, this._driver.frameChain);
+    const fc = new FrameChain(this._logger, this._driver.frameChain);
     await ensureFrameVisibleLoop(this._positionProvider, fc, this._driver.switchTo(), this.getPromiseFactory());
     await this._driver.switchTo().frames(originalFC);
     return originalFC;
@@ -775,8 +859,8 @@ class Eyes extends EyesBase {
   }
 
 
-  // noinspection JSUnusedGlobalSymbols
   setViewportSize(size) {
+    // noinspection JSUnusedGlobalSymbols
     this._viewportSize = size;
     return EyesWDIOUtils.setViewportSize(this._logger, this._driver, size);
   };
@@ -817,6 +901,7 @@ class Eyes extends EyesBase {
     super.setFailureReport(mode);
   };
 
+  // noinspection JSUnusedGlobalSymbols
   /**
    * Set the image rotation degrees.
    * @param degrees The amount of degrees to set the rotation to.
@@ -826,6 +911,7 @@ class Eyes extends EyesBase {
     this.setRotation(new ImageRotation(degrees))
   }
 
+  // noinspection JSUnusedGlobalSymbols
   /**
    * Get the rotation degrees.
    * @return {number} The rotation degrees.
@@ -833,6 +919,16 @@ class Eyes extends EyesBase {
    */
   getForcedImageRotation() {
     return this.getRotation().getRotation();
+  }
+
+  /**
+   * @param {ImageRotation} rotation The image rotation data.
+   */
+  setRotation(rotation) {
+    this._rotation = rotation;
+    if (this._driver) {
+      this._driver.setRotation(rotation);
+    }
   }
 
   // noinspection JSUnusedGlobalSymbols
@@ -872,6 +968,7 @@ class Eyes extends EyesBase {
   }
 
 
+  // noinspection JSUnusedGlobalSymbols
   /**
    *
    * @returns {Region}
@@ -930,6 +1027,33 @@ class Eyes extends EyesBase {
   shouldStitchContent() {
     return this._stitchContent;
   }
+
+
+  /**
+   * Set the type of stitching used for full page screenshots. When the page includes fixed position header/sidebar, use {@link StitchMode#CSS}.
+   * Default is {@link StitchMode#SCROLL}.
+   *
+   * @param {StitchMode} mode The stitch mode to set.
+   */
+  setStitchMode(mode) {
+    this._logger.verbose(`setting stitch mode to ${mode}`);
+
+    this._stitchMode = mode;
+    if (this._driver) {
+      this._initPositionProvider();
+    }
+  }
+
+
+  /**
+   * Hide the scrollbars when taking screenshots.
+   *
+   * @param {boolean} shouldHide Whether to hide the scrollbars or not.
+   */
+  setHideScrollbars(shouldHide) {
+    this._hideScrollbars = shouldHide;
+  }
+
 }
 
 /**
@@ -939,17 +1063,15 @@ class Eyes extends EyesBase {
  * @param promiseFactory
  * @return {Promise}
  */
-function ensureFrameVisibleLoop(positionProvider, frameChain, switchTo, promiseFactory) {
-  return promiseFactory.resolve().then(() => {
-    if (frameChain.size() > 0) {
-      return switchTo.parentFrame().then(() => {
-        const frame = frameChain.pop();
-        return positionProvider.setPosition(frame.getLocation());
-      }).then(() => {
-        return ensureFrameVisibleLoop(positionProvider, frameChain, switchTo, promiseFactory);
-      });
-    }
-  });
+async function ensureFrameVisibleLoop(positionProvider, frameChain, switchTo, promiseFactory) {
+  await promiseFactory.resolve();
+  if (frameChain.size() > 0) {
+    await switchTo.parentFrame();
+    const frame = frameChain.pop();
+    await positionProvider.setPosition(frame.getLocation());
+
+    return ensureFrameVisibleLoop(positionProvider, frameChain, switchTo, promiseFactory);
+  }
 }
 
 module.exports = Eyes;

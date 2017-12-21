@@ -318,7 +318,7 @@ class EyesWDIOUtils {
   /**
    * @param {Logger} logger
    * @param {EyesJsExecutor} executor The executor to use.
-   * @return {Promise.RectangleSize} The viewport size of the current context, or the display size if the viewport size cannot be retrieved.
+   * @return {Promise.<RectangleSize>} The viewport size of the current context, or the display size if the viewport size cannot be retrieved.
    */
   static async getViewportSizeOrDisplaySize(logger, executor) {
     try {

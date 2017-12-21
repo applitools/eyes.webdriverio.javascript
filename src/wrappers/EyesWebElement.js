@@ -1,6 +1,6 @@
 'use strict';
 
-const {RectangleSize} = require('eyes.sdk');
+const {Location, RectangleSize} = require('eyes.sdk');
 
 const WebElement = require('./WebElement');
 
@@ -69,7 +69,7 @@ class EyesWebElement extends WebElement {
     ArgumentGuard.notNull(eyesDriver, "eyesDriver");
     ArgumentGuard.notNull(webElement, "webElement");
 
-    super(eyesDriver.webDriver);
+    super(eyesDriver.webDriver, webElement.element);
 
     this._logger = logger;
     /** @type {EyesWebDriver}*/
@@ -82,13 +82,13 @@ class EyesWebElement extends WebElement {
    */
   getBounds() {
     const that = this;
-    return that.getLocation().then(/** @type {{x: number, y: number}} */ location_ => {
+    return that.getLocation().then(/** @type {{x: number, y: number}} */location_ => {
       let left = location_.x;
       let top = location_.y;
       let width = 0;
       let height = 0;
 
-      return that.getSize().then(/** @type {{width: number, height: number}} */ size_ => {
+      return that.getSize().then(/** @type {{width: number, height: number}} */size_ => {
         width = size_.width;
         height = size_.height;
       }).catch(err => {
@@ -351,25 +351,30 @@ class EyesWebElement extends WebElement {
     return this._webElement.getText();
   }
 
+  // noinspection JSCheckFunctionSignatures
   /**
    * @override
    * @inheritDoc
+   * @returns {RectangleSize}
    */
   async getSize() {
     let {value: {width}, value: {height}} = await this._webElement.getSize();
     return new RectangleSize(width, height);
   }
 
+  // noinspection JSCheckFunctionSignatures
   /**
    * @override
    * @inheritDoc
+   * @returns {Location}
    */
   async getLocation() {
     // The workaround is similar to Java one, but in js we always get raw data with decimal value which we should round up.
-    let {value: {x=0}, value: {y = 0}} = await this._webElement.getLocation();
+    console.log(1);
+    let {value: {x = 0}, value: {y = 0}} = await super.getLocation();
     x = Math.ceil(x);
     y = Math.ceil(y);
-    return {x, y};
+    return new Location(x, y);
   }
 
   /**
@@ -434,7 +439,7 @@ class EyesWebElement extends WebElement {
    * @private
    */
   _executeScript(script) {
-    return this._eyesDriver.executeScript(script, this._webElement._element.value);
+    return this._eyesDriver.executeScript(script, this._webElement._element);
   }
 }
 

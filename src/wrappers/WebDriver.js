@@ -2,6 +2,7 @@
 
 const TargetLocator = require('../TargetLocator');
 
+
 class WebDriver {
 
   /**
@@ -20,6 +21,21 @@ class WebDriver {
 
   switchTo() {
     return new TargetLocator(this);
+  }
+
+
+  frame(id) {
+    return this._remoteWebDriver.frame(id);
+  }
+
+
+  sleep(ms) {
+    return this._remoteWebDriver.pause(ms);
+  }
+
+
+  quit() {
+    return this._remoteWebDriver.end();
   }
 
 

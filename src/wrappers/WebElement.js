@@ -8,12 +8,11 @@
 class WebElement {
 
   /**
-   *
-   * @param browser
-   * @param element
+   * @param {EyesWebDriver} driver
+   * @param {Object} element WebElement JSON object
    */
-  constructor(browser, element) {
-    this._browser = browser;
+  constructor(driver, element) {
+    this._driver = driver;
     this._element = element;
   }
 
@@ -23,7 +22,7 @@ class WebElement {
    * @return {EyesWebElement}
    */
   findElement(locator) {
-    return this._browser.element(locator.value);
+    return this._driver.element(locator.value);
   }
 
 
@@ -36,27 +35,28 @@ class WebElement {
 
 
   /**
-   *
    * @returns {Promise.<{x, y}>}
    */
   getLocation() {
-    return this._browser.remoteWebDriver.elementIdLocation(this._element.value.ELEMENT);
+    return this._driver.remoteWebDriver.elementIdLocation(this._element.ELEMENT);
   }
 
+
+  /**
+   * @returns {Promise}
+   */
   getSize() {
-    return this._browser.remoteWebDriver.elementIdSize(this._element.value.ELEMENT);
+    return this._driver.remoteWebDriver.elementIdSize(this._element.ELEMENT);
   }
 
 
   /**
    *
    */
-  takeScreenshot(opt_scroll) {
-    return this._browser.screenshot(opt_scroll);
+  takeScreenshot(opt_scroll) { // todo
+    return this._driver.screenshot(opt_scroll);
 
-    return this.requestHandler.create(`/session/:sessionId/element/${id}/screenshot`);
-
-
+    // return this.requestHandler.create(`/session/:sessionId/element/${id}/screenshot`);
   }
 
 
@@ -65,6 +65,10 @@ class WebElement {
     return false;
   }
 
+
+  get element() {
+    return this._element;
+  }
 
 }
 

@@ -17,6 +17,17 @@ class TargetLocator {
   }
 
 
+  frame(id) {
+    return this._driver.frame(id);
+  }
+
+
+  /**
+   *
+   */
+  alert() {
+    // todo
+  }
 
 }
 

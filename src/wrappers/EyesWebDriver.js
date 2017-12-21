@@ -6,6 +6,7 @@ const EyesTargetLocator = require('./EyesTargetLocator');
 const WebElement = require('./WebElement');
 const WebDriver = require('./WebDriver');
 const EyesWDIOUtils = require('../EyesWDIOUtils');
+const By = require('../By');
 
 /*
  ---
@@ -24,12 +25,12 @@ class EyesWebDriver {
    * C'tor = initializes the module settings
    *
    * @constructor
-   * @param {WebDriver} remoteWebDriver
+   * @param {WebDriver} webDriver
    * @param {Eyes} eyes An instance of Eyes
    * @param {Object} logger
    **/
-  constructor(remoteWebDriver, eyes, logger) {
-    this._driver = remoteWebDriver;
+  constructor(webDriver, eyes, logger) {
+    this._driver = webDriver;
     this._eyes = eyes;
     this._logger = logger;
 
@@ -63,6 +64,17 @@ class EyesWebDriver {
   get rotation() {
     return this._rotation;
   }
+
+
+  sleep(ms) {
+    return this._driver.sleep(ms);
+  }
+
+
+  quit() {
+    return this._driver.quit();
+  }
+
 
   /**
    * @param {number} rotation The image rotation data.
@@ -123,7 +135,7 @@ class EyesWebDriver {
   //noinspection JSUnusedGlobalSymbols
   async getUserAgent() {
     try {
-      let {value: userAgent} = await this._driver.execute('return navigator.userAgent');
+      let {value: userAgent} = await this.remoteWebDriver.execute('return navigator.userAgent');
       this._logger.verbose("user agent: " + userAgent);
       return userAgent;
     } catch (e) {
@@ -157,7 +169,7 @@ class EyesWebDriver {
    * @return {EyesWebElement}
    */
   async findElement(locator) {
-    let element = await this.remoteWebDriver.element(locator.value);
+    let {value: element} = await this.remoteWebDriver.element(locator.value);
     return new EyesWebElement(this._logger, this, new WebElement(this._driver, element));
   }
 
@@ -168,10 +180,46 @@ class EyesWebDriver {
    * @return {Promise.<EyesWebElement[]>}
    */
   async findElements(locator) {
-    const elements = await this.remoteWebDriver.elements(locator.value);
-    return elements.map(function (element) {
-      return new EyesWebElement(element, this, this._logger);
+    const {value: elements} = await this.remoteWebDriver.elements(locator.value);
+    return elements.map((element) => {
+      return new EyesWebElement(this._logger, this, new WebElement(this._driver, element));
     });
+  }
+
+
+  /**
+   * @param {String} id
+   * @return {EyesWebElement} A promise that will resolve to a EyesWebElement.
+   */
+  findElementById(id) {
+    return this.findElement(By.id(id));
+  }
+
+
+  /**
+   * @param {String} id
+   * @return {!Promise.<!Array<!EyesWebElement>>} A promise that will resolve to an array of EyesWebElements.
+   */
+  findElementsById(id) {
+    return this.findElements(By.id(id));
+  }
+
+
+  /**
+   * @param {String} name
+   * @return {EyesWebElement} A promise that will resolve to a EyesWebElement.
+   */
+  findElementByName(name) {
+    return this.findElement(By.name(name));
+  }
+
+
+  /**
+   * @param {String} name
+   * @return {!Promise.<!Array<!EyesWebElement>>} A promise that will resolve to an array of EyesWebElements.
+   */
+  findElementsByName(name) {
+    return this.findElements(By.name(name));
   }
 
 

@@ -5,7 +5,4 @@ exports.EyesWebDriver = require('./src/wrappers/EyesWebDriver');
 exports.WebdriverioCheckSettings = require('./src/fluent/WebdriverioCheckSettings');
 exports.EyesWDIOScreenshot = require('./src/capture/EyesWDIOScreenshot');
 exports.EyesWDIOUtils = require('./src/EyesWDIOUtils');
-
-
-const EyesSDK = require('eyes.sdk');
-exports.ConsoleLogHandler = EyesSDK.ConsoleLogHandler;
+exports.StitchMode = require('./src/StitchMode');

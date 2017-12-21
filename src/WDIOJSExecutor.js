@@ -39,7 +39,7 @@ class WDIOJSExecutor extends EyesJsExecutor {
    * @inheritDoc
    */
   sleep(millis) { // todo
-    return this._executor.webDriver.sleep(millis);
+    return this._executor.sleep(millis);
   }
 
 
