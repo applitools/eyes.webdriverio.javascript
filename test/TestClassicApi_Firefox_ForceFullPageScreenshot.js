@@ -30,7 +30,7 @@ describe(appName, function () {
     eyes.setApiKey(process.env.API_KEY);
     eyes.setLogHandler(new ConsoleLogHandler(true));
 
-    eyes.setForceFullPageScreenshot(false);
+    eyes.setForceFullPageScreenshot(true);
     eyes.setStitchMode(StitchMode.CSS);
     eyes.setHideScrollbars(true);
 

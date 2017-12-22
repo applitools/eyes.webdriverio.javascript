@@ -338,7 +338,7 @@ class Eyes extends EyesBase {
       async getRegion() {
         const p = await that._targetElement.getLocation();
         const d = await that._targetElement.getSize();
-        return new Region(Math.ceil(p.x), Math.ceil(p.y), d.getWidth(), d.getHeight(), CoordinatesType.CONTEXT_RELATIVE);
+        return new Region(Math.ceil(p.getX()), Math.ceil(p.getY()), d.getWidth(), d.getHeight(), CoordinatesType.CONTEXT_RELATIVE);
       }
     };
 
