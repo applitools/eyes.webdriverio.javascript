@@ -13,13 +13,7 @@ const testedPageUrl = 'http://applitools.github.io/demo/TestPages/FramesTestPage
 
 const options = {
   desiredCapabilities: {
-    browserName: 'chrome',
-    chromeOptions: {
-      args: [
-        'disable-infobars',
-        'headless'
-      ]
-    }
+    browserName: 'firefox'
   }
 };
 

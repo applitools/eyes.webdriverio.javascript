@@ -1,6 +1,8 @@
 exports.Eyes = require('./src/Eyes');
 exports.By = require('./src/By');
 exports.Target = require('./src/fluent/Target');
+exports.WebDriver = require('./src/wrappers/WebDriver');
+exports.WebElement = require('./src/wrappers/WebElement');
 exports.EyesWebDriver = require('./src/wrappers/EyesWebDriver');
 exports.WebdriverioCheckSettings = require('./src/fluent/WebdriverioCheckSettings');
 exports.EyesWDIOScreenshot = require('./src/capture/EyesWDIOScreenshot');

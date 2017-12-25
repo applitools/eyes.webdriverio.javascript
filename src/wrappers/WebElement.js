@@ -19,10 +19,11 @@ class WebElement {
 
   /**
    * @param {By} locator
-   * @return {EyesWebElement}
+   * @return {WebElement}
    */
   findElement(locator) {
-    return this._driver.element(locator.value);
+    const element = this._driver.remoteWebDriver.element(locator.value);
+    return new WebElement(this._driver, element);
   }
 
 

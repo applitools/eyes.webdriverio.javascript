@@ -73,7 +73,7 @@ class EyesWebElement extends WebElement {
 
     this._logger = logger;
     /** @type {EyesWebDriver}*/
-    this._eyesDriver = eyesDriver;
+    this._eyesWebDriver = eyesDriver;
     this._webElement = webElement;
   }
 
@@ -272,11 +272,11 @@ class EyesWebElement extends WebElement {
   /**
    * @Override
    * @inheritDoc
+   * return {EyesWebElement}
    */
   async findElement(locator) {
-    const that = this;
     const element = await this._webElement.findElement(locator);
-    return new EyesWebElement(that._logger, that._eyesDriver, element);
+    return new EyesWebElement(this._logger, this._eyesWebDriver, element);
   }
 
   /**
@@ -285,7 +285,7 @@ class EyesWebElement extends WebElement {
    */
   findElements(locator) {
     const that = this;
-    return this._webElement.findElements(locator).then(elements => elements.map(element => new EyesWebElement(that._logger, that._eyesDriver, element)));
+    return this._webElement.findElements(locator).then(elements => elements.map(element => new EyesWebElement(that._logger, that._eyesWebDriver, element)));
   }
 
   // noinspection JSCheckFunctionSignatures
@@ -298,7 +298,7 @@ class EyesWebElement extends WebElement {
     // Letting the driver know about the current action.
     const that = this;
     return that.getBounds().then(currentControl => {
-      that._eyesDriver.eyes.addMouseTrigger(MouseTrigger.MouseAction.Click, this);
+      that._eyesWebDriver.eyes.addMouseTrigger(MouseTrigger.MouseAction.Click, this);
       that._logger.verbose(`click(${currentControl})`);
 
       return that._webElement.click();
@@ -313,8 +313,8 @@ class EyesWebElement extends WebElement {
   sendKeys(...keysToSend) {
     const that = this;
     return keysToSend.reduce((promise, keys) => {
-      return promise.then(() => that._eyesDriver.eyes.addTextTriggerForElement(this._webElement, String(keys)));
-    }, that._eyesDriver.getPromiseFactory().resolve()).then(() => {
+      return promise.then(() => that._eyesWebDriver.eyes.addTextTriggerForElement(this._webElement, String(keys)));
+    }, that._eyesWebDriver.getPromiseFactory().resolve()).then(() => {
       return that._webElement.sendKeys(...keysToSend);
     });
   }
@@ -370,7 +370,6 @@ class EyesWebElement extends WebElement {
    */
   async getLocation() {
     // The workaround is similar to Java one, but in js we always get raw data with decimal value which we should round up.
-    console.log(1);
     let {value: {x = 0}, value: {y = 0}} = await super.getLocation();
     x = Math.ceil(x);
     y = Math.ceil(y);
@@ -439,7 +438,7 @@ class EyesWebElement extends WebElement {
    * @private
    */
   _executeScript(script) {
-    return this._eyesDriver.executeScript(script, this._webElement._element);
+    return this._eyesWebDriver.executeScript(script, this._webElement._element);
   }
 }
 

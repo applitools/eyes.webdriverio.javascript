@@ -13,13 +13,7 @@ const testedPageUrl = 'http://applitools.github.io/demo/TestPages/FramesTestPage
 
 const options = {
   desiredCapabilities: {
-    browserName: 'chrome',
-    chromeOptions: {
-      args: [
-        'disable-infobars',
-        'headless'
-      ]
-    }
+    browserName: 'firefox'
   }
 };
 
@@ -36,7 +30,7 @@ describe(appName, function () {
     eyes.setApiKey(process.env.API_KEY);
     eyes.setLogHandler(new ConsoleLogHandler(true));
 
-    eyes.setForceFullPageScreenshot(false);
+    eyes.setForceFullPageScreenshot(true);
     eyes.setStitchMode(StitchMode.CSS);
     eyes.setHideScrollbars(true);
 

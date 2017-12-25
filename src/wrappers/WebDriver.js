@@ -14,6 +14,15 @@ class WebDriver {
   }
 
 
+  /**
+   * @param {By} locator
+   * @return {WebElement}
+   */
+  findElement(locator) {
+    return this._remoteWebDriver.element(locator.value);
+  }
+
+
   defaultContent() {
     return this._remoteWebDriver.frame();
   }

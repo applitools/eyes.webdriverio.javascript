@@ -8,7 +8,7 @@ const {ConsoleLogHandler, RectangleSize} = require('eyes.sdk');
 const assert = require('assert');
 
 
-const appName = 'Eyes Selenium SDK - Classic API';
+const appName = 'Eyes Selenium SDK - Classic API - ForceFPS';
 const testedPageUrl = 'http://applitools.github.io/demo/TestPages/FramesTestPage/';
 
 const options = {
@@ -36,7 +36,7 @@ describe(appName, function () {
     eyes.setApiKey(process.env.API_KEY);
     eyes.setLogHandler(new ConsoleLogHandler(true));
 
-    eyes.setForceFullPageScreenshot(false);
+    eyes.setForceFullPageScreenshot(true);
     eyes.setStitchMode(StitchMode.CSS);
     eyes.setHideScrollbars(true);
 

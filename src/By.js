@@ -30,6 +30,16 @@ class By {
   }
 
 
+  /**
+   *
+   * @param {string} tagName
+   * @return {By}
+   */
+  static tagName(tagName) {
+    throw new Error('By.tagName is unsupported');
+  }
+
+
   static attributeValue(attributeName, value) {
     return new By(`[${attributeName}=${value}]`);
   }
