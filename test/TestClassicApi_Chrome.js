@@ -70,6 +70,8 @@ describe(appName, function () {
     assert.equal(result.asExpected, true);
   });
 
+  // todo frame support
+/*
   xit('TestCheckFrame', async function () {
     const result = await eyes.checkFrame('frame1', null, 'frame1');
     assert.equal(result.asExpected, true);
@@ -79,6 +81,7 @@ describe(appName, function () {
     const result = await  eyes.checkRegionInFrame('frame1', By.id('inner-frame-div'), null, 'Inner frame div', true);
     assert.equal(result.asExpected, true);
   });
+*/
 
   it('TestCheckRegion2', async function () {
     const result = await  eyes.checkRegionBy(By.id('overflowing-div-image'), 'minions');

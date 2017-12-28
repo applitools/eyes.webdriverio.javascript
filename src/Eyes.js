@@ -84,6 +84,8 @@ class Eyes extends EyesBase {
     this._hideScrollbars = null;
     /** @type {boolean} */
     this._checkFrameOrElement = false;
+    /** @type {String} */
+    this._originalOverflow = null;
     /** @type {EyesJsExecutor} */
     this._jsExecutor = undefined;
     this._rotation = undefined;
@@ -716,7 +718,31 @@ class Eyes extends EyesBase {
   }
 
 
-  // noinspection JSUnusedGlobalSymbols
+  /**
+   * @override
+   */
+  async beforeOpen() {
+    await this._tryHideScrollbars();
+  }
+
+  /**
+   * @override
+   */
+  async beforeMatchWindow() {
+    await this._tryHideScrollbars();
+  }
+
+  async _tryHideScrollbars() {
+    if (this._hideScrollbars) {
+      try {
+        this._originalOverflow = EyesWDIOUtils.hideScrollbars(this._jsExecutor, DEFAULT_WAIT_SCROLL_STABILIZATION);
+      } catch (e) {
+        this._logger.verbose(`WARNING: Failed to hide scrollbars! Error: ${e}`);
+      }
+    }
+  }
+
+
   /**
    *
    * @returns {Promise.<EyesWDIOScreenshot>}
@@ -737,7 +763,6 @@ class Eyes extends EyesBase {
             originalBodyOverflow = await EyesWDIOUtils.setBodyOverflow(this._jsExecutor, "initial");
           }
         }
-
       } catch (e) {
         this._logger.verbose('WARNING: Failed to hide scrollbars! Error: ', e);
       }
@@ -781,7 +806,7 @@ class Eyes extends EyesBase {
 
         await switchTo.frames(originalFrameChain);
         const screenshot = new EyesWDIOScreenshot(this._logger, this._driver, fullPageImage, this.getPromiseFactory());
-        result = screenshot.init(null, originalFramePosition);
+        result = await screenshot.init(null, originalFramePosition);
       } else {
         await this._ensureElementVisible(this.targetElement);
 
