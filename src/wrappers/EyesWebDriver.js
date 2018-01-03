@@ -1,5 +1,6 @@
 'use strict';
 
+const {ArgumentGuard, ImageUtils, MutableImage} = require('eyes.sdk');
 const FrameChain = require('../frames/FrameChain');
 const EyesWebElement = require('./EyesWebElement');
 const EyesTargetLocator = require('./EyesTargetLocator');
@@ -68,6 +69,12 @@ class EyesWebDriver {
 
   sleep(ms) {
     return this._driver.sleep(ms);
+  }
+
+
+  /** @override */
+  getCapabilities() {
+    return this._driver.remoteWebDriver.getCapabilities();
   }
 
 
@@ -223,6 +230,16 @@ class EyesWebDriver {
   }
 
 
+  /** @override */
+  async takeScreenshot() {
+    // Get the image as base64.
+    const screenshot64 = await this._driver.takeScreenshot();
+    let screenshot = new MutableImage(screenshot64, this.getPromiseFactory());
+    screenshot = await EyesWebDriver.normalizeRotation(this._logger, this._driver, screenshot, this._rotation, this.getPromiseFactory());
+
+    return screenshot.getImageBase64();
+  }
+
   /**
    *
    * @param {String} script
@@ -241,11 +258,41 @@ class EyesWebDriver {
   }
 
 
-    /** @override */
+  /** @override */
   getTitle() {
     return this.remoteWebDriver.getTitle();
   }
 
+
+  /**
+   * Rotates the image as necessary. The rotation is either manually forced by passing a non-null ImageRotation, or automatically inferred.
+   *
+   * @param {Logger} logger The underlying driver which produced the screenshot.
+   * @param {WebDriver} driver The underlying driver which produced the screenshot.
+   * @param {MutableImage} image The image to normalize.
+   * @param {ImageRotation} rotation The degrees by which to rotate the image:
+   *                 positive values = clockwise rotation,
+   *                 negative values = counter-clockwise,
+   *                 0 = force no rotation,
+   *                 null = rotate automatically as needed.
+   * @param {PromiseFactory} promiseFactory
+   * @return {Promise.<MutableImage>} A normalized image.
+   */
+  static async normalizeRotation(logger, driver, image, rotation, promiseFactory) {
+    ArgumentGuard.notNull(logger, "logger");
+    ArgumentGuard.notNull(driver, "driver");
+    ArgumentGuard.notNull(image, "image");
+
+    await promiseFactory.resolve();
+    let degrees;
+    if (rotation) {
+      degrees = await rotation.getRotation();
+    } else {
+      degrees = await EyesWDIOUtils.tryAutomaticRotation(logger, driver, image);
+    }
+
+    return image.rotate(degrees);
+  }
 
 }
 

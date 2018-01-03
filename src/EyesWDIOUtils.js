@@ -6,6 +6,8 @@ const EyesUtils = require('eyes.utils');
 const GeneralUtils = EyesUtils.GeneralUtils;
 
 const EyesDriverOperationError = require('./errors/EyesDriverOperationError');
+const ImageOrientationHandler = require('./ImageOrientationHandler');
+const JavascriptHandler = require('./JavascriptHandler');
 
 /*
  ---
@@ -16,6 +18,31 @@ const EyesDriverOperationError = require('./errors/EyesDriverOperationError');
 
  ---
  */
+
+let imageOrientationHandler = new class ImageOrientationHandlerImpl extends ImageOrientationHandler {
+  /** @override */
+  async isLandscapeOrientation(driver) {
+    try {
+      const orientation = await driver.remoteWebDriver.getOrientation();
+      return orientation === 'landscape';
+    } catch (e) {
+      throw new EyesDriverOperationError("Failed to get orientation!", e);
+    }
+  }
+
+  /** @override */
+  async tryAutomaticRotation(logger, driver, image) {
+    const {value: res} = await driver.execute(() => 0);
+    return res;
+  }
+};
+
+let javascriptHandler = new class JavascriptHandlerImpl extends JavascriptHandler {
+  /** @override */
+  handle(script, ...args) {
+    throw new Error('You should init javascriptHandler before, using setJavascriptHandler method.');
+  }
+};
 
 
 class EyesWDIOUtils {
@@ -177,6 +204,17 @@ class EyesWDIOUtils {
    */
   static translateTo(executor, position) {
     return EyesWDIOUtils.setTransform(executor, `translate(-${position.getX()}px, -${position.getY()}px)`);
+  }
+
+
+  /**
+   * @param {Logger} logger
+   * @param {WebDriver} driver
+   * @param {MutableImage} image
+   * @returns {Promise.<int>}
+   */
+  static tryAutomaticRotation(logger, driver, image){
+    return imageOrientationHandler.tryAutomaticRotation(logger, driver, image);
   }
 
 

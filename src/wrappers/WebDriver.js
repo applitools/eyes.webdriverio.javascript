@@ -23,6 +23,15 @@ class WebDriver {
   }
 
 
+  /**
+   * Save a screenshot as a base64 encoded PNG
+   * @return {Promise.Buffer} returns base64 string buffer
+   */
+  async takeScreenshot() {
+    return this._remoteWebDriver.saveScreenshot();
+  }
+
+
   defaultContent() {
     return this._remoteWebDriver.frame();
   }
@@ -48,11 +57,20 @@ class WebDriver {
   }
 
 
+  /**
+   *
+   * @return {Promise}
+   */
+  execute(f) {
+    return this._remoteWebDriver.execute(f);
+  }
+
   get remoteWebDriver() {
     return this._remoteWebDriver;
   }
 
 
+  getCapabilities() {}
 
 }
 

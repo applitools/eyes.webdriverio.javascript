@@ -3,7 +3,7 @@
 // const test = require('ava');
 const webdriverio = require('webdriverio');
 const {By, Eyes, StitchMode, Target, WebElement} = require('../index');
-const {ConsoleLogHandler, RectangleSize} = require('eyes.sdk');
+const {ConsoleLogHandler, RectangleSize, Region} = require('eyes.sdk');
 
 const assert = require('assert');
 
@@ -68,49 +68,52 @@ describe(appName, function () {
     assert.equal(result.asExpected, true);
   });
 
-  xit('TestCheckFrame_Fully_Fluent', async function () {
-    const result = await eyes.check("Fluent - Full Frame", Target.frame("frame1").fully());
-    assert.equal(result.asExpected, true);
-  });
+  // todo frame support
+  /*
+    it('TestCheckFrame_Fully_Fluent', async function () {
+      const result = await eyes.check("Fluent - Full Frame", Target.frame("frame1").fully());
+      assert.equal(result.asExpected, true);
+    });
 
-  xit('TestCheckFrame_Fluent', async function () {
-    const result = await eyes.check("Fluent - Frame", Target.frame("frame1"));
-    assert.equal(result.asExpected, true);
-  });
+    it('TestCheckFrame_Fluent', async function () {
+      const result = await eyes.check("Fluent - Frame", Target.frame("frame1"));
+      assert.equal(result.asExpected, true);
+    });
 
-  xit('TestCheckFrameInFrame_Fully_Fluent', async function () {
-    const result = await eyes.check("Fluent - Full Frame in Frame", Target.frame("frame1")
-      .frame("frame1-1")
-      .fully());
-    assert.equal(result.asExpected, true);
-  });
+    it('TestCheckFrameInFrame_Fully_Fluent', async function () {
+      const result = await eyes.check("Fluent - Full Frame in Frame", Target.frame("frame1")
+        .frame("frame1-1")
+        .fully());
+      assert.equal(result.asExpected, true);
+    });
 
-  xit('TestCheckRegionInFrame_Fluent', async function () {
-    const result = await eyes.check("TestCheckRegionInFrame_Fluent", Target.frame("frame1")
-      .frame("frame1-1")
-      .fully());
-    assert.equal(result.asExpected, true);
-  });
+    it('TestCheckRegionInFrame_Fluent', async function () {
+      const result = await eyes.check("TestCheckRegionInFrame_Fluent", Target.frame("frame1")
+        .frame("frame1-1")
+        .fully());
+      assert.equal(result.asExpected, true);
+    });
 
-  xit('TestCheckRegionInFrameInFrame_Fluent', async function () {
-    const result = await eyes.check("Fluent - Region in Frame in Frame", Target.frame("frame1")
-      .frame("frame1-1")
-      .region(By.tagName("img"))
-      .fully());
-    assert.equal(result.asExpected, true);
-  });
+    it('TestCheckRegionInFrameInFrame_Fluent', async function () {
+      const result = await eyes.check("Fluent - Region in Frame in Frame", Target.frame("frame1")
+        .frame("frame1-1")
+        .region(By.tagName("img"))
+        .fully());
+      assert.equal(result.asExpected, true);
+    });
 
-  xit('TestCheckFrameInFrame_Fully_Fluent2', async function () {
-    let result = await eyes.check("Fluent - Window with Ignore region 2", Target.window()
-      .fully()
-    );
-    assert.equal(result.asExpected, true);
+    it('TestCheckFrameInFrame_Fully_Fluent2', async function () {
+      let result = await eyes.check("Fluent - Window with Ignore region 2", Target.window()
+        .fully()
+      );
+      assert.equal(result.asExpected, true);
 
-    result = await eyes.check("Fluent - Full Frame in Frame 2", Target.frame("frame1")
-      .frame("frame1-1")
-      .fully());
-    assert.equal(result.asExpected, true);
-  });
+      result = await eyes.check("Fluent - Full Frame in Frame 2", Target.frame("frame1")
+        .frame("frame1-1")
+        .fully());
+      assert.equal(result.asExpected, true);
+    });
+  */
 
   it('TestCheckWindowWithIgnoreBySelector_Fluent', async function () {
     const result = await eyes.check('Fluent - Window with ignore region by selector', Target.window()
@@ -125,14 +128,14 @@ describe(appName, function () {
   });
 
   it('TestCheckElementFully_Fluent', async function () {
-    const element = browser.element('#overflowing-div-image');
+    const {value: element} = await browser.element('#overflowing-div-image');
     const webElement = new WebElement(eyes.getDriver(), element);
     let result = await eyes.check('Fluent - Region by element - fully', Target.region(webElement).fully());
     assert.equal(result.asExpected, true);
   });
 
   it('TestCheckElement_Fluent', async function () {
-    const element = browser.element('#overflowing-div-image');
+    const {value: element} = await browser.element('#overflowing-div-image');
     const webElement = new WebElement(eyes.getDriver(), element);
     let result = await eyes.check("Fluent - Region by element", Target.region(webElement));
     assert.equal(result.asExpected, true);

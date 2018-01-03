@@ -8,7 +8,7 @@ const {ConsoleLogHandler, RectangleSize} = require('eyes.sdk');
 const assert = require('assert');
 
 
-const appName = 'Eyes Selenium SDK - Classic API';
+const appName = 'Eyes Selenium SDK - Classic API - ForceFPS';
 const testedPageUrl = 'http://applitools.github.io/demo/TestPages/FramesTestPage/';
 
 const options = {
@@ -64,15 +64,18 @@ describe(appName, function () {
     assert.equal(result.asExpected, true);
   });
 
-  xit('TestCheckFrame', async function () {
+  // todo frame support
+/*
+  it('TestCheckFrame', async function () {
     const result = await eyes.checkFrame('frame1', null, 'frame1');
     assert.equal(result.asExpected, true);
   });
 
-  xit('TestCheckRegionInFrame', async function () {
+  it('TestCheckRegionInFrame', async function () {
     const result = await  eyes.checkRegionInFrame('frame1', By.id('inner-frame-div'), null, 'Inner frame div', true);
     assert.equal(result.asExpected, true);
   });
+*/
 
   it('TestCheckRegion2', async function () {
     const result = await  eyes.checkRegionBy(By.id('overflowing-div-image'), 'minions');
