@@ -6,6 +6,8 @@ const EyesUtils = require('eyes.utils');
 const GeneralUtils = EyesUtils.GeneralUtils;
 
 const EyesDriverOperationError = require('./errors/EyesDriverOperationError');
+const ImageOrientationHandler = require('./ImageOrientationHandler');
+const JavascriptHandler = require('./JavascriptHandler');
 
 /*
  ---
@@ -17,12 +19,33 @@ const EyesDriverOperationError = require('./errors/EyesDriverOperationError');
  ---
  */
 
+let imageOrientationHandler = new class ImageOrientationHandlerImpl extends ImageOrientationHandler {
+  /** @override */
+  async isLandscapeOrientation(driver) {
+    try {
+      const orientation = await driver.remoteWebDriver.getOrientation();
+      return orientation === 'landscape';
+    } catch (e) {
+      throw new EyesDriverOperationError("Failed to get orientation!", e);
+    }
+  }
+
+  /** @override */
+  async tryAutomaticRotation(logger, driver, image) {
+    const {value: res} = await driver.execute(() => 0);
+    return res;
+  }
+};
+
+let javascriptHandler = new class JavascriptHandlerImpl extends JavascriptHandler {
+  /** @override */
+  handle(script, ...args) {
+    throw new Error('You should init javascriptHandler before, using setJavascriptHandler method.');
+  }
+};
+
 
 class EyesWDIOUtils {
-
-  static generateExpression(fn) {
-    return '(' + fn.toString() + ')()';
-  }
 
 
   /**
@@ -74,17 +97,17 @@ class EyesWDIOUtils {
    * @type {string}
    */
   static get JS_GET_CONTENT_ENTIRE_SIZE() {
-    return "var scrollWidth = document.documentElement.scrollWidth; " +
-      "var bodyScrollWidth = document.body.scrollWidth; " +
-      "var totalWidth = Math.max(scrollWidth, bodyScrollWidth); " +
-      "var clientHeight = document.documentElement.clientHeight; " +
-      "var bodyClientHeight = document.body.clientHeight; " +
-      "var scrollHeight = document.documentElement.scrollHeight; " +
-      "var bodyScrollHeight = document.body.scrollHeight; " +
-      "var maxDocElementHeight = Math.max(clientHeight, scrollHeight); " +
-      "var maxBodyHeight = Math.max(bodyClientHeight, bodyScrollHeight); " +
-      "var totalHeight = Math.max(maxDocElementHeight, maxBodyHeight); " +
-      "return [totalWidth, totalHeight];";
+    return `var scrollWidth = document.documentElement.scrollWidth;
+      var bodyScrollWidth = document.body.scrollWidth; 
+      var totalWidth = Math.max(scrollWidth, bodyScrollWidth); 
+      var clientHeight = document.documentElement.clientHeight;
+      var bodyClientHeight = document.body.clientHeight; 
+      var scrollHeight = document.documentElement.scrollHeight;
+      var bodyScrollHeight = document.body.scrollHeight;
+      var maxDocElementHeight = Math.max(clientHeight, scrollHeight);
+      var maxBodyHeight = Math.max(bodyClientHeight, bodyScrollHeight);
+      var totalHeight = Math.max(maxDocElementHeight, maxBodyHeight);
+      return [totalWidth, totalHeight];`;
   }
 
 
@@ -115,8 +138,8 @@ class EyesWDIOUtils {
    * @return {Promise<number>} A promise which resolves to the device pixel ratio (float type).
    */
   static async getDevicePixelRatio(executor) {
-    const result = await executor.executeScript('return window.devicePixelRatio');
-    return parseFloat(result.value);
+    const {value: result} = await executor.executeScript('return window.devicePixelRatio');
+    return parseFloat(result);
   }
 
   /**
@@ -125,13 +148,14 @@ class EyesWDIOUtils {
    * @param {EyesJsExecutor} executor The executor to use.
    * @return {Promise.<Object.<String, String>>} A promise which resolves to the current transform value.
    */
-  static getCurrentTransform(executor) {
+  static async getCurrentTransform(executor) {
     let script = "return { ";
     for (let i = 0, l = EyesWDIOUtils.JS_TRANSFORM_KEYS.length; i < l; i++) {
       script += `'${EyesWDIOUtils.JS_TRANSFORM_KEYS[i]}': document.documentElement.style['${EyesWDIOUtils.JS_TRANSFORM_KEYS[i]}'],`;
     }
     script += " }";
-    return executor.executeScript(script);
+    const {value: result} = await executor.executeScript(script);
+    return result;
   }
 
   /**
@@ -180,6 +204,17 @@ class EyesWDIOUtils {
    */
   static translateTo(executor, position) {
     return EyesWDIOUtils.setTransform(executor, `translate(-${position.getX()}px, -${position.getY()}px)`);
+  }
+
+
+  /**
+   * @param {Logger} logger
+   * @param {WebDriver} driver
+   * @param {MutableImage} image
+   * @returns {Promise.<int>}
+   */
+  static tryAutomaticRotation(logger, driver, image){
+    return imageOrientationHandler.tryAutomaticRotation(logger, driver, image);
   }
 
 
@@ -237,7 +272,8 @@ class EyesWDIOUtils {
     }
 
     try {
-      return executor.executeScript(script);
+      const {value: result} = await executor.executeScript(script);
+      return result;
     } catch (e) {
       throw new EyesDriverOperationError('Failed to set overflow', e);
     }
@@ -250,7 +286,8 @@ class EyesWDIOUtils {
    */
    static async isBodyOverflowHidden(executor) {
     try {
-      return executor.executeScript(EyesWDIOUtils.JS_GET_IS_BODY_OVERFLOW_HIDDEN);
+      const {value: isBodyOverflowHidden} = await executor.executeScript(EyesWDIOUtils.JS_GET_IS_BODY_OVERFLOW_HIDDEN);
+      return isBodyOverflowHidden;
     } catch (e) {
       throw new EyesDriverOperationError('Failed to get state of body overflow', e);
     }
@@ -280,7 +317,8 @@ class EyesWDIOUtils {
     }
 
     try {
-      return executor.executeScript(script);
+      const {value: result} = await executor.executeScript(script);
+      return result;
     } catch (e) {
       throw new EyesDriverOperationError('Failed to set body overflow', e);
     }
@@ -295,7 +333,7 @@ class EyesWDIOUtils {
    * @return {Promise.<String>} The previous value of the overflow property (could be {@code null}).
    */
   static async hideScrollbars(executor, stabilizationTimeout) {
-    const result = await EyesWDIOUtils.setOverflow(executor, "hidden");
+    const result = await EyesWDIOUtils.setOverflow(executor, 'hidden');
     if (stabilizationTimeout > 0) {
       await executor.sleep(stabilizationTimeout);
     }

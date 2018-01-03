@@ -11,56 +11,53 @@ const EyesWDIOScreenshot = require('./EyesWDIOScreenshot');
  */
 class FirefoxScreenshotImageProvider extends ImageProvider {
 
-    /**
-     * @param {Eyes} eyes
-     * @param {Logger} logger
-     * @param {EyesWebDriver} driver
-     * @param {PromiseFactory} promiseFactory
-     */
-    constructor(eyes, logger, driver, promiseFactory) {
-        super();
+  /**
+   * @param {Eyes} eyes
+   * @param {Logger} logger
+   * @param {EyesWebDriver} driver
+   * @param {PromiseFactory} promiseFactory
+   */
+  constructor(eyes, logger, driver, promiseFactory) {
+    super();
 
-        this._executor = eyes;
-        this._logger = logger;
-        this._executor = driver;
-        this._promiseFactory = promiseFactory;
+    this._eyes = eyes;
+    this._logger = logger;
+    this._executor = driver;
+    this._promiseFactory = promiseFactory;
+  }
+
+  /**
+   * @override
+   * @return {Promise.<MutableImage>}
+   */
+  async getImage() {
+    const that = this;
+    this._logger.verbose("Getting screenshot as base64...");
+    const screenshot64 = await this._executor.takeScreenshot();
+    that._logger.verbose("Done getting base64! Creating BufferedImage...");
+    const image = new MutableImage(screenshot64, that._promiseFactory);
+
+    await that._eyes.getDebugScreenshotsProvider().save(image, "FIREFOX_FRAME");
+    const frameChain = that._executor.frameChain;
+    if (frameChain.size() > 0) {
+      //Frame frame = frameChain.peek();
+      //Region region = eyes.getRegionToCheck();
+      const screenshot = new EyesWDIOScreenshot(that._logger, that._executor, image, that._promiseFactory);
+      await screenshot.init();
+      let viewportSize = await that._eyes.getViewportSize();
+
+      let loc = screenshot.getFrameWindow().getLocation();
+      that._logger.verbose("frame.getLocation(): " + loc);
+
+      const scaleRatio = that._eyes.getDevicePixelRatio();
+      viewportSize = viewportSize.scale(scaleRatio);
+      loc = loc.scale(scaleRatio);
+
+      return image.crop(new Region(loc, viewportSize));
     }
 
-    /**
-     * @override
-     * @return {Promise.<MutableImage>}
-     */
-    getImage() {
-        const that = this;
-        this._logger.verbose("Getting screenshot as base64...");
-        return this._executor.takeScreenshot().then(screenshot64 => {
-            that._logger.verbose("Done getting base64! Creating BufferedImage...");
-            const image = new MutableImage(screenshot64, that._promiseFactory);
-
-            return that._executor.getDebugScreenshotsProvider().save(image, "FIREFOX_FRAME").then(() => {
-                const frameChain = that._executor.getFrameChain();
-                if (frameChain.size() > 0) {
-                    //Frame frame = frameChain.peek();
-                    //Region region = eyes.getRegionToCheck();
-                    const screenshot = new EyesWDIOScreenshot(that._logger, that._executor, image, that._promiseFactory);
-                    return screenshot.init().then(() => {
-                        return that._executor.getViewportSize();
-                    }).then(viewportSize => {
-                        let loc = screenshot.getFrameWindow().getLocation();
-                        that._logger.verbose("frame.getLocation(): " + loc);
-
-                        const scaleRatio = that._executor.getDevicePixelRatio();
-                        viewportSize = viewportSize.scale(scaleRatio);
-                        loc = loc.scale(scaleRatio);
-
-                        return image.crop(new Region(loc, viewportSize));
-                    });
-                }
-
-                return image;
-            });
-        });
-    }
+    return image;
+  }
 }
 
 module.exports = FirefoxScreenshotImageProvider;

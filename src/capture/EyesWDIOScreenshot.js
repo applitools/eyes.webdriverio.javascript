@@ -196,14 +196,17 @@ class EyesWDIOScreenshot extends EyesScreenshot {
    * @return {Promise.<RectangleSize>}
    */
   async _getFrameSize(positionProvider) {
-    if (this._frameChain.size() === 0) {
+    if (this._frameChain.size() !== 0) {
+      return this._promiseFactory.resolve(this._frameChain.getCurrentFrameInnerSize());
+    } else {
       // get entire page size might throw an exception for applications which don't support Javascript (e.g., Appium).
       // In that case we'll use the viewport size as the frame's size.
-      return positionProvider.getEntireSize().catch(() => {
+      try {
+        const entireSize = await positionProvider.getEntireSize();
+        return entireSize;
+      } catch (e) {
         return this._driver.getDefaultContentViewportSize();
-      });
-    } else {
-      return this._promiseFactory.resolve(this._frameChain.getCurrentFrameInnerSize());
+      }
     }
   }
 

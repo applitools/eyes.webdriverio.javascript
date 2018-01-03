@@ -3,12 +3,12 @@
 // const test = require('ava');
 const webdriverio = require('webdriverio');
 const {By, Eyes, StitchMode, Target, WebElement} = require('../index');
-const {ConsoleLogHandler, RectangleSize} = require('eyes.sdk');
+const {ConsoleLogHandler, RectangleSize, Region} = require('eyes.sdk');
 
 const assert = require('assert');
 
 
-const appName = 'Eyes Selenium SDK - Fluent API';
+const appName = 'Eyes Selenium SDK - Fluent API - ForceFPS';
 const testedPageUrl = 'http://applitools.github.io/demo/TestPages/FramesTestPage/';
 
 const options = {
@@ -74,6 +74,8 @@ describe(appName, function () {
     assert.equal(result.asExpected, true);
   });
 
+  // todo
+/*
   xit('TestCheckFrame_Fully_Fluent', async function () {
     const result = await eyes.check("Fluent - Full Frame", Target.frame("frame1").fully());
     assert.equal(result.asExpected, true);
@@ -117,6 +119,7 @@ describe(appName, function () {
       .fully());
     assert.equal(result.asExpected, true);
   });
+*/
 
   it('TestCheckWindowWithIgnoreBySelector_Fluent', async function () {
     const result = await eyes.check('Fluent - Window with ignore region by selector', Target.window()
@@ -131,14 +134,14 @@ describe(appName, function () {
   });
 
   it('TestCheckElementFully_Fluent', async function () {
-    const element = browser.element('#overflowing-div-image');
+    const {value: element} = await browser.element('#overflowing-div-image');
     const webElement = new WebElement(eyes.getDriver(), element);
     let result = await eyes.check('Fluent - Region by element - fully', Target.region(webElement).fully());
     assert.equal(result.asExpected, true);
   });
 
   it('TestCheckElement_Fluent', async function () {
-    const element = browser.element('#overflowing-div-image');
+    const {value: element} = await browser.element('#overflowing-div-image');
     const webElement = new WebElement(eyes.getDriver(), element);
     let result = await eyes.check("Fluent - Region by element", Target.region(webElement));
     assert.equal(result.asExpected, true);

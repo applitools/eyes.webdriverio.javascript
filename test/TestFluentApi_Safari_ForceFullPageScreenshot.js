@@ -3,12 +3,12 @@
 // const test = require('ava');
 const webdriverio = require('webdriverio');
 const {By, Eyes, StitchMode, Target, WebElement} = require('../index');
-const {ConsoleLogHandler, RectangleSize} = require('eyes.sdk');
+const {ConsoleLogHandler, RectangleSize, Region} = require('eyes.sdk');
 
 const assert = require('assert');
 
 
-const appName = 'Eyes Selenium SDK - Fluent API';
+const appName = 'Eyes Selenium SDK - Fluent API - ForceFPS';
 const testedPageUrl = 'http://applitools.github.io/demo/TestPages/FramesTestPage/';
 
 const options = {
@@ -54,7 +54,7 @@ describe(appName, function () {
     await eyes.abortIfNotClosed();
   });
 
-  it('TestCheckWindowWithIgnoreRegion_Fluent', async function () {
+  xit('TestCheckWindowWithIgnoreRegion_Fluent', async function () {
     const result = await eyes.check("Fluent - Window with Ignore region", Target.window()
       .fully()
       .timeout(5000)
@@ -62,12 +62,14 @@ describe(appName, function () {
     assert.equal(result.asExpected, true);
   });
 
-  it('TestCheckRegionWithIgnoreRegion_Fluent', async function () {
+  xit('TestCheckRegionWithIgnoreRegion_Fluent', async function () {
     const result = await eyes.check("Fluent - Region with Ignore region", Target.region(By.id("overflowing-div"))
       .ignore(new Region(50, 50, 100, 100)));
     assert.equal(result.asExpected, true);
   });
 
+// todo frame support
+/*
   xit('TestCheckFrame_Fully_Fluent', async function () {
     const result = await eyes.check("Fluent - Full Frame", Target.frame("frame1").fully());
     assert.equal(result.asExpected, true);
@@ -111,27 +113,28 @@ describe(appName, function () {
       .fully());
     assert.equal(result.asExpected, true);
   });
+*/
 
-  it('TestCheckWindowWithIgnoreBySelector_Fluent', async function () {
+  xit('TestCheckWindowWithIgnoreBySelector_Fluent', async function () {
     const result = await eyes.check('Fluent - Window with ignore region by selector', Target.window()
       .ignore(By.id('overflowing-div')));
     assert.equal(result.asExpected, true);
   });
 
-  it('TestCheckWindowWithFloatingBySelector_Fluent', async function () {
+  xit('TestCheckWindowWithFloatingBySelector_Fluent', async function () {
     const result = await eyes.check('Fluent - Window with floating region by selector', Target.window()
       .floating(By.id('overflowing-div'), 3, 3, 20, 30));
     assert.equal(result.asExpected, true);
   });
 
-  it('TestCheckElementFully_Fluent', async function () {
+  xit('TestCheckElementFully_Fluent', async function () {
     const element = browser.element('#overflowing-div-image');
     const webElement = new WebElement(eyes.getDriver(), element);
     let result = await eyes.check('Fluent - Region by element - fully', Target.region(webElement).fully());
     assert.equal(result.asExpected, true);
   });
 
-  it('TestCheckElement_Fluent', async function () {
+  xit('TestCheckElement_Fluent', async function () {
     const element = browser.element('#overflowing-div-image');
     const webElement = new WebElement(eyes.getDriver(), element);
     let result = await eyes.check("Fluent - Region by element", Target.region(webElement));
