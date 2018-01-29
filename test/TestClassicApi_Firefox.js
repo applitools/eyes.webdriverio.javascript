@@ -17,8 +17,8 @@ const options = {
   }
 };
 
-const driver = webdriverio.remote(options);
-const browser = driver.init();
+let driver;
+let browser;
 
 let eyes;
 
@@ -40,18 +40,20 @@ describe(appName, function () {
   });
 
   beforeEach(async function () {
+    driver = webdriverio.remote(options);
+    browser = driver.init();
     const testName = this.currentTest.title;
     await eyes.open(browser, appName, testName, new RectangleSize(800, 600));
     await browser.url(testedPageUrl);
   });
 
   afterEach(async function () {
-    await eyes.close();
-  });
-
-  after(async function () {
-    await browser.end();
-    await eyes.abortIfNotClosed();
+    try {
+      await eyes.close();
+    } finally {
+      await browser.end();
+      await eyes.abortIfNotClosed();
+    }
   });
 
   it('TestCheckWindow', async function () {
@@ -64,8 +66,6 @@ describe(appName, function () {
     assert.equal(result.asExpected, true);
   });
 
-  // todo frame support
-/*
   it('TestCheckFrame', async function () {
     const result = await eyes.checkFrame('frame1', null, 'frame1');
     assert.equal(result.asExpected, true);
@@ -75,7 +75,6 @@ describe(appName, function () {
     const result = await  eyes.checkRegionInFrame('frame1', By.id('inner-frame-div'), null, 'Inner frame div', true);
     assert.equal(result.asExpected, true);
   });
-*/
 
   it('TestCheckRegion2', async function () {
     const result = await  eyes.checkRegionBy(By.id('overflowing-div-image'), 'minions');

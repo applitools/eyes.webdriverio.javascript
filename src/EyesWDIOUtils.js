@@ -122,6 +122,32 @@ class EyesWDIOUtils {
       "return overflow == 'hidden' || overflowX == 'hidden' || overflowY == 'hidden'";
   }
 
+
+// IMPORTANT: Notice there's a major difference between scrollWidth and scrollHeight.
+// While scrollWidth is the maximum between an element's width and its content width,
+// scrollHeight might be smaller (!) than the clientHeight, which is why we take the maximum between them.
+  static get JS_COMPUTE_CONTENT_ENTIRE_SIZE() {
+    return "var scrollWidth = document.documentElement.scrollWidth; " +
+    "var bodyScrollWidth = document.body.scrollWidth; " +
+    "var totalWidth = Math.max(scrollWidth, bodyScrollWidth); " +
+    "var clientHeight = document.documentElement.clientHeight; " +
+    "var bodyClientHeight = document.body.clientHeight; " +
+    "var scrollHeight = document.documentElement.scrollHeight; " +
+    "var bodyScrollHeight = document.body.scrollHeight; " +
+    "var maxDocElementHeight = Math.max(clientHeight, scrollHeight); " +
+    "var maxBodyHeight = Math.max(bodyClientHeight, bodyScrollHeight); " +
+    "var totalHeight = Math.max(maxDocElementHeight, maxBodyHeight); ";
+  }
+
+  static get JS_RETURN_CONTENT_ENTIRE_SIZE() {
+    return EyesWDIOUtils.JS_COMPUTE_CONTENT_ENTIRE_SIZE + "return [totalWidth, totalHeight];";
+  }
+
+  static get JS_SCROLL_TO_BOTTOM_RIGHT() {
+    return EyesWDIOUtils.JS_COMPUTE_CONTENT_ENTIRE_SIZE + "window.scrollTo(totalWidth, totalHeight);";
+  }
+
+
   /**
    * @private
    * @type {string[]}
@@ -473,6 +499,7 @@ class EyesWDIOUtils {
     logger.verbose("setViewportSize(", requiredSize, ")");
 
     let jsExecutor = browser.eyes.jsExecutor;
+    /** RectangleSize */
     let actualViewportSize = await EyesWDIOUtils.getViewportSize(jsExecutor);
     logger.verbose("Initial viewport size:", actualViewportSize);
 
@@ -601,6 +628,16 @@ class EyesWDIOUtils {
     throw new Error("EyesError: failed to set window size! Zoom workaround failed.");
   }
 
+
+  /**
+   * Scrolls current frame to its bottom right.
+   *
+   * @param {EyesJsExecutor} executor The executor to use.
+   * @return {Promise} A promise which resolves after the action is performed and timeout passed.
+   */
+  static scrollToBottomRight(executor) {
+    return executor.executeScript(EyesWDIOUtils.JS_SCROLL_TO_BOTTOM_RIGHT);
+  }
 
 }
 

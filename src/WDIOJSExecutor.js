@@ -12,7 +12,7 @@ class WDIOJSExecutor extends EyesJsExecutor {
     super();
 
     /** @type {EyesWebDriver} */
-    this._executor = driver;
+    this._driver = driver;
 
     if (!driver.getPromiseFactory()) {
       ArgumentGuard.notNull(promiseFactory, 'promiseFactory')
@@ -28,7 +28,7 @@ class WDIOJSExecutor extends EyesJsExecutor {
    */
   async executeScript(script, ...args) {
     try {
-      return await this._executor.remoteWebDriver.execute(script, args);
+      return await this._driver.remoteWebDriver.execute(script, args);
     } catch (e) {
       console.error(e);
     }
@@ -39,7 +39,7 @@ class WDIOJSExecutor extends EyesJsExecutor {
    * @inheritDoc
    */
   sleep(millis) { // todo
-    return this._executor.sleep(millis);
+    return this._driver.sleep(millis);
   }
 
 
@@ -47,7 +47,7 @@ class WDIOJSExecutor extends EyesJsExecutor {
    * @return {PromiseFactory}
    */
   getPromiseFactory() {
-    return this._executor.eyes.getPromiseFactory();
+    return this._driver.eyes.getPromiseFactory();
   }
 }
 

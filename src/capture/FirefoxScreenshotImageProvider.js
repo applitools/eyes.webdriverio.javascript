@@ -14,16 +14,14 @@ class FirefoxScreenshotImageProvider extends ImageProvider {
   /**
    * @param {Eyes} eyes
    * @param {Logger} logger
-   * @param {EyesWebDriver} driver
-   * @param {PromiseFactory} promiseFactory
+   * @param {EyesWebDriver} tsInstance
    */
-  constructor(eyes, logger, driver, promiseFactory) {
+  constructor(eyes, logger, tsInstance) {
     super();
 
     this._eyes = eyes;
     this._logger = logger;
-    this._executor = driver;
-    this._promiseFactory = promiseFactory;
+    this._tsInstance = tsInstance;
   }
 
   /**
@@ -31,29 +29,33 @@ class FirefoxScreenshotImageProvider extends ImageProvider {
    * @return {Promise.<MutableImage>}
    */
   async getImage() {
-    const that = this;
     this._logger.verbose("Getting screenshot as base64...");
-    const screenshot64 = await this._executor.takeScreenshot();
-    that._logger.verbose("Done getting base64! Creating BufferedImage...");
-    const image = new MutableImage(screenshot64, that._promiseFactory);
+    const screenshot64 = await this._tsInstance.takeScreenshot();
+    this._logger.verbose("Done getting base64! Creating BufferedImage...");
+    const image = new MutableImage(screenshot64, this._eyes.getPromiseFactory());
 
-    await that._eyes.getDebugScreenshotsProvider().save(image, "FIREFOX_FRAME");
-    const frameChain = that._executor.frameChain;
+    await this._eyes.getDebugScreenshotsProvider().save(image, "FIREFOX_FRAME");
+    const frameChain = this._tsInstance.getFrameChain();
     if (frameChain.size() > 0) {
       //Frame frame = frameChain.peek();
       //Region region = eyes.getRegionToCheck();
-      const screenshot = new EyesWDIOScreenshot(that._logger, that._executor, image, that._promiseFactory);
+      const screenshot = new EyesWDIOScreenshot(this._logger, this._tsInstance, image, this._eyes.getPromiseFactory());
       await screenshot.init();
-      let viewportSize = await that._eyes.getViewportSize();
+      let viewportSize = await this._eyes.getViewportSize();
 
       let loc = screenshot.getFrameWindow().getLocation();
-      that._logger.verbose("frame.getLocation(): " + loc);
+      this._logger.verbose("frame.getLocation(): " + loc);
 
-      const scaleRatio = that._eyes.getDevicePixelRatio();
+      const scaleRatio = this._eyes.getDevicePixelRatio();
       viewportSize = viewportSize.scale(scaleRatio);
       loc = loc.scale(scaleRatio);
 
-      return image.crop(new Region(loc, viewportSize));
+      const fullImage = MutableImage.newImage(viewportSize.getWidth(), viewportSize.getHeight(), this._eyes.getPromiseFactory());
+      await fullImage.copyRasterData(loc.getX(), loc.getY(), image);
+      // await fullImage.setCoordinates(loc);
+
+      return fullImage;
+      // return image.crop(new Region(loc, viewportSize));
     }
 
     return image;

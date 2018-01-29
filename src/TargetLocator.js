@@ -8,17 +8,17 @@ class TargetLocator {
    * @param {WebDriver} driver
    */
   constructor(driver) {
-    this._driver = driver;
+    this._tsInstance = driver;
   }
 
 
   defaultContent() {
-    return this._driver.remoteWebDriver.frame();
+    return this._tsInstance.remoteWebDriver.frame();
   }
 
 
   frame(id) {
-    return this._driver.frame(id);
+    return this._tsInstance.remoteWebDriver.frame(id);
   }
 
 

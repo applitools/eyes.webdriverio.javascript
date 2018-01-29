@@ -36,7 +36,7 @@ class EyesWDIOScreenshot extends EyesScreenshot {
     this._driver = driver;
     this._promiseFactory = promiseFactory;
     /** @type {FrameChain} */
-    this._frameChain = driver.frameChain;
+    this._frameChain = driver.getFrameChain();
     /** @type {Location} */
     this._currentFrameScrollPosition = null;
     /** @type {ScreenshotType} */
@@ -82,7 +82,7 @@ class EyesWDIOScreenshot extends EyesScreenshot {
   async init(screenshotType, frameLocationInScreenshot) {
     this._screenshotType = await this._updateScreenshotType(screenshotType, this._image);
 
-    this._frameChain = this._driver.frameChain;
+    this._frameChain = this._driver.getFrameChain();
 
     const positionProvider = this._driver.eyes.getPositionProvider();
     const frameSize = await this._getFrameSize(positionProvider);
@@ -273,6 +273,7 @@ class EyesWDIOScreenshot extends EyesScreenshot {
     const subScreenshotImage = await this._image.getImagePart(asIsSubScreenshotRegion);
     const screenshot = new EyesWDIOScreenshot(this._logger, this._driver, subScreenshotImage, this._promiseFactory);
     const result = await screenshot.initFromFrameSize(new RectangleSize(subScreenshotImage.getWidth(), subScreenshotImage.getHeight()));
+    result._frameLocationInScreenshot = new Location(-region.getLeft(), -region.getTop());
 
     this._logger.verbose("Done!");
     return result;

@@ -84,6 +84,13 @@ class ScrollPositionProvider extends PositionProvider {
     await this.setPosition(new Location(state.getX(), state.getY()));
     this._logger.verbose("Position restored.");
   }
+
+  /**
+   * @return {Promise}
+   */
+  scrollToBottomRight() {
+    return EyesWDIOUtils.scrollToBottomRight(this._executor);
+  }
 }
 
 module.exports = ScrollPositionProvider;

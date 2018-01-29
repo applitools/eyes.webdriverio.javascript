@@ -71,42 +71,43 @@ class EyesWebElement extends WebElement {
 
     super(eyesDriver.webDriver, webElement.element);
 
+    /** @type {Logger}*/
     this._logger = logger;
     /** @type {EyesWebDriver}*/
     this._eyesWebDriver = eyesDriver;
+    /** @type {WebElement}*/
     this._webElement = webElement;
   }
 
   /**
    * @return {Promise.<Region>}
    */
-  getBounds() {
-    const that = this;
-    return that.getLocation().then(/** @type {{x: number, y: number}} */location_ => {
-      let left = location_.x;
-      let top = location_.y;
-      let width = 0;
-      let height = 0;
+  async getBounds() {
+    const location = await this.getLocation();
+    let left = location.getX();
+    let top = location.getY();
+    let width = 0;
+    let height = 0;
 
-      return that.getSize().then(/** @type {{width: number, height: number}} */size_ => {
-        width = size_.width;
-        height = size_.height;
-      }).catch(err => {
-        // Not supported on all platforms.
-      }).then(() => {
-        if (left < 0) {
-          width = Math.max(0, width + left);
-          left = 0;
-        }
+    try {
+      const size = await this.getSize();
+      width = size.getWidth();
+      height = size.getHeight();
+    } catch (ignored) {
+      // Not supported on all platforms.
+    }
 
-        if (top < 0) {
-          height = Math.max(0, height + top);
-          top = 0;
-        }
+    if (left < 0) {
+      width = Math.max(0, width + left);
+      left = 0;
+    }
 
-        return new Region(left, top, width, height, CoordinatesType.CONTEXT_RELATIVE);
-      });
-    });
+    if (top < 0) {
+      height = Math.max(0, height + top);
+      top = 0;
+    }
+
+    return new Region(left, top, width, height, CoordinatesType.CONTEXT_RELATIVE);
   }
 
   /**
@@ -117,7 +118,7 @@ class EyesWebElement extends WebElement {
    */
   async getComputedStyle(propStyle) {
     try {
-      const {value} = await this._executeScript(JS_GET_COMPUTED_STYLE_FORMATTED_STR(propStyle));
+      const {value} = await this.executeScript(JS_GET_COMPUTED_STYLE_FORMATTED_STR(propStyle));
       return value;
     } catch (e) {
       this._logger.verbose("WARNING: getComputedStyle error: " + e);
@@ -144,7 +145,7 @@ class EyesWebElement extends WebElement {
    * @return {Promise.<int>} The value of the scrollLeft property of the element.
    */
   async getScrollLeft() {
-    const {value} = await this._executeScript(JS_GET_SCROLL_LEFT);
+    const {value} = await this.executeScript(JS_GET_SCROLL_LEFT);
     return Math.ceil(parseFloat(value));
   }
 
@@ -152,7 +153,7 @@ class EyesWebElement extends WebElement {
    * @return {Promise.<int>} The value of the scrollTop property of the element.
    */
   async getScrollTop() {
-    const {value} = await this._executeScript(JS_GET_SCROLL_TOP);
+    const {value} = await this.executeScript(JS_GET_SCROLL_TOP);
     return Math.ceil(parseFloat(value));
   }
 
@@ -160,7 +161,7 @@ class EyesWebElement extends WebElement {
    * @return {Promise.<int>} The value of the scrollWidth property of the element.
    */
   async getScrollWidth() {
-    const {value} = await this._executeScript(JS_GET_SCROLL_WIDTH);
+    const {value} = await this.executeScript(JS_GET_SCROLL_WIDTH);
     return Math.ceil(parseFloat(value));
   }
 
@@ -168,7 +169,7 @@ class EyesWebElement extends WebElement {
    * @return {Promise.<int>} The value of the scrollHeight property of the element.
    */
   async getScrollHeight() {
-    const {value} = await this._executeScript(JS_GET_SCROLL_HEIGHT);
+    const {value} = await this.executeScript(JS_GET_SCROLL_HEIGHT);
     return Math.ceil(parseFloat(value));
   }
 
@@ -233,8 +234,9 @@ class EyesWebElement extends WebElement {
   /**
    * @return {Promise.<String>} The overflow of the element.
    */
-  getOverflow() {
-    return this.executeScript(JS_GET_OVERFLOW);
+  async getOverflow() {
+    const {value} = await this.executeScript(JS_GET_OVERFLOW);
+    return value;
   }
 
   /**
@@ -250,7 +252,7 @@ class EyesWebElement extends WebElement {
    * @returns {Promise} The result returned from the script
    */
   executeScript(script) {
-    return this._executeScript(script);
+    return this._eyesWebDriver.executeScript(script, this.getWebElement()._element);
   }
 
   /**
@@ -258,7 +260,7 @@ class EyesWebElement extends WebElement {
    * @inheritDoc
    */
   getDriver() {
-    return this._webElement.getDriver();
+    return this.getWebElement().getDriver();
   }
 
   /**
@@ -266,7 +268,7 @@ class EyesWebElement extends WebElement {
    * @return {promise.Thenable.<string>}
    */
   getId() {
-    return this._webElement.getId();
+    return this.getWebElement().getId();
   }
 
   /**
@@ -275,7 +277,7 @@ class EyesWebElement extends WebElement {
    * return {EyesWebElement}
    */
   async findElement(locator) {
-    const element = await this._webElement.findElement(locator);
+    const element = await this.getWebElement().findElement(locator);
     return new EyesWebElement(this._logger, this._eyesWebDriver, element);
   }
 
@@ -285,7 +287,7 @@ class EyesWebElement extends WebElement {
    */
   findElements(locator) {
     const that = this;
-    return this._webElement.findElements(locator).then(elements => elements.map(element => new EyesWebElement(that._logger, that._eyesWebDriver, element)));
+    return this.getWebElement().findElements(locator).then(elements => elements.map(element => new EyesWebElement(that._logger, that._eyesWebDriver, element)));
   }
 
   // noinspection JSCheckFunctionSignatures
@@ -301,7 +303,7 @@ class EyesWebElement extends WebElement {
       that._eyesWebDriver.eyes.addMouseTrigger(MouseTrigger.MouseAction.Click, this);
       that._logger.verbose(`click(${currentControl})`);
 
-      return that._webElement.click();
+      return that.getWebElement().click();
     });
   }
 
@@ -313,9 +315,9 @@ class EyesWebElement extends WebElement {
   sendKeys(...keysToSend) {
     const that = this;
     return keysToSend.reduce((promise, keys) => {
-      return promise.then(() => that._eyesWebDriver.eyes.addTextTriggerForElement(this._webElement, String(keys)));
+      return promise.then(() => that._eyesWebDriver.eyes.addTextTriggerForElement(this.getWebElement(), String(keys)));
     }, that._eyesWebDriver.getPromiseFactory().resolve()).then(() => {
-      return that._webElement.sendKeys(...keysToSend);
+      return that.getWebElement().sendKeys(...keysToSend);
     });
   }
 
@@ -324,7 +326,7 @@ class EyesWebElement extends WebElement {
    * @inheritDoc
    */
   getTagName() {
-    return this._webElement.getTagName();
+    return this.getWebElement().getTagName();
   }
 
   /**
@@ -332,7 +334,7 @@ class EyesWebElement extends WebElement {
    * @inheritDoc
    */
   getCssValue(cssStyleProperty) {
-    return this._webElement.getCssValue(cssStyleProperty);
+    return this.getWebElement().getCssValue(cssStyleProperty);
   }
 
   /**
@@ -340,7 +342,7 @@ class EyesWebElement extends WebElement {
    * @inheritDoc
    */
   getAttribute(attributeName) {
-    return this._webElement.getAttribute(attributeName);
+    return this.getWebElement().getAttribute(attributeName);
   }
 
   /**
@@ -348,7 +350,7 @@ class EyesWebElement extends WebElement {
    * @inheritDoc
    */
   getText() {
-    return this._webElement.getText();
+    return this.getWebElement().getText();
   }
 
   // noinspection JSCheckFunctionSignatures
@@ -358,7 +360,7 @@ class EyesWebElement extends WebElement {
    * @returns {RectangleSize}
    */
   async getSize() {
-    let {value: {width}, value: {height}} = await this._webElement.getSize();
+    let {value: {width}, value: {height}} = await super.getSize();
     return new RectangleSize(width, height);
   }
 
@@ -381,7 +383,7 @@ class EyesWebElement extends WebElement {
    * @inheritDoc
    */
   isEnabled() {
-    return this._webElement.isEnabled();
+    return this.getWebElement().isEnabled();
   }
 
   /**
@@ -389,7 +391,7 @@ class EyesWebElement extends WebElement {
    * @inheritDoc
    */
   isSelected() {
-    return this._webElement.isSelected();
+    return this.getWebElement().isSelected();
   }
 
   /**
@@ -397,7 +399,7 @@ class EyesWebElement extends WebElement {
    * @inheritDoc
    */
   submit() {
-    return this._webElement.submit();
+    return this.getWebElement().submit();
   }
 
   /**
@@ -405,7 +407,7 @@ class EyesWebElement extends WebElement {
    * @inheritDoc
    */
   clear() {
-    return this._webElement.clear();
+    return this.getWebElement().clear();
   }
 
   /**
@@ -413,7 +415,7 @@ class EyesWebElement extends WebElement {
    * @inheritDoc
    */
   isDisplayed() {
-    return this._webElement.isDisplayed();
+    return this.getWebElement().isDisplayed();
   }
 
   /**
@@ -421,7 +423,7 @@ class EyesWebElement extends WebElement {
    * @inheritDoc
    */
   takeScreenshot(opt_scroll) {
-    return this._webElement.takeScreenshot(opt_scroll);
+    return this.getWebElement().takeScreenshot(opt_scroll);
   }
 
   // noinspection JSUnusedGlobalSymbols
@@ -432,14 +434,6 @@ class EyesWebElement extends WebElement {
     return this._webElement;
   }
 
-  /**
-   * @param {String} script
-   * @returns {Promise<T>}
-   * @private
-   */
-  _executeScript(script) {
-    return this._eyesWebDriver.executeScript(script, this._webElement._element);
-  }
 }
 
 module.exports = EyesWebElement;

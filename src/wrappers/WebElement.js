@@ -66,6 +66,12 @@ class WebElement {
     return false;
   }
 
+  /**
+   * @returns {EyesWebDriver}
+   */
+  getDriver() {
+    return this._driver;
+  }
 
   get element() {
     return this._element;

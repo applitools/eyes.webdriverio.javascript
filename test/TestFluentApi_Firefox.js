@@ -17,9 +17,8 @@ const options = {
   }
 };
 
-const driver = webdriverio.remote(options);
-const browser = driver.init();
-
+let driver;
+let browser;
 let eyes;
 
 
@@ -40,18 +39,20 @@ describe(appName, function () {
   });
 
   beforeEach(async function () {
+    driver = webdriverio.remote(options);
+    browser = driver.init();
     const testName = this.currentTest.title;
     await eyes.open(browser, appName, testName, new RectangleSize(800, 600));
     await browser.url(testedPageUrl);
   });
 
   afterEach(async function () {
-    await eyes.close();
-  });
-
-  after(async function () {
-    await browser.end();
-    await eyes.abortIfNotClosed();
+    try {
+      await eyes.close();
+    } finally {
+      await browser.end();
+      await eyes.abortIfNotClosed();
+    }
   });
 
   it('TestCheckWindowWithIgnoreRegion_Fluent', async function () {
@@ -88,8 +89,8 @@ describe(appName, function () {
     });
 
     it('TestCheckRegionInFrame_Fluent', async function () {
-      const result = await eyes.check("TestCheckRegionInFrame_Fluent", Target.frame("frame1")
-        .frame("frame1-1")
+    const result = await eyes.check('Fluent - Region in Frame', Target.frame('frame1')
+      .region(By.id('inner-frame-div'))
         .fully());
       assert.equal(result.asExpected, true);
     });
@@ -125,6 +126,14 @@ describe(appName, function () {
     const result = await eyes.check('Fluent - Window with floating region by selector', Target.window()
       .floating(By.id('overflowing-div'), 3, 3, 20, 30));
     assert.equal(result.asExpected, true);
+  });
+
+  // todo
+  xit('TestCheckWindowWithFloatingByRegion_Fluent', async function () {
+    const settings = Target.window().floating(new Region(10, 10, 20, 20), 3, 3, 20, 30);
+    await eyes.check("Fluent - Window with floating region by region", settings);
+
+    setExpectedFloatingsRegions(new FloatingMatchSettings(10, 10, 20, 20, 3, 3, 20, 30));
   });
 
   it('TestCheckElementFully_Fluent', async function () {

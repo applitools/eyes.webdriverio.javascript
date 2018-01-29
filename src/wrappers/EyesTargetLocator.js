@@ -30,7 +30,7 @@ class EyesTargetLocator extends TargetLocator {
     super(driver.webDriver);
 
     this._logger = logger;
-    this._driver = driver;
+    this._tsInstance = driver;
     this._targetLocator = targetLocator;
     this._jsExecutor = new WDIOJSExecutor(driver);
     this._scrollPosition = new ScrollPositionProvider(this._logger, this._jsExecutor);
@@ -49,7 +49,7 @@ class EyesTargetLocator extends TargetLocator {
    *   is the same as calling {@link #defaultContent defaultContent()}.
    *
    * @override
-   * @param {number|string|WebElement|EyesWebElement|null} arg1 The frame locator.
+   * @param {number|string|WebElement|EyesWebElement|null} [arg1] The frame locator.
    * @return {Promise.<EyesWebDriver>}
    */
   frame(arg1) {
@@ -64,7 +64,7 @@ class EyesTargetLocator extends TargetLocator {
       that._logger.verbose(`EyesTargetLocator.frame(${frameIndex})`);
       // Finding the target element so and reporting it using onWillSwitch.
       that._logger.verbose("Getting frames list...");
-      return that._driver.findElementsByCssSelector("frame, iframe").then(frames => {
+      return that._tsInstance.findElementsByCssSelector("frame, iframe").then(frames => {
         if (frameIndex > frames.length) {
           throw new TypeError(`Frame index [${frameIndex}] is invalid!`);
         }
@@ -77,7 +77,7 @@ class EyesTargetLocator extends TargetLocator {
         return that._targetLocator.frame(frameIndex);
       }).then(() => {
         that._logger.verbose("Done!");
-        return that._driver;
+        return that._tsInstance;
       });
     }
 
@@ -88,11 +88,11 @@ class EyesTargetLocator extends TargetLocator {
       // We use find elements(plural) to avoid exception when the element is not found.
       that._logger.verbose("Getting frames by name...");
       let frames;
-      return that._driver.findElementsByName(frameNameOrId).then(framesByName => {
+      return that._tsInstance.findElementsByName(frameNameOrId).then(framesByName => {
         if (framesByName.length === 0) {
           that._logger.verbose("No frames Found! Trying by id...");
           // If there are no frames by that name, we'll try the id
-          return that._driver.findElementsById(frameNameOrId).then(framesById => {
+          return that._tsInstance.findElementsById(frameNameOrId).then(framesById => {
             if (framesById.length === 0) {
               // No such frame, bummer
               throw new TypeError(`No frame with name or id '${frameNameOrId}' exists!`);
@@ -114,7 +114,7 @@ class EyesTargetLocator extends TargetLocator {
         return that._targetLocator.frame(frameElement.element);
       }).then(() => {
         that._logger.verbose("Done!");
-        return that._driver;
+        return that._tsInstance;
       });
     }
 
@@ -129,7 +129,7 @@ class EyesTargetLocator extends TargetLocator {
       return that._targetLocator.frame(frameElement.element);
     }).then(() => {
       that._logger.verbose("Done!");
-      return that._driver;
+      return that._tsInstance;
     });
   }
 
@@ -141,15 +141,15 @@ class EyesTargetLocator extends TargetLocator {
    */
   async parentFrame() {
     this._logger.verbose("EyesTargetLocator.parentFrame()");
-    if (this._driver.frameChain.size() !== 0) {
+    if (this._tsInstance.getFrameChain().size() !== 0) {
       this._logger.verbose("Making preparations...");
-      this._driver.frameChain.pop();
+      this._tsInstance.getFrameChain().pop();
       this._logger.verbose("Done! Switching to parent frame..");
-      await this._driver.remoteWebDriver.frameParent();
+      await this._tsInstance.remoteWebDriver.frameParent();
       this._logger.verbose("Done!");
-      return this._driver;
+      return this._tsInstance;
     }
-    return this._driver.getPromiseFactory().resolve(this._driver);
+    return this._tsInstance.getPromiseFactory().resolve(this._tsInstance);
   }
 
   /**
@@ -160,17 +160,17 @@ class EyesTargetLocator extends TargetLocator {
    */
   async framesDoScroll(frameChain) {
     this._logger.verbose("EyesTargetLocator.framesDoScroll(frameChain)");
-    await this._driver.switchTo().defaultContent();
-    for (const frame of frameChain.frames) {
+    await this._tsInstance.switchTo().defaultContent();
+    for (const frame of frameChain.getFrames()) {
       this._logger.verbose("Scrolling by parent scroll position...");
       const frameLocation = frame.getLocation();
       await this._scrollPosition.setPosition(frameLocation);
       this._logger.verbose("Done! Switching to frame...");
-      await this._driver.switchTo().frame(frame.getReference());
+      await this._tsInstance.switchTo().frame(frame.getReference());
       this._logger.verbose("Done!");
     }
     this._logger.verbose("Done switching into nested frames!");
-    return this._driver;
+    return this._tsInstance;
   }
 
   /**
@@ -183,22 +183,22 @@ class EyesTargetLocator extends TargetLocator {
     if (obj instanceof FrameChain) {
       const frameChain = obj;
       this._logger.verbose("EyesTargetLocator.frames(frameChain)");
-      await this._driver.switchTo().defaultContent();
-      for (const frame of  frameChain.frames) {
-        await this._driver.switchTo().frame(frame.getReference());
+      await this._tsInstance.switchTo().defaultContent();
+      for (const frame of  frameChain.getFrames()) {
+        await this._tsInstance.switchTo().frame(frame.getReference());
       }
       this._logger.verbose("Done switching into nested frames!");
-      return this._driver;
+      return this._tsInstance;
     } else if (Array.isArray(obj)) {
       this._logger.verbose("EyesTargetLocator.frames(framesPath)");
       for (const frameNameOrId of obj) {
         this._logger.verbose("Switching to frame...");
-        await this._driver.switchTo().frame(frameNameOrId);
+        await this._tsInstance.switchTo().frame(frameNameOrId);
         this._logger.verbose("Done!");
       }
 
       this._logger.verbose("Done switching into nested frames!");
-      return this._driver;
+      return this._tsInstance;
     }
   }
 
@@ -214,10 +214,10 @@ class EyesTargetLocator extends TargetLocator {
   async window(nameOrHandle) {
     try {
       this._logger.verbose("EyesTargetLocator.window()");
-      this._driver.frameChain.clear();
+      this._tsInstance.getFrameChain().clear();
       this._logger.verbose("Done! Switching to window...");
-      await this._driver.webDriver.window(nameOrHandle);
-      return this._driver;
+      await this._tsInstance.webDriver.window(nameOrHandle);
+      return this._tsInstance;
     } finally {
       this._logger.verbose("Done!");
     }
@@ -232,14 +232,14 @@ class EyesTargetLocator extends TargetLocator {
    */
   async defaultContent() {
     this._logger.verbose("EyesTargetLocator.defaultContent()");
-    if (this._driver.frameChain.size() !== 0) {
+    if (this._tsInstance.getFrameChain().size() !== 0) {
       this._logger.verbose("Making preparations...");
-      this._driver.frameChain.clear();
+      this._tsInstance.getFrameChain().clear();
       this._logger.verbose("Done! Switching to default content...");
       await this._targetLocator.defaultContent();
       this._logger.verbose("Done!");
     }
-    return this._driver.getPromiseFactory().resolve(this._driver);
+    return this._tsInstance.getPromiseFactory().resolve(this._tsInstance);
   }
 
   // noinspection JSUnusedGlobalSymbols
@@ -254,10 +254,10 @@ class EyesTargetLocator extends TargetLocator {
     this._logger.verbose("EyesTargetLocator.activeElement()");
     this._logger.verbose("Switching to element...");
     // noinspection JSCheckFunctionSignatures
-    const element = this._driver.remoteWebDriver.elementActive();
+    const element = this._tsInstance.remoteWebDriver.elementActive();
     // const element = this._driver.schedule(new command.Command(command.Name.GET_ACTIVE_ELEMENT), 'WebDriver.switchTo().activeElement()');
     this._logger.verbose("Done!");
-    return new EyesWebElement(this._logger, this._driver, new WebElement(this._driver.remoteWebDriver, element));
+    return new EyesWebElement(this._logger, this._tsInstance, new WebElement(this._tsInstance.remoteWebDriver, element));
   }
 
   /**
@@ -286,9 +286,9 @@ class EyesTargetLocator extends TargetLocator {
     this._logger.verbose("willSwitchToFrame()");
     this._logger.verbose("Frame");
 
-    const eyesFrame = (targetFrame instanceof EyesWebElement) ? targetFrame : new EyesWebElement(this._logger, this._driver, targetFrame);
+    const eyesFrame = (targetFrame instanceof EyesWebElement) ? targetFrame : new EyesWebElement(this._logger, this._tsInstance, targetFrame);
 
-    let location, elementSize, clientSize, contentLocation, originalLocation;
+    let location, elementSize, clientSize, contentLocation;
     const pl = await eyesFrame.getLocation();
     location = new Location(pl);
 
@@ -303,9 +303,11 @@ class EyesTargetLocator extends TargetLocator {
     const borderTopWidth = await eyesFrame.getComputedStyleInteger("border-top-width");
     contentLocation = new Location(location.getX() + borderLeftWidth, location.getY() + borderTopWidth);
 
-    originalLocation = await this._scrollPosition.getCurrentPosition();
-    const frame = new Frame(this._logger, targetFrame, contentLocation, elementSize, clientSize, originalLocation);
-    this._driver.frameChain.push(frame);
+    const originalLocation = await this._scrollPosition.getCurrentPosition();
+    const originalOverflow = await eyesFrame.getOverflow();
+
+    const frame = new Frame(this._logger, targetFrame, contentLocation, elementSize, clientSize, originalLocation, originalOverflow);
+    this._tsInstance.getFrameChain().push(frame);
   }
 }
 

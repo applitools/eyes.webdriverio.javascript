@@ -36,7 +36,7 @@ class By {
    * @return {By}
    */
   static tagName(tagName) {
-    throw new Error('By.tagName is unsupported');
+    return new By(`<${tagName}>`);
   }
 
 
