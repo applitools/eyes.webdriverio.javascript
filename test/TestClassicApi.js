@@ -1,23 +1,13 @@
 'use strict';
 
+const assert = require('assert');
 const shared = require('shared-examples-for');
-
 const {By} = require('../index');
 
-const Common = require('./lib/Common');
 
-const assert = require('assert');
-
-
-const testTitle = 'Eyes WDIO SDK - Classic API';
-const testedPageUrl = 'http://applitools.github.io/demo/TestPages/FramesTestPage/';
-
-
-let test = new Common({testedPageUrl});
-
-
-shared.examplesFor('TestClassicApi', function () {
+shared.examplesFor('TestClassicApi', function (test) {
   // fixme in java first
+  // chrome fps & ff fps
   xit('TestCheckWindow', async function () {
     const result = await test.eyes.checkWindow('Window');
     assert.equal(result.asExpected, true);
@@ -44,87 +34,4 @@ shared.examplesFor('TestClassicApi', function () {
   });
 });
 
-
-describe(testTitle, function () {
-
-  describe('Chrome', function () {
-    const appName = 'Eyes Selenium SDK - Classic API';
-
-    before(function () {
-      test.beforeTest({appName: appName});
-    });
-
-    beforeEach(async function () {
-      await test.beforeEachTest({appName: appName, testName: this.currentTest.title, browserOptions: Common.CHROME});
-    });
-
-    afterEach(async function () {
-      await test.afterEachTest();
-    });
-
-
-    shared.shouldBehaveLike('TestClassicApi'); // all arguments after shared example title will be passed to shared example function
-
-  });
-
-  describe('Chrome_FPS', function () {
-    const appName = 'Eyes Selenium SDK - Classic API - ForceFPS';
-
-    before(function () {
-      test.beforeTest({appName: appName, fps: true});
-    });
-
-    beforeEach(async function () {
-      await test.beforeEachTest({appName: appName, testName: this.currentTest.title, browserOptions: Common.CHROME});
-    });
-
-    afterEach(async function () {
-      await test.afterEachTest();
-    });
-
-
-    shared.shouldBehaveLike('TestClassicApi'); // all arguments after shared example title will be passed to shared example function
-
-  });
-
-  describe('Firefox', function () {
-    const appName = 'Eyes Selenium SDK - Classic API';
-
-    before(function () {
-      test.beforeTest({appName: appName});
-    });
-
-    beforeEach(async function () {
-      await test.beforeEachTest({appName: appName, testName: this.currentTest.title, browserOptions: Common.FIREFOX});
-    });
-
-    afterEach(async function () {
-      await test.afterEachTest();
-    });
-
-
-    shared.shouldBehaveLike('TestClassicApi'); // all arguments after shared example title will be passed to shared example function
-
-  });
-
-  describe('Firefox_FPS', function () {
-    const appName = 'Eyes Selenium SDK - Classic API - ForceFPS';
-
-    before(function () {
-      test.beforeTest({appName: appName, fps: true});
-    });
-
-    beforeEach(async function () {
-      await test.beforeEachTest({appName: appName, testName: this.currentTest.title, browserOptions: Common.FIREFOX});
-    });
-
-    afterEach(async function () {
-      await test.afterEachTest();
-    });
-
-
-    shared.shouldBehaveLike('TestClassicApi'); // all arguments after shared example title will be passed to shared example function
-
-  });
-
-});
+module.exports.TestClassicApi = shared;

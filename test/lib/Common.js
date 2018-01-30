@@ -77,6 +77,9 @@ class Common {
     }
   }
 
+  async afterTest() {
+
+  }
 
   get eyes() {
     return this._eyes;
@@ -84,6 +87,14 @@ class Common {
 
   get browser() {
     return this._browser;
+  }
+
+  /**
+   *
+   * @param {FloatingMatchSettings} expectedFloatingsRegions
+   */
+  setExpectedFloatingsRegions(expectedFloatingsRegions) {
+    this._expectedFloatingsRegions = expectedFloatingsRegions;
   }
 
 }
