@@ -1,20 +1,12 @@
 'use strict';
 
-const shared = require('shared-examples-for');
-const {By, Eyes, StitchMode, Target, WebElement} = require('../index');
-const {ConsoleLogHandler, FloatingMatchSettings, RectangleSize, Region} = require('eyes.sdk');
-
-
 const {equal} = require('assert');
+const shared = require('shared-examples-for');
+const {By, Target, WebElement} = require('../index');
+const {FloatingMatchSettings, Region} = require('eyes.sdk');
 
 
-const testedPageUrl = 'http://applitools.github.io/demo/TestPages/FramesTestPage/';
-
-
-let test = new Common({testedPageUrl});
-
-
-shared.examplesFor('TestFluentApi', function(options) {
+shared.examplesFor('TestFluentApi', function(test) {
   // fixme fail in java version
   // chrome & chrome fps & ff & ff fps
   xit('TestCheckWindowWithIgnoreRegion_Fluent', async function () {
@@ -92,8 +84,7 @@ shared.examplesFor('TestFluentApi', function(options) {
     equal(result.asExpected, true);
   });
 
-  // todo
-  xit('TestCheckWindowWithFloatingByRegion_Fluent', async function () {
+  it('TestCheckWindowWithFloatingByRegion_Fluent', async function () {
     const settings = Target.window().floating(new Region(10, 10, 20, 20), 3, 3, 20, 30);
     await test.eyes.check("Fluent - Window with floating region by region", settings);
 
@@ -114,6 +105,5 @@ shared.examplesFor('TestFluentApi', function(options) {
     equal(result.asExpected, true);
   });
 });
-
 
 module.exports.TestFluentApi = shared;

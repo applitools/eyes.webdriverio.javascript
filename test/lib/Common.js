@@ -1,8 +1,11 @@
 'use strict';
 
+const {deepEqual} = require('assert');
 const webdriverio = require('webdriverio');
 const {Eyes, StitchMode} = require('../../index');
-const {ConsoleLogHandler, RectangleSize} = require('eyes.sdk');
+const {ConsoleLogHandler, FloatingMatchSettings, RectangleSize} = require('eyes.sdk');
+const {URL} = require('url');
+const netHelper = require('./NetHelper');
 
 
 class Common {
@@ -66,19 +69,36 @@ class Common {
     this._browser = driver.init();
     await this._eyes.open(this._browser, appName, testName, new RectangleSize(800, 600));
     await this._browser.url(this._testedPageUrl);
+    this._expectedFloatingsRegions = null;
   }
 
   async afterEachTest() {
     try {
-      await this._eyes.close();
+      /**@type {TestResults} */
+      const results = await this._eyes.close();
+
+      if (this._expectedFloatingsRegions) {
+        const apiSessionUrl = results.getApiUrls().session;
+
+        const apiSessionUri = new URL(apiSessionUrl);
+        apiSessionUri.searchParams.append('format', 'json');
+        apiSessionUri.searchParams.append('AccessToken', results.getSecretToken());
+        apiSessionUri.searchParams.append('apiKey', this.eyes.getApiKey());
+
+        const res = await netHelper.get(apiSessionUri);
+
+        const resultObject = JSON.parse(res);
+        const actualAppOutput = resultObject.actualAppOutput;
+        const f = actualAppOutput[0].imageMatchSettings.floating[0];
+
+        const floating = new FloatingMatchSettings(f.left, f.top, f.width, f.height, f.maxUpOffset, f.maxDownOffset, f.maxLeftOffset, f.maxRightOffset);
+
+        deepEqual(this._expectedFloatingsRegions, floating);
+      }
     } finally {
       await this._browser.end();
       await this._eyes.abortIfNotClosed();
     }
-  }
-
-  async afterTest() {
-
   }
 
   get eyes() {
@@ -94,6 +114,7 @@ class Common {
    * @param {FloatingMatchSettings} expectedFloatingsRegions
    */
   setExpectedFloatingsRegions(expectedFloatingsRegions) {
+    /** @type {FloatingMatchSettings} */
     this._expectedFloatingsRegions = expectedFloatingsRegions;
   }
 
