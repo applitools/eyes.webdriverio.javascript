@@ -62,7 +62,11 @@ class WebElement {
 
 
   // todo
-  equals(a, b) {
+  static equals(a, b) {
+    if (a === b) {
+      return a._driver.getPromiseFactory().resolve(true);
+    }
+
     return false;
   }
 

@@ -6,9 +6,7 @@ const {By} = require('../index');
 
 
 shared.examplesFor('TestClassicApi', function (test) {
-  // fixme in java first
-  // chrome fps & ff fps
-  xit('TestCheckWindow', async function () {
+  it('TestCheckWindow', async function () {
     const result = await test.eyes.checkWindow('Window');
     equal(result.asExpected, true);
   });
