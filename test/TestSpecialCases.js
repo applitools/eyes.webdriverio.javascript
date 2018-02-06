@@ -12,11 +12,11 @@ shared.examplesFor('TestSpecialCases', function (test) {
     equal(result.asExpected, true);
   });
 
-  xit('TestCheckRegionInAVeryBigFrameAfterManualSwitchToFrame', async function () {
+  it('TestCheckRegionInAVeryBigFrameAfterManualSwitchToFrame', async function () {
     const driver = test.eyes.getDriver();
     await driver.switchTo().frame("frame1");
 
-    const {value: element} = await test.browser.element(By.cssSelector('img'));
+    const {value: element} = await test.browser.element('img');
     driver.executeScript('arguments[0].scrollIntoView(true);', element);
 
     await test.eyes.check('', Target.region(By.cssSelector('img')));
