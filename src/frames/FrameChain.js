@@ -51,7 +51,7 @@ class FrameChain {
     }
 
     for (let i = 0; i < lc1; ++i) {
-      if (c1.getFrames()[i].reference !== c2.getFrames()[i].reference) {
+      if (c1.getFrames()[i].reference !== c2.getFrames()[i].getReference()) {
         return false;
       }
     }

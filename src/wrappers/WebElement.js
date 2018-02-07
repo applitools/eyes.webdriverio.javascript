@@ -1,6 +1,8 @@
 'use strict';
 
 
+const command = require('../services/selenium/Command');
+
 /**
  * Wrapper for Webdriverio element
  */
@@ -61,14 +63,29 @@ class WebElement {
   }
 
 
-  // todo
-  static equals(a, b) {
+  static async equals(a, b) {
     if (a === b) {
-      return a._driver.getPromiseFactory().resolve(true);
+      return true;
     }
 
-    return false;
+    if (a == undefined || b == undefined) {
+      return false;
+    }
+
+    const elementA = a.getWebElement().element.ELEMENT;
+    const elementB = b.getWebElement().element.ELEMENT;
+    if (a === b) {
+      return true;
+    }
+
+    let cmd = new command.Command(command.Name.ELEMENT_EQUALS);
+    cmd.setParameter('id', elementA);
+    cmd.setParameter('other', elementB);
+
+    const {value} = await a._driver.executeCommand(cmd);
+    return value;
   }
+
 
   /**
    * @returns {EyesWebDriver}

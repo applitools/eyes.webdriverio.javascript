@@ -974,7 +974,8 @@ class Eyes extends EyesBase {
 
       elementLocation = new Location(p.getX(), p.getY());
 
-      if (originalFC.size() > 0 && !EyesWebElement.equals(element, originalFC.peek().reference)) {
+      const equals = await EyesWebElement.equals(element, originalFC.peek().getReference());
+      if (originalFC.size() > 0 && !equals) {
         await switchTo.frames(originalFC);
       }
 
