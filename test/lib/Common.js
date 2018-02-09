@@ -64,10 +64,10 @@ class Common {
     // this._eyes.setSaveDebugScreenshots(true);
   }
 
-  async beforeEachTest({appName, testName, browserOptions: browserOptions}) {
+  async beforeEachTest({appName, testName, browserOptions: browserOptions, rectangleSize = {width: 800, height: 600}}) {
     const driver = webdriverio.remote(browserOptions);
     this._browser = driver.init();
-    await this._eyes.open(this._browser, appName, testName, new RectangleSize(800, 600));
+    await this._eyes.open(this._browser, appName, testName, new RectangleSize(rectangleSize));
     await this._browser.url(this._testedPageUrl);
     this._expectedFloatingsRegions = null;
   }
