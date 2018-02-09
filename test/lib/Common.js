@@ -40,17 +40,18 @@ class Common {
     }
   };
 
+  /**
+   *
+   * @param {Object} options
+   */
   constructor({testedPageUrl}) {
     this._eyes = null;
     this._browser = null;
-    this._options = null;
     this._testedPageUrl = testedPageUrl;
     this._forceFullPageScreenshot = false;
-    this._stitchMode = StitchMode.CSS;
-
   }
 
-  beforeTest({appName, fps = false, stitchMode = StitchMode.CSS}) {
+  beforeTest({batchName: batchName, fps = false, stitchMode = StitchMode.CSS}) {
     this._eyes = new Eyes();
     this._eyes.setApiKey(process.env.API_KEY);
     this._eyes.setLogHandler(new ConsoleLogHandler(true));
@@ -59,16 +60,24 @@ class Common {
     this._eyes.setStitchMode(stitchMode);
     this._eyes.setHideScrollbars(true);
 
-    this._eyes.setBatch(appName);
+    this._eyes.setBatch(batchName);
 
     // this._eyes.setSaveDebugScreenshots(true);
   }
 
-  async beforeEachTest({appName, testName, browserOptions: browserOptions, rectangleSize = {width: 800, height: 600}}) {
+  async beforeEachTest({
+                         appName,
+                         testName,
+                         browserOptions: browserOptions,
+                         rectangleSize = {
+                           width: 800,
+                           height: 600
+                         }, testedPageUrl = this._testedPageUrl
+                       }) {
     const driver = webdriverio.remote(browserOptions);
     this._browser = driver.init();
     await this._eyes.open(this._browser, appName, testName, new RectangleSize(rectangleSize));
-    await this._browser.url(this._testedPageUrl);
+    await this._browser.url(testedPageUrl);
     this._expectedFloatingsRegions = null;
   }
 

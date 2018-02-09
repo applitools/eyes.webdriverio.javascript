@@ -15,7 +15,7 @@ const test = new Common({testedPageUrl});
 describe(appName, function () {
 
   before(function () {
-    test.beforeTest({appName: 'WIX like test', fps: true});
+    test.beforeTest({batchName: 'WIX like test', fps: true});
   });
 
   beforeEach(async function () {
