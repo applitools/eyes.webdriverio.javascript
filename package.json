@@ -10,7 +10,6 @@
   "license": "Apache-2.0",
   "dependencies": {
     "eyes.sdk.core": "^1.0.0",
-    "eyes.utils": "0.0.25",
     "webdriverio": "4.9.8"
   },
   "devDependencies": {

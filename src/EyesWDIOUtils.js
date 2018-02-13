@@ -1,9 +1,6 @@
 "use strict";
 
-const {Location, RectangleSize, ArgumentGuard} = require('eyes.sdk.core');
-
-const EyesUtils = require('eyes.utils');
-const GeneralUtils = EyesUtils.GeneralUtils;
+const {Location, RectangleSize, ArgumentGuard, GeneralUtils} = require('eyes.sdk.core');
 
 const EyesDriverOperationError = require('./errors/EyesDriverOperationError');
 const ImageOrientationHandler = require('./ImageOrientationHandler');
