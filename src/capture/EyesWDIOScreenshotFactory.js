@@ -1,6 +1,6 @@
 'use strict';
 
-const {EyesScreenshotFactory} = require('eyes.sdk.core');
+const {EyesScreenshotFactory} = require('@applitools/eyes.sdk.core');
 
 const EyesWebDriverScreenshot = require('./EyesWDIOScreenshot');
 

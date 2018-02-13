@@ -1,6 +1,6 @@
 'use strict';
 
-const {ImageProvider, MutableImage} = require('eyes.sdk.core');
+const {ImageProvider, MutableImage} = require('@applitools/eyes.sdk.core');
 
 /**
  * An image provider based on WebDriver's interface.

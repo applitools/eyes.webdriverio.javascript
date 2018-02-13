@@ -1,6 +1,6 @@
 'use strict';
 
-const {GetFloatingRegion, FloatingMatchSettings, Location, CoordinatesType} = require('eyes.sdk.core');
+const {GetFloatingRegion, FloatingMatchSettings, Location, CoordinatesType} = require('@applitools/eyes.sdk.core');
 
 class FloatingRegionByElement extends GetFloatingRegion {
 

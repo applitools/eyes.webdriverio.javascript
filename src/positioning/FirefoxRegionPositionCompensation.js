@@ -1,6 +1,6 @@
 'use strict';
 
-const {Region} = require('eyes.sdk.core');
+const {Region} = require('@applitools/eyes.sdk.core');
 const RegionPositionCompensation = require('./RegionPositionCompensation');
 
 class FirefoxRegionPositionCompensation extends RegionPositionCompensation {

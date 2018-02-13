@@ -3,7 +3,7 @@
 const {deepEqual} = require('assert');
 const webdriverio = require('webdriverio');
 const {Eyes, StitchMode} = require('../../index');
-const {ConsoleLogHandler, FloatingMatchSettings, RectangleSize} = require('eyes.sdk.core');
+const {ConsoleLogHandler, FloatingMatchSettings, RectangleSize} = require('@applitools/eyes.sdk.core');
 const {URL} = require('url');
 const netHelper = require('./NetHelper');
 
@@ -53,7 +53,7 @@ class Common {
 
   beforeTest({batchName: batchName, fps = false, stitchMode = StitchMode.CSS}) {
     this._eyes = new Eyes();
-    this._eyes.setApiKey(process.env.API_KEY);
+    this._eyes.setApiKey(process.env.APPLITOOLS_API_KEY);
     this._eyes.setLogHandler(new ConsoleLogHandler(true));
 
     this._eyes.setForceFullPageScreenshot(fps);
