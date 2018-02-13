@@ -19,7 +19,7 @@ const {
   TestFailedError,
   TestResultsStatus,
   UserAgent
-} = require('eyes.sdk.core');
+} = require('@applitools/eyes.sdk.core');
 const {
   ArgumentGuard,
   SimplePropertyHandler
@@ -967,7 +967,7 @@ class Eyes extends EyesBase {
           this.getStitchOverlap(), this._regionPositionCompensation
         );
 /*
-        const {FileDebugScreenshotsProvider} = require('eyes.sdk.core');
+        const {FileDebugScreenshotsProvider} = require('@applitools/eyes.sdk.core');
         const debugScreenshotsProvider = new FileDebugScreenshotsProvider();
         await debugScreenshotsProvider.save(entireFrameOrElement, "entireFrameOrElement");
 */
