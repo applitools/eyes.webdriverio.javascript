@@ -3,7 +3,7 @@
 const {deepEqual} = require('assert');
 const webdriverio = require('webdriverio');
 const {Eyes, StitchMode} = require('../../index');
-const {ConsoleLogHandler, FloatingMatchSettings, RectangleSize} = require('eyes.sdk.core');
+const {ConsoleLogHandler, FloatingMatchSettings, RectangleSize} = require('@applitools/eyes.sdk.core');
 const {URL} = require('url');
 const netHelper = require('./NetHelper');
 

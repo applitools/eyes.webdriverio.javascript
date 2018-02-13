@@ -2,7 +2,7 @@
 
 const WebElement = require('./WebElement');
 
-const {Region, MouseTrigger, ArgumentGuard, CoordinatesType, Location, RectangleSize} = require('eyes.sdk.core');
+const {Region, MouseTrigger, ArgumentGuard, CoordinatesType, Location, RectangleSize} = require('@applitools/eyes.sdk.core');
 
 
 const JS_GET_SCROLL_LEFT = "return arguments[0].scrollLeft;";
