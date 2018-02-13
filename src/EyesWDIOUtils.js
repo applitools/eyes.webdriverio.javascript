@@ -1,6 +1,6 @@
 "use strict";
 
-const {Location, RectangleSize, ArgumentGuard} = require('eyes.sdk');
+const {Location, RectangleSize, ArgumentGuard} = require('eyes.sdk.core');
 
 const EyesUtils = require('eyes.utils');
 const GeneralUtils = EyesUtils.GeneralUtils;
@@ -393,9 +393,10 @@ class EyesWDIOUtils {
 
       // If we failed to extract the viewport size using JS, will use the window size instead.
       logger.verbose("Using window size as viewport size.");
-      const size = await executor.windowHandleSize();
-      logger.verbose(String.format("Done! Size is", size));
-      return size;
+      const {value: size} = await executor.remoteWebDriver.windowHandleSize();
+      const viewport = new RectangleSize(size);
+      logger.verbose(`Done! Size ${size.width} x ${size.height}`);
+      return viewport;
     }
   }
 

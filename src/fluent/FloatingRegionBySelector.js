@@ -1,6 +1,6 @@
 'use strict';
 
-const {GetFloatingRegion, FloatingMatchSettings, Location, CoordinatesType} = require('eyes.sdk');
+const {GetFloatingRegion, FloatingMatchSettings, Location, CoordinatesType} = require('eyes.sdk.core');
 
 class FloatingRegionBySelector extends GetFloatingRegion {
 

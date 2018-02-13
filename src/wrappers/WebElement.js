@@ -54,6 +54,14 @@ class WebElement {
 
 
   /**
+   * @returns {Promise}
+   */
+  click() {
+    return this._driver.remoteWebDriver.elementIdClick(this._element.ELEMENT);
+  }
+
+
+  /**
    *
    */
   takeScreenshot(opt_scroll) { // todo

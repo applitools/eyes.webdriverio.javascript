@@ -1,6 +1,6 @@
 'use strict';
 
-const {ImageProvider, MutableImage, Region} = require('eyes.sdk');
+const {ImageProvider, MutableImage, Region} = require('eyes.sdk.core');
 
 const EyesWDIOScreenshot = require('./EyesWDIOScreenshot');
 

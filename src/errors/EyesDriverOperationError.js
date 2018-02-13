@@ -1,6 +1,6 @@
 'use strict';
 
-const {EyesError} = require('eyes.sdk');
+const {EyesError} = require('eyes.sdk.core');
 
 /**
  * Encapsulates an error when trying to perform an action using WebDriver.

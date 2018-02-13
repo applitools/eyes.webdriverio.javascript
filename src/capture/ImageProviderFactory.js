@@ -1,6 +1,6 @@
 'use strict';
 
-const {BrowserNames} = require('eyes.sdk');
+const {BrowserNames} = require('eyes.sdk.core');
 
 const TakesScreenshotImageProvider = require('./TakesScreenshotImageProvider');
 const FirefoxScreenshotImageProvider = require('./FirefoxScreenshotImageProvider');

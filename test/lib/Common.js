@@ -3,7 +3,7 @@
 const {deepEqual} = require('assert');
 const webdriverio = require('webdriverio');
 const {Eyes, StitchMode} = require('../../index');
-const {ConsoleLogHandler, FloatingMatchSettings, RectangleSize} = require('eyes.sdk');
+const {ConsoleLogHandler, FloatingMatchSettings, RectangleSize} = require('eyes.sdk.core');
 const {URL} = require('url');
 const netHelper = require('./NetHelper');
 
@@ -76,7 +76,8 @@ class Common {
                        }) {
     const driver = webdriverio.remote(browserOptions);
     this._browser = driver.init();
-    await this._eyes.open(this._browser, appName, testName, new RectangleSize(rectangleSize));
+    const viewportSize = rectangleSize ? new RectangleSize(rectangleSize) : null;
+    await this._eyes.open(this._browser, appName, testName, viewportSize);
     await this._browser.url(testedPageUrl);
     this._expectedFloatingsRegions = null;
   }

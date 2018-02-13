@@ -1,6 +1,6 @@
 'use strict';
 
-const {BrowserNames} = require('eyes.sdk');
+const {BrowserNames} = require('eyes.sdk.core');
 
 const FirefoxRegionPositionCompensation = require('./FirefoxRegionPositionCompensation');
 const NullRegionPositionCompensation = require('./NullRegionPositionCompensation');

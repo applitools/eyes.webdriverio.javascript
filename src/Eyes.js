@@ -19,7 +19,7 @@ const {
   TestFailedError,
   TestResultsStatus,
   UserAgent
-} = require('eyes.sdk');
+} = require('eyes.sdk.core');
 const {
   ArgumentGuard,
   SimplePropertyHandler
@@ -601,6 +601,131 @@ class Eyes extends EyesBase {
 
 
   /**
+   * Adds a mouse trigger.
+   *
+   * @param {MouseTrigger.MouseAction} action  Mouse action.
+   * @param {Region} control The control on which the trigger is activated (context relative coordinates).
+   * @param {Location} cursor  The cursor's position relative to the control.
+   */
+  addMouseTrigger(action, control, cursor) {
+    if (this.getIsDisabled()) {
+      this._logger.verbose(`Ignoring ${action} (disabled)`);
+      return;
+    }
+
+    // Triggers are actually performed on the previous window.
+    if (!this._lastScreenshot) {
+      this._logger.verbose(`Ignoring ${action} (no screenshot)`);
+      return;
+    }
+
+    if (!FrameChain.isSameFrameChain(this._driver.getFrameChain(), this._lastScreenshot.getFrameChain())) {
+      this._logger.verbose(`Ignoring ${action} (different frame)`);
+      return;
+    }
+
+    super.addMouseTriggerBase(action, control, cursor);
+  }
+
+  // noinspection JSUnusedGlobalSymbols
+  /**
+   * Adds a mouse trigger.
+   *
+   * @param {MouseTrigger.MouseAction} action  Mouse action.
+   * @param {WebElement} element The WebElement on which the click was called.
+   * @return {Promise}
+   */
+  addMouseTriggerForElement(action, element) {
+    if (this.getIsDisabled()) {
+      this._logger.verbose(`Ignoring ${action} (disabled)`);
+      return this.getPromiseFactory().resolve();
+    }
+
+    // Triggers are actually performed on the previous window.
+    if (!this._lastScreenshot) {
+      this._logger.verbose(`Ignoring ${action} (no screenshot)`);
+      return this.getPromiseFactory().resolve();
+    }
+
+    if (!FrameChain.isSameFrameChain(this._driver.getFrameChain(), this._lastScreenshot.getFrameChain())) {
+      this._logger.verbose(`Ignoring ${action} (different frame)`);
+      return this.getPromiseFactory().resolve();
+    }
+
+    ArgumentGuard.notNull(element, "element");
+
+    let p1;
+    return element.getLocation().then(loc => {
+      p1 = loc;
+      return element.getSize();
+    }).then(ds => {
+      const elementRegion = new Region(p1.x, p1.y, ds.width, ds.height);
+      super.addMouseTriggerBase(action, elementRegion, elementRegion.getMiddleOffset());
+    });
+  }
+
+  /**
+   * Adds a keyboard trigger.
+   *
+   * @param {Region} control The control on which the trigger is activated (context relative coordinates).
+   * @param {String} text  The trigger's text.
+   */
+  addTextTrigger(control, text) {
+    if (this.getIsDisabled()) {
+      this._logger.verbose(`Ignoring ${text} (disabled)`);
+      return;
+    }
+
+    // Triggers are actually performed on the previous window.
+    if (!this._lastScreenshot) {
+      this._logger.verbose(`Ignoring ${text} (no screenshot)`);
+      return;
+    }
+
+    if (!FrameChain.isSameFrameChain(this._driver.getFrameChain(), this._lastScreenshot.getFrameChain())) {
+      this._logger.verbose(`Ignoring ${text} (different frame)`);
+      return;
+    }
+
+    super.addTextTriggerBase(control, text);
+  }
+
+  /**
+   * Adds a keyboard trigger.
+   *
+   * @param {EyesWebElement} element The element for which we sent keys.
+   * @param {String} text  The trigger's text.
+   * @return {Promise}
+   */
+  addTextTriggerForElement(element, text) {
+    if (this.getIsDisabled()) {
+      this._logger.verbose(`Ignoring ${text} (disabled)`);
+      return this.getPromiseFactory().resolve();
+    }
+
+    // Triggers are actually performed on the previous window.
+    if (!this._lastScreenshot) {
+      this._logger.verbose(`Ignoring ${text} (no screenshot)`);
+      return this.getPromiseFactory().resolve();
+    }
+
+    if (!FrameChain.isSameFrameChain(this._driver.getFrameChain(), this._lastScreenshot.getFrameChain())) {
+      this._logger.verbose(`Ignoring ${text} (different frame)`);
+      return this.getPromiseFactory().resolve();
+    }
+
+    ArgumentGuard.notNull(element, "element");
+
+    return element.getLocation().then(p1 => {
+      return element.getSize().then(ds => {
+        const elementRegion = new Region(Math.ceil(p1.x), Math.ceil(p1.y), ds.width, ds.height);
+        super.addTextTrigger(elementRegion, text);
+      });
+    });
+  }
+
+
+  /**
    * Use this method only if you made a previous call to {@link #open(WebDriver, String, String)} or one of its variants.
    *
    * @override
@@ -842,7 +967,7 @@ class Eyes extends EyesBase {
           this.getStitchOverlap(), this._regionPositionCompensation
         );
 /*
-        const {FileDebugScreenshotsProvider} = require('eyes.sdk');
+        const {FileDebugScreenshotsProvider} = require('eyes.sdk.core');
         const debugScreenshotsProvider = new FileDebugScreenshotsProvider();
         await debugScreenshotsProvider.save(entireFrameOrElement, "entireFrameOrElement");
 */

@@ -9,7 +9,7 @@
   "author": "Applitools Team <team@applitools.com> (http://www.applitools.com/)",
   "license": "Apache-2.0",
   "dependencies": {
-    "eyes.sdk": "file:../eyes.sdk.javascript1_es6/eyes.sdk.core.javascript",
+    "eyes.sdk.core": "^1.0.0",
     "eyes.utils": "0.0.25",
     "webdriverio": "4.9.8"
   },

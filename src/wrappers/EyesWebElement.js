@@ -1,11 +1,11 @@
 'use strict';
 
-const {Location, RectangleSize} = require('eyes.sdk');
+const {Location, RectangleSize} = require('eyes.sdk.core');
 
 const WebElement = require('./WebElement');
 
 
-const {Region, MouseTrigger, ArgumentGuard, CoordinatesType} = require('eyes.sdk');
+const {Region, MouseTrigger, ArgumentGuard, CoordinatesType} = require('eyes.sdk.core');
 
 const JS_GET_SCROLL_LEFT = "return arguments[0].scrollLeft;";
 
@@ -296,15 +296,13 @@ class EyesWebElement extends WebElement {
    * @inheritDoc
    * @return {Promise}
    */
-  click() {
+  async click() {
     // Letting the driver know about the current action.
-    const that = this;
-    return that.getBounds().then(currentControl => {
-      that._eyesWebDriver.eyes.addMouseTrigger(MouseTrigger.MouseAction.Click, this);
-      that._logger.verbose(`click(${currentControl})`);
+    const currentControl = await this.getBounds();
+    this._eyesWebDriver.eyes.addMouseTrigger(MouseTrigger.MouseAction.Click, this);
+    this._logger.verbose(`click(${currentControl})`);
 
-      return that.getWebElement().click();
-    });
+    return this.getWebElement().click();
   }
 
   // noinspection JSCheckFunctionSignatures

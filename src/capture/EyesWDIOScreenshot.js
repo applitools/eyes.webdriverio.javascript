@@ -1,6 +1,6 @@
 'use strict';
 
-const {ArgumentGuard, EyesScreenshot, CoordinatesType, Region, Location, RectangleSize, CoordinatesTypeConversionError, OutOfBoundsError} = require('eyes.sdk');
+const {ArgumentGuard, EyesScreenshot, CoordinatesType, Region, Location, RectangleSize, CoordinatesTypeConversionError, OutOfBoundsError} = require('eyes.sdk.core');
 
 const WDIOJSExecutor = require('../WDIOJSExecutor');
 const ScrollPositionProvider = require('../positioning/ScrollPositionProvider');

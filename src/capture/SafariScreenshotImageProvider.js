@@ -1,6 +1,6 @@
 'use strict';
 
-const {ImageProvider, MutableImage, OSNames, Region} = require('eyes.sdk');
+const {ImageProvider, MutableImage, OSNames, Region} = require('eyes.sdk.core');
 
 const ScrollPositionProvider = require('../positioning/ScrollPositionProvider');
 const WDIOJSExecutor = require('../WDIOJSExecutor');

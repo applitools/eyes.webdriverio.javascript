@@ -1,6 +1,6 @@
 'use strict';
 
-const {CheckSettings, GeneralUtils, Region} = require('eyes.sdk');
+const {CheckSettings, GeneralUtils, Region} = require('eyes.sdk.core');
 const By = require('../By');
 const WebElement = require('../wrappers/WebElement');
 const FrameLocator = require('./FrameLocator');

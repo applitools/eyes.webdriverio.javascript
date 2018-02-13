@@ -1,6 +1,6 @@
 'use strict';
 
-const {ArgumentGuard, PositionProvider, RectangleSize, Location} = require('eyes.sdk');
+const {ArgumentGuard, PositionProvider, RectangleSize, Location} = require('eyes.sdk.core');
 
 const ElementPositionMemento = require('./ElementPositionMemento');
 const EyesWebElement = require('./../wrappers/EyesWebElement');

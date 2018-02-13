@@ -1,6 +1,6 @@
 'use strict';
 
-const {ArgumentGuard, ImageUtils, MutableImage} = require('eyes.sdk');
+const {ArgumentGuard, ImageUtils, MutableImage} = require('eyes.sdk.core');
 const FrameChain = require('../frames/FrameChain');
 const EyesWebElement = require('./EyesWebElement');
 const EyesTargetLocator = require('./EyesTargetLocator');
