@@ -3,7 +3,7 @@
 const {deepEqual} = require('assert');
 const webdriverio = require('webdriverio');
 const {Eyes, StitchMode} = require('../../index');
-const {ConsoleLogHandler, FloatingMatchSettings, RectangleSize} = require('@applitools/eyes.sdk.core');
+const {ConsoleLogHandler, FloatingMatchSettings, RectangleSize} = require('eyes.sdk.core');
 const {URL} = require('url');
 const netHelper = require('./NetHelper');
 
@@ -85,7 +85,7 @@ class Common {
   async afterEachTest() {
     try {
       /**@type {TestResults} */
-      const results = await this._eyes.close();
+      const results = await this._eyes.close(false);
 
       if (this._expectedFloatingsRegions) {
         const apiSessionUrl = results.getApiUrls().session;

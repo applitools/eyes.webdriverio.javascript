@@ -1,6 +1,6 @@
 'use strict';
 
-const {ArgumentGuard, Location} = require('@applitools/eyes.sdk.core');
+const {ArgumentGuard, Location} = require('eyes.sdk.core');
 
 const EyesWebElement = require('./wrappers/EyesWebElement');
 

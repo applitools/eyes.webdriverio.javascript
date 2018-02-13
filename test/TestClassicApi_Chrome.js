@@ -22,7 +22,10 @@ describe(appName, function () {
   });
 
   afterEach(async function () {
-    await test.afterEachTest();
+    try {
+      await test.afterEachTest();
+    } catch (ignored) {
+    }
   });
 
 

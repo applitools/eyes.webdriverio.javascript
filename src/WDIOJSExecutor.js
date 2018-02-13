@@ -1,6 +1,6 @@
 'use strict';
 
-const {ArgumentGuard, EyesJsExecutor} = require('@applitools/eyes.sdk.core');
+const {ArgumentGuard, EyesJsExecutor} = require('eyes.sdk.core');
 
 class WDIOJSExecutor extends EyesJsExecutor {
 

@@ -3,7 +3,7 @@
 const {equal} = require('assert');
 const shared = require('shared-examples-for');
 const {By, Target, WebElement} = require('../index');
-const {FloatingMatchSettings, Region} = require('@applitools/eyes.sdk.core');
+const {FloatingMatchSettings, Region} = require('eyes.sdk.core');
 
 
 shared.examplesFor('TestFluentApi', function(test) {

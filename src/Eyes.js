@@ -3,11 +3,9 @@
 const {
   ContextBasedScaleProviderFactory,
   CoordinatesType,
-  DiffsFoundError,
   EyesBase,
   FailureReports,
   FixedScaleProviderFactory,
-  NewTestError,
   Location,
   NullCutProvider,
   NullScaleProvider,
@@ -17,11 +15,10 @@ const {
   Region,
   RegionProvider,
   TestFailedError,
-  TestResultsStatus,
   UserAgent,
   ArgumentGuard,
   SimplePropertyHandler
-} = require('@applitools/eyes.sdk.core');
+} = require('eyes.sdk.core');
 
 const ImageProviderFactory = require('./capture/ImageProviderFactory');
 const CssTranslatePositionProvider = require('./positioning/CssTranslatePositionProvider');
@@ -164,35 +161,16 @@ class Eyes extends EyesBase {
   }
 
 
+/* todo remove this
   async close(throwEx = true) {
     try {
       const results = await super.close.call(this, false);
-      const status = results.getStatus();
-      if (throwEx && status !== TestResultsStatus.Passed) {
-        const status = results.getStatus();
-        const sessionResultsUrl = results.getUrl();
-        if (status === TestResultsStatus.Unresolved) {
-          if (results.getIsNew()) {
-            const instructions = 'Please approve the new baseline at ' + sessionResultsUrl;
-            const message = `'${this._sessionStartInfo.getScenarioIdOrName()}' of '${this._sessionStartInfo.getAppIdOrName()}'. ${instructions}`;
-            return this.getPromiseFactory().reject(new NewTestError(results, message));
-          } else {
-            const instructions = `See details at ${sessionResultsUrl}`;
-            const message = `Test '${this._sessionStartInfo.getScenarioIdOrName()}' of '${this._sessionStartInfo.getAppIdOrName()} detected differences!'. ${instructions}`;
-            return this.getPromiseFactory().reject(new DiffsFoundError(results, message));
-          }
-        } else if (status === TestResultsStatus.Failed) {
-          const instructions = `See details at ${sessionResultsUrl}`;
-          const message = `'${this._sessionStartInfo.getScenarioIdOrName()}' of '${this._sessionStartInfo.getAppIdOrName()}'. ${instructions}`;
-          return this.getPromiseFactory().reject(new TestFailedError(results, message));
-        }
-      } else {
-        return this.getPromiseFactory().resolve(results);
-      }
+      return this.getPromiseFactory().resolve(results);
     } catch (e) {
       console.error(e);
     }
   }
+*/
 
 
   /**
@@ -874,13 +852,13 @@ class Eyes extends EyesBase {
   async _tryHideScrollbars() {
     if (this._hideScrollbars) {
       try {
-      const originalFC = new FrameChain(this._logger, this._driver.getFrameChain());
-      const fc = new FrameChain(this._logger, this._driver.getFrameChain());
+        const originalFC = new FrameChain(this._logger, this._driver.getFrameChain());
+        const fc = new FrameChain(this._logger, this._driver.getFrameChain());
         this._originalOverflow = await EyesWDIOUtils.hideScrollbars(this._jsExecutor, 200);
         await this._tryHideScrollbarsLoop(fc);
 
         await this._driver.switchTo().frames(originalFC);
-      } catch(err) {
+      } catch (err) {
         this._logger.log("WARNING: Failed to hide scrollbars! Error: " + err);
       }
     }
@@ -896,9 +874,9 @@ class Eyes extends EyesBase {
   async _tryHideScrollbarsLoop(fc) {
     if (fc.size() > 0) {
       await this._driver.getRemoteWebDriver().switchTo().parentFrame();
-        const frame = fc.pop();
-        await EyesWDIOUtils.hideScrollbars(this._jsExecutor, 200);
-        await this._tryHideScrollbarsLoop(fc);
+      const frame = fc.pop();
+      await EyesWDIOUtils.hideScrollbars(this._jsExecutor, 200);
+      await this._tryHideScrollbarsLoop(fc);
     }
 
     return this.getPromiseFactory().resolve();
@@ -913,7 +891,7 @@ class Eyes extends EyesBase {
       const originalFC = new FrameChain(this._logger, this._driver.getFrameChain());
       const fc = new FrameChain(this._logger, this._driver.getFrameChain());
       await this._tryRestoreScrollbarsLoop(fc);
-        return this._driver.switchTo().frames(originalFC);
+      return this._driver.switchTo().frames(originalFC);
     }
   }
 
@@ -925,9 +903,9 @@ class Eyes extends EyesBase {
   async _tryRestoreScrollbarsLoop(fc) {
     if (fc.size() > 0) {
       await this._driver.remoteWebDriver.switchTo().parentFrame();
-        const frame = fc.pop();
-        await frame.getReference().setOverflow(frame.getOriginalOverflow());
-        await this._tryRestoreScrollbarsLoop(fc);
+      const frame = fc.pop();
+      await frame.getReference().setOverflow(frame.getOriginalOverflow());
+      await this._tryRestoreScrollbarsLoop(fc);
     }
 
     return this.getPromiseFactory().resolve();
@@ -964,11 +942,11 @@ class Eyes extends EyesBase {
           this.getWaitBeforeScreenshots(), this._debugScreenshotsProvider, screenshotFactory,
           this.getStitchOverlap(), this._regionPositionCompensation
         );
-/*
-        const {FileDebugScreenshotsProvider} = require('@applitools/eyes.sdk.core');
-        const debugScreenshotsProvider = new FileDebugScreenshotsProvider();
-        await debugScreenshotsProvider.save(entireFrameOrElement, "entireFrameOrElement");
-*/
+        /*
+                const {FileDebugScreenshotsProvider} = require('eyes.sdk.core');
+                const debugScreenshotsProvider = new FileDebugScreenshotsProvider();
+                await debugScreenshotsProvider.save(entireFrameOrElement, "entireFrameOrElement");
+        */
 
         this._logger.verbose("Building screenshot object...");
         let screenshot = new EyesWDIOScreenshot(this._logger, this._driver, entireFrameOrElement, this.getPromiseFactory());
