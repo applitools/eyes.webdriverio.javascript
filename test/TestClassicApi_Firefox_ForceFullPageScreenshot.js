@@ -14,7 +14,7 @@ const test = new Common({testedPageUrl});
 describe(appName, function () {
 
   before(function () {
-    test.beforeTest({batchName: appName, fps: true});
+    test.beforeTest({fps: true});
   });
 
   beforeEach(async function () {

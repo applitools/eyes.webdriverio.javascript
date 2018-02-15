@@ -3,10 +3,11 @@
 const {deepEqual} = require('assert');
 const webdriverio = require('webdriverio');
 const {Eyes, StitchMode} = require('../../index');
-const {ConsoleLogHandler, FloatingMatchSettings, RectangleSize} = require('@applitools/eyes.sdk.core');
+const {BatchInfo, ConsoleLogHandler, FloatingMatchSettings, RectangleSize} = require('@applitools/eyes.sdk.core');
 const {URL} = require('url');
 const netHelper = require('./NetHelper');
 
+const batchInfo = new BatchInfo('Java3 Tests');
 
 class Common {
 
@@ -60,7 +61,11 @@ class Common {
     this._eyes.setStitchMode(stitchMode);
     this._eyes.setHideScrollbars(true);
 
-    this._eyes.setBatch(batchName);
+    if (batchName) {
+      this._eyes.setBatch(batchName);
+    } else {
+      this._eyes.setBatch(batchInfo);
+    }
 
     // this._eyes.setSaveDebugScreenshots(true);
   }
@@ -77,6 +82,9 @@ class Common {
     const driver = webdriverio.remote(browserOptions);
     this._browser = driver.init();
     const viewportSize = rectangleSize ? new RectangleSize(rectangleSize) : null;
+    if (this._eyes.getForceFullPageScreenshot()) {
+      testName += '_FPS';
+    }
     await this._eyes.open(this._browser, appName, testName, viewportSize);
     await this._browser.url(testedPageUrl);
     this._expectedFloatingsRegions = null;
@@ -105,6 +113,7 @@ class Common {
 
         deepEqual(this._expectedFloatingsRegions, floating);
       }
+    } catch(ignored) {
     } finally {
       await this._browser.end();
       await this._eyes.abortIfNotClosed();

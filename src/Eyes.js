@@ -161,16 +161,16 @@ class Eyes extends EyesBase {
   }
 
 
-/* todo remove this
-  async close(throwEx = true) {
-    try {
-      const results = await super.close.call(this, false);
-      return this.getPromiseFactory().resolve(results);
-    } catch (e) {
-      console.error(e);
+  /* todo remove this
+    async close(throwEx = true) {
+      try {
+        const results = await super.close.call(this, false);
+        return this.getPromiseFactory().resolve(results);
+      } catch (e) {
+        console.error(e);
+      }
     }
-  }
-*/
+  */
 
 
   /**
@@ -1075,9 +1075,11 @@ class Eyes extends EyesBase {
 
       elementLocation = new Location(p.getX(), p.getY());
 
-      const equals = await EyesWebElement.equals(element, originalFC.peek().getReference());
-      if (originalFC.size() > 0 && !equals) {
-        await switchTo.frames(originalFC);
+      if (originalFC.size() > 0) {
+        const equals = await EyesWebElement.equals(element, originalFC.peek().getReference());
+        if (!equals) {
+          await switchTo.frames(originalFC);
+        }
       }
 
       return this._positionProvider.setPosition(elementLocation);
