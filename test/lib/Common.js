@@ -7,7 +7,7 @@ const {BatchInfo, ConsoleLogHandler, FloatingMatchSettings, RectangleSize} = req
 const {URL} = require('url');
 const netHelper = require('./NetHelper');
 
-const batchInfo = new BatchInfo('Java3 Tests');
+let batchInfo = new BatchInfo('Java3 Tests');
 
 class Common {
 
@@ -61,11 +61,15 @@ class Common {
     this._eyes.setStitchMode(stitchMode);
     this._eyes.setHideScrollbars(true);
 
+
     if (batchName) {
-      this._eyes.setBatch(batchName);
-    } else {
-      this._eyes.setBatch(batchInfo);
+      batchInfo = new BatchInfo(batchName);
     }
+    const batchId = process.env.APPLITOOLS_BATCH_ID;
+    if (batchId != null) {
+      batchInfo.setId(batchId);
+    }
+    this._eyes.setBatch(batchInfo);
 
     // this._eyes.setSaveDebugScreenshots(true);
   }
@@ -113,7 +117,7 @@ class Common {
 
         deepEqual(this._expectedFloatingsRegions, floating);
       }
-    } catch(ignored) {
+    } catch (ignored) {
     } finally {
       await this._browser.end();
       await this._eyes.abortIfNotClosed();
