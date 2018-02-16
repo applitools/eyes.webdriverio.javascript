@@ -13,7 +13,7 @@ const test = new Common({testedPageUrl});
 describe.skip(appName, function () {
 
   before(function () {
-    test.beforeTest({appName: appName});
+    test.beforeTest({});
   });
 
   beforeEach(async function () {

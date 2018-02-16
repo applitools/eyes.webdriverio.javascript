@@ -3,10 +3,11 @@
 const {deepEqual} = require('assert');
 const webdriverio = require('webdriverio');
 const {Eyes, StitchMode} = require('../../index');
-const {ConsoleLogHandler, FloatingMatchSettings, RectangleSize} = require('eyes.sdk');
+const {BatchInfo, ConsoleLogHandler, FloatingMatchSettings, RectangleSize} = require('@applitools/eyes.sdk.core');
 const {URL} = require('url');
 const netHelper = require('./NetHelper');
 
+let batchInfo = new BatchInfo('Java3 Tests');
 
 class Common {
 
@@ -40,42 +41,63 @@ class Common {
     }
   };
 
+  /**
+   *
+   * @param {Object} options
+   */
   constructor({testedPageUrl}) {
     this._eyes = null;
     this._browser = null;
-    this._options = null;
     this._testedPageUrl = testedPageUrl;
     this._forceFullPageScreenshot = false;
-    this._stitchMode = StitchMode.CSS;
-
   }
 
-  beforeTest({appName, fps = false, stitchMode = StitchMode.CSS}) {
+  beforeTest({batchName: batchName, fps = false, stitchMode = StitchMode.CSS}) {
     this._eyes = new Eyes();
-    this._eyes.setApiKey(process.env.API_KEY);
+    this._eyes.setApiKey(process.env.APPLITOOLS_API_KEY);
     this._eyes.setLogHandler(new ConsoleLogHandler(true));
 
     this._eyes.setForceFullPageScreenshot(fps);
     this._eyes.setStitchMode(stitchMode);
     this._eyes.setHideScrollbars(true);
 
-    this._eyes.setBatch(appName);
+
+    if (batchName) {
+      batchInfo = new BatchInfo(batchName);
+    }
+    const batchId = process.env.APPLITOOLS_BATCH_ID;
+    if (batchId != null) {
+      batchInfo.setId(batchId);
+    }
+    this._eyes.setBatch(batchInfo);
 
     // this._eyes.setSaveDebugScreenshots(true);
   }
 
-  async beforeEachTest({appName, testName, browserOptions: browserOptions}) {
+  async beforeEachTest({
+                         appName,
+                         testName,
+                         browserOptions: browserOptions,
+                         rectangleSize = {
+                           width: 800,
+                           height: 600
+                         }, testedPageUrl = this._testedPageUrl
+                       }) {
     const driver = webdriverio.remote(browserOptions);
     this._browser = driver.init();
-    await this._eyes.open(this._browser, appName, testName, new RectangleSize(800, 600));
-    await this._browser.url(this._testedPageUrl);
+    const viewportSize = rectangleSize ? new RectangleSize(rectangleSize) : null;
+    if (this._eyes.getForceFullPageScreenshot()) {
+      testName += '_FPS';
+    }
+    await this._eyes.open(this._browser, appName, testName, viewportSize);
+    await this._browser.url(testedPageUrl);
     this._expectedFloatingsRegions = null;
   }
 
   async afterEachTest() {
     try {
       /**@type {TestResults} */
-      const results = await this._eyes.close();
+      const results = await this._eyes.close(false);
 
       if (this._expectedFloatingsRegions) {
         const apiSessionUrl = results.getApiUrls().session;
@@ -95,6 +117,7 @@ class Common {
 
         deepEqual(this._expectedFloatingsRegions, floating);
       }
+    } catch (ignored) {
     } finally {
       await this._browser.end();
       await this._eyes.abortIfNotClosed();

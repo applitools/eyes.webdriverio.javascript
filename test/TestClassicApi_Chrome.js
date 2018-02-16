@@ -14,7 +14,7 @@ const test = new Common({testedPageUrl});
 describe(appName, function () {
 
   before(function () {
-    test.beforeTest({appName: appName});
+    test.beforeTest({});
   });
 
   beforeEach(async function () {
@@ -22,7 +22,10 @@ describe(appName, function () {
   });
 
   afterEach(async function () {
-    await test.afterEachTest();
+    try {
+      await test.afterEachTest();
+    } catch (ignored) {
+    }
   });
 
 

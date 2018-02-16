@@ -1,6 +1,6 @@
 'use strict';
 
-const {ArgumentGuard, Location} = require('eyes.sdk');
+const {ArgumentGuard, Location} = require('@applitools/eyes.sdk.core');
 const Frame = require('./Frame');
 const NoFramesError = require('./../errors/NoFramesError');
 

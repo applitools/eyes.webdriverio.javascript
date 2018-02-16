@@ -1,6 +1,6 @@
 'use strict';
 
-const {Location, RectangleSize, ArgumentGuard, GeneralUtils} = require('eyes.sdk');
+const {Location, RectangleSize, ArgumentGuard, GeneralUtils} = require('@applitools/eyes.sdk.core');
 
 const Frame = require('../frames/Frame');
 const FrameChain = require('../frames/FrameChain');

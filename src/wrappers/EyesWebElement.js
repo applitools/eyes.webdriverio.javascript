@@ -1,11 +1,9 @@
 'use strict';
 
-const {Location, RectangleSize} = require('eyes.sdk');
-
 const WebElement = require('./WebElement');
 
+const {Region, MouseTrigger, ArgumentGuard, CoordinatesType, Location, RectangleSize} = require('@applitools/eyes.sdk.core');
 
-const {Region, MouseTrigger, ArgumentGuard, CoordinatesType} = require('eyes.sdk');
 
 const JS_GET_SCROLL_LEFT = "return arguments[0].scrollLeft;";
 
@@ -296,15 +294,13 @@ class EyesWebElement extends WebElement {
    * @inheritDoc
    * @return {Promise}
    */
-  click() {
+  async click() {
     // Letting the driver know about the current action.
-    const that = this;
-    return that.getBounds().then(currentControl => {
-      that._eyesWebDriver.eyes.addMouseTrigger(MouseTrigger.MouseAction.Click, this);
-      that._logger.verbose(`click(${currentControl})`);
+    const currentControl = await this.getBounds();
+    this._eyesWebDriver.eyes.addMouseTrigger(MouseTrigger.MouseAction.Click, this);
+    this._logger.verbose(`click(${currentControl})`);
 
-      return that.getWebElement().click();
-    });
+    return this.getWebElement().click();
   }
 
   // noinspection JSCheckFunctionSignatures
@@ -360,7 +356,7 @@ class EyesWebElement extends WebElement {
    * @returns {RectangleSize}
    */
   async getSize() {
-    let {value: {width}, value: {height}} = await super.getSize();
+    let {width, height} = await super.getSize();
     return new RectangleSize(width, height);
   }
 
@@ -372,7 +368,7 @@ class EyesWebElement extends WebElement {
    */
   async getLocation() {
     // The workaround is similar to Java one, but in js we always get raw data with decimal value which we should round up.
-    let {value: {x = 0}, value: {y = 0}} = await super.getLocation();
+    let {x = 0, y = 0} = await super.getLocation();
     x = Math.ceil(x);
     y = Math.ceil(y);
     return new Location(x, y);

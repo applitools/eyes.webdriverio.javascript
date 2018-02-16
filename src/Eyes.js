@@ -3,11 +3,9 @@
 const {
   ContextBasedScaleProviderFactory,
   CoordinatesType,
-  DiffsFoundError,
   EyesBase,
   FailureReports,
   FixedScaleProviderFactory,
-  NewTestError,
   Location,
   NullCutProvider,
   NullScaleProvider,
@@ -17,13 +15,10 @@ const {
   Region,
   RegionProvider,
   TestFailedError,
-  TestResultsStatus,
-  UserAgent
-} = require('eyes.sdk');
-const {
+  UserAgent,
   ArgumentGuard,
   SimplePropertyHandler
-} = require('eyes.utils');
+} = require('@applitools/eyes.sdk.core');
 
 const ImageProviderFactory = require('./capture/ImageProviderFactory');
 const CssTranslatePositionProvider = require('./positioning/CssTranslatePositionProvider');
@@ -166,35 +161,16 @@ class Eyes extends EyesBase {
   }
 
 
-  async close(throwEx = true) {
-    try {
-      const results = await super.close.call(this, false);
-      const status = results.getStatus();
-      if (throwEx && status !== TestResultsStatus.Passed) {
-        const status = results.getStatus();
-        const sessionResultsUrl = results.getUrl();
-        if (status === TestResultsStatus.Unresolved) {
-          if (results.getIsNew()) {
-            const instructions = 'Please approve the new baseline at ' + sessionResultsUrl;
-            const message = `'${this._sessionStartInfo.getScenarioIdOrName()}' of '${this._sessionStartInfo.getAppIdOrName()}'. ${instructions}`;
-            return this.getPromiseFactory().reject(new NewTestError(results, message));
-          } else {
-            const instructions = `See details at ${sessionResultsUrl}`;
-            const message = `Test '${this._sessionStartInfo.getScenarioIdOrName()}' of '${this._sessionStartInfo.getAppIdOrName()} detected differences!'. ${instructions}`;
-            return this.getPromiseFactory().reject(new DiffsFoundError(results, message));
-          }
-        } else if (status === TestResultsStatus.Failed) {
-          const instructions = `See details at ${sessionResultsUrl}`;
-          const message = `'${this._sessionStartInfo.getScenarioIdOrName()}' of '${this._sessionStartInfo.getAppIdOrName()}'. ${instructions}`;
-          return this.getPromiseFactory().reject(new TestFailedError(results, message));
-        }
-      } else {
+  /* todo remove this
+    async close(throwEx = true) {
+      try {
+        const results = await super.close.call(this, false);
         return this.getPromiseFactory().resolve(results);
+      } catch (e) {
+        console.error(e);
       }
-    } catch (e) {
-      console.error(e);
     }
-  }
+  */
 
 
   /**
@@ -601,6 +577,131 @@ class Eyes extends EyesBase {
 
 
   /**
+   * Adds a mouse trigger.
+   *
+   * @param {MouseTrigger.MouseAction} action  Mouse action.
+   * @param {Region} control The control on which the trigger is activated (context relative coordinates).
+   * @param {Location} cursor  The cursor's position relative to the control.
+   */
+  addMouseTrigger(action, control, cursor) {
+    if (this.getIsDisabled()) {
+      this._logger.verbose(`Ignoring ${action} (disabled)`);
+      return;
+    }
+
+    // Triggers are actually performed on the previous window.
+    if (!this._lastScreenshot) {
+      this._logger.verbose(`Ignoring ${action} (no screenshot)`);
+      return;
+    }
+
+    if (!FrameChain.isSameFrameChain(this._driver.getFrameChain(), this._lastScreenshot.getFrameChain())) {
+      this._logger.verbose(`Ignoring ${action} (different frame)`);
+      return;
+    }
+
+    super.addMouseTriggerBase(action, control, cursor);
+  }
+
+  // noinspection JSUnusedGlobalSymbols
+  /**
+   * Adds a mouse trigger.
+   *
+   * @param {MouseTrigger.MouseAction} action  Mouse action.
+   * @param {WebElement} element The WebElement on which the click was called.
+   * @return {Promise}
+   */
+  addMouseTriggerForElement(action, element) {
+    if (this.getIsDisabled()) {
+      this._logger.verbose(`Ignoring ${action} (disabled)`);
+      return this.getPromiseFactory().resolve();
+    }
+
+    // Triggers are actually performed on the previous window.
+    if (!this._lastScreenshot) {
+      this._logger.verbose(`Ignoring ${action} (no screenshot)`);
+      return this.getPromiseFactory().resolve();
+    }
+
+    if (!FrameChain.isSameFrameChain(this._driver.getFrameChain(), this._lastScreenshot.getFrameChain())) {
+      this._logger.verbose(`Ignoring ${action} (different frame)`);
+      return this.getPromiseFactory().resolve();
+    }
+
+    ArgumentGuard.notNull(element, "element");
+
+    let p1;
+    return element.getLocation().then(loc => {
+      p1 = loc;
+      return element.getSize();
+    }).then(ds => {
+      const elementRegion = new Region(p1.x, p1.y, ds.width, ds.height);
+      super.addMouseTriggerBase(action, elementRegion, elementRegion.getMiddleOffset());
+    });
+  }
+
+  /**
+   * Adds a keyboard trigger.
+   *
+   * @param {Region} control The control on which the trigger is activated (context relative coordinates).
+   * @param {String} text  The trigger's text.
+   */
+  addTextTrigger(control, text) {
+    if (this.getIsDisabled()) {
+      this._logger.verbose(`Ignoring ${text} (disabled)`);
+      return;
+    }
+
+    // Triggers are actually performed on the previous window.
+    if (!this._lastScreenshot) {
+      this._logger.verbose(`Ignoring ${text} (no screenshot)`);
+      return;
+    }
+
+    if (!FrameChain.isSameFrameChain(this._driver.getFrameChain(), this._lastScreenshot.getFrameChain())) {
+      this._logger.verbose(`Ignoring ${text} (different frame)`);
+      return;
+    }
+
+    super.addTextTriggerBase(control, text);
+  }
+
+  /**
+   * Adds a keyboard trigger.
+   *
+   * @param {EyesWebElement} element The element for which we sent keys.
+   * @param {String} text  The trigger's text.
+   * @return {Promise}
+   */
+  addTextTriggerForElement(element, text) {
+    if (this.getIsDisabled()) {
+      this._logger.verbose(`Ignoring ${text} (disabled)`);
+      return this.getPromiseFactory().resolve();
+    }
+
+    // Triggers are actually performed on the previous window.
+    if (!this._lastScreenshot) {
+      this._logger.verbose(`Ignoring ${text} (no screenshot)`);
+      return this.getPromiseFactory().resolve();
+    }
+
+    if (!FrameChain.isSameFrameChain(this._driver.getFrameChain(), this._lastScreenshot.getFrameChain())) {
+      this._logger.verbose(`Ignoring ${text} (different frame)`);
+      return this.getPromiseFactory().resolve();
+    }
+
+    ArgumentGuard.notNull(element, "element");
+
+    return element.getLocation().then(p1 => {
+      return element.getSize().then(ds => {
+        const elementRegion = new Region(Math.ceil(p1.x), Math.ceil(p1.y), ds.width, ds.height);
+        super.addTextTrigger(elementRegion, text);
+      });
+    });
+  }
+
+
+  /**
    * Use this method only if you made a previous call to {@link #open(WebDriver, String, String)} or one of its variants.
    *
    * @override
@@ -751,13 +852,13 @@ class Eyes extends EyesBase {
   async _tryHideScrollbars() {
     if (this._hideScrollbars) {
       try {
-      const originalFC = new FrameChain(this._logger, this._driver.getFrameChain());
-      const fc = new FrameChain(this._logger, this._driver.getFrameChain());
+        const originalFC = new FrameChain(this._logger, this._driver.getFrameChain());
+        const fc = new FrameChain(this._logger, this._driver.getFrameChain());
         this._originalOverflow = await EyesWDIOUtils.hideScrollbars(this._jsExecutor, 200);
         await this._tryHideScrollbarsLoop(fc);
 
         await this._driver.switchTo().frames(originalFC);
-      } catch(err) {
+      } catch (err) {
         this._logger.log("WARNING: Failed to hide scrollbars! Error: " + err);
       }
     }
@@ -773,9 +874,9 @@ class Eyes extends EyesBase {
   async _tryHideScrollbarsLoop(fc) {
     if (fc.size() > 0) {
       await this._driver.getRemoteWebDriver().switchTo().parentFrame();
-        const frame = fc.pop();
-        await EyesWDIOUtils.hideScrollbars(this._jsExecutor, 200);
-        await this._tryHideScrollbarsLoop(fc);
+      const frame = fc.pop();
+      await EyesWDIOUtils.hideScrollbars(this._jsExecutor, 200);
+      await this._tryHideScrollbarsLoop(fc);
     }
 
     return this.getPromiseFactory().resolve();
@@ -790,7 +891,7 @@ class Eyes extends EyesBase {
       const originalFC = new FrameChain(this._logger, this._driver.getFrameChain());
       const fc = new FrameChain(this._logger, this._driver.getFrameChain());
       await this._tryRestoreScrollbarsLoop(fc);
-        return this._driver.switchTo().frames(originalFC);
+      return this._driver.switchTo().frames(originalFC);
     }
   }
 
@@ -802,9 +903,9 @@ class Eyes extends EyesBase {
   async _tryRestoreScrollbarsLoop(fc) {
     if (fc.size() > 0) {
       await this._driver.remoteWebDriver.switchTo().parentFrame();
-        const frame = fc.pop();
-        await frame.getReference().setOverflow(frame.getOriginalOverflow());
-        await this._tryRestoreScrollbarsLoop(fc);
+      const frame = fc.pop();
+      await frame.getReference().setOverflow(frame.getOriginalOverflow());
+      await this._tryRestoreScrollbarsLoop(fc);
     }
 
     return this.getPromiseFactory().resolve();
@@ -841,11 +942,11 @@ class Eyes extends EyesBase {
           this.getWaitBeforeScreenshots(), this._debugScreenshotsProvider, screenshotFactory,
           this.getStitchOverlap(), this._regionPositionCompensation
         );
-/*
-        const {FileDebugScreenshotsProvider} = require('eyes.sdk');
-        const debugScreenshotsProvider = new FileDebugScreenshotsProvider();
-        await debugScreenshotsProvider.save(entireFrameOrElement, "entireFrameOrElement");
-*/
+        /*
+                const {FileDebugScreenshotsProvider} = require('@applitools/eyes.sdk.core');
+                const debugScreenshotsProvider = new FileDebugScreenshotsProvider();
+                await debugScreenshotsProvider.save(entireFrameOrElement, "entireFrameOrElement");
+        */
 
         this._logger.verbose("Building screenshot object...");
         let screenshot = new EyesWDIOScreenshot(this._logger, this._driver, entireFrameOrElement, this.getPromiseFactory());
@@ -974,9 +1075,11 @@ class Eyes extends EyesBase {
 
       elementLocation = new Location(p.getX(), p.getY());
 
-      const equals = await EyesWebElement.equals(element, originalFC.peek().getReference());
-      if (originalFC.size() > 0 && !equals) {
-        await switchTo.frames(originalFC);
+      if (originalFC.size() > 0) {
+        const equals = await EyesWebElement.equals(element, originalFC.peek().getReference());
+        if (!equals) {
+          await switchTo.frames(originalFC);
+        }
       }
 
       return this._positionProvider.setPosition(elementLocation);

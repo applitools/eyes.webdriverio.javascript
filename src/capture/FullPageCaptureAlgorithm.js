@@ -1,6 +1,6 @@
 'use strict';
 
-const {ArgumentGuard, Location, Region, RectangleSize, CoordinatesType, GeneralUtils, MutableImage, NullCutProvider} = require('eyes.sdk');
+const {ArgumentGuard, Location, Region, RectangleSize, CoordinatesType, GeneralUtils, MutableImage, NullCutProvider} = require('@applitools/eyes.sdk.core');
 
 const NullRegionPositionCompensation = require('../positioning/NullRegionPositionCompensation');
 const ScrollPositionProvider = require('../positioning/ScrollPositionProvider');
