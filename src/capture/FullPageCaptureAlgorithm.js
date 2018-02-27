@@ -1,8 +1,9 @@
 'use strict';
 
-const {ArgumentGuard, Location, Region, RectangleSize, CoordinatesType, GeneralUtils, MutableImage, NullCutProvider} = require('eyes.sdk');
+const {ArgumentGuard, Location, Region, RectangleSize, CoordinatesType, GeneralUtils, MutableImage, NullCutProvider} = require('@applitools/eyes.sdk.core');
 
 const NullRegionPositionCompensation = require('../positioning/NullRegionPositionCompensation');
+const ScrollPositionProvider = require('../positioning/ScrollPositionProvider');
 
 const MIN_SCREENSHOT_PART_HEIGHT = 10;
 
@@ -11,15 +12,19 @@ class FullPageCaptureAlgorithm {
   /**
    * @param {Logger} logger
    * @param {UserAgent} userAgent
+   * @param {EyesJsExecutor} jsExecutor
    * @param {PromiseFactory} promiseFactory
    */
-  constructor(logger, userAgent, promiseFactory) {
+  constructor(logger, userAgent, jsExecutor, promiseFactory) {
     ArgumentGuard.notNull(logger, "logger");
+    // TODO: why do we need userAgent here?
     // ArgumentGuard.notNull(userAgent, "userAgent");
+    ArgumentGuard.notNull(jsExecutor, "jsExecutor");
     ArgumentGuard.notNull(promiseFactory, "promiseFactory");
 
     this._logger = logger;
     this._userAgent = userAgent;
+    this._jsExecutor = jsExecutor;
     this._promiseFactory = promiseFactory;
   }
 
@@ -58,9 +63,8 @@ class FullPageCaptureAlgorithm {
     currentPosition = await _setPositionLoop(originProvider, Location.ZERO, 3, waitBeforeScreenshots, this._promiseFactory);
 
     if (currentPosition.getX() !== 0 || currentPosition.getY() !== 0) {
-      return originProvider.restoreState(originalPosition).then(() => {
-        throw new Error("Couldn't set position to the top/left corner!");
-      });
+      await originProvider.restoreState(originalPosition);
+      throw new Error("Couldn't set position to the top/left corner!");
     }
 
     this._logger.verbose("Getting top/left image...");
@@ -76,7 +80,7 @@ class FullPageCaptureAlgorithm {
     cutProvider = cutProvider.scale(pixelRatio);
     if (!(cutProvider instanceof NullCutProvider)) {
       image = await cutProvider.cut(image);
-      return debugScreenshotsProvider.save(image, "original-cut");
+      await debugScreenshotsProvider.save(image, "original-cut");
     }
 
     this._logger.verbose("Done! Creating screenshot object...");
@@ -98,22 +102,37 @@ class FullPageCaptureAlgorithm {
     }
 
     if (pixelRatio !== 1) {
-      image = image.scale(scaleProvider.getScaleRatio());
+      image = await image.scale(scaleProvider.getScaleRatio());
       await debugScreenshotsProvider.save(image, "scaled");
     }
 
-    try {
-      entireSize = await positionProvider.getEntireSize();
-      this._logger.verbose("Entire size of region context: " + entireSize);
-    } catch (e) {
-      this._logger.log("WARNING: Failed to extract entire size of region context" + e);
-      this._logger.log("Using image size instead: " + image.getWidth() + "x" + image.getHeight());
-      entireSize = new RectangleSize(image.getWidth(), image.getHeight());
+    const checkingAnElement = !region.isEmpty();
+    entireSize = await positionProvider.getEntireSize();
+    if (!checkingAnElement) {
+      try {
+        const spp = new ScrollPositionProvider(this._logger, this._jsExecutor);
+        const originalCurrentPosition = await spp.getCurrentPosition();
+        await spp.scrollToBottomRight();
+
+        const localCurrentPosition = await spp.getCurrentPosition();
+
+        entireSize = new RectangleSize(
+          localCurrentPosition.getX() + image.getWidth(),
+          localCurrentPosition.getY() + image.getHeight());
+
+        this._logger.verbose(`Entire size of region context: ${entireSize}`);
+        await spp.setPosition(originalCurrentPosition);
+      } catch (err) {
+        this._logger.log("WARNING: Failed to extract entire size of region context" + err);
+        this._logger.log(`Using image size instead: ${image.getWidth()}x${image.getHeight()}`);
+        entireSize = new RectangleSize(image.getWidth(), image.getHeight());
+      }
     }
 
     // Notice that this might still happen even if we used "getImagePart", since "entirePageSize" might be that of a frame.
     if (image.getWidth() >= entireSize.getWidth() && image.getHeight() >= entireSize.getHeight()) {
-      return originProvider.restoreState(originalPosition).then(() => image);
+      await originProvider.restoreState(originalPosition);
+      return image;
     }
 
     // These will be used for storing the actual stitched size (it is sometimes less than the size extracted via "getEntireSize").

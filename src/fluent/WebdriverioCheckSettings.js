@@ -1,6 +1,6 @@
 'use strict';
 
-const {CheckSettings, GeneralUtils, Region} = require('eyes.sdk');
+const {CheckSettings, GeneralUtils, Region} = require('@applitools/eyes.sdk.core');
 const By = require('../By');
 const WebElement = require('../wrappers/WebElement');
 const FrameLocator = require('./FrameLocator');
@@ -39,7 +39,7 @@ class WebdriverioCheckSettings extends CheckSettings {
 
   /**
    *
-   * @param {Region|By} region
+   * @param {Region|By|WebElement} region
    * @returns {WebdriverioCheckSettings}
    */
   region(region) {
@@ -200,7 +200,7 @@ class WebdriverioCheckSettings extends CheckSettings {
   /**
    * @returns {FrameLocator[]}
    */
-  get frameChain() {
+  getFrameChain() {
     return this._frameChain;
   }
 

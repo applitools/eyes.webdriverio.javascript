@@ -3,11 +3,9 @@
 const {
   ContextBasedScaleProviderFactory,
   CoordinatesType,
-  DiffsFoundError,
   EyesBase,
   FailureReports,
   FixedScaleProviderFactory,
-  NewTestError,
   Location,
   NullCutProvider,
   NullScaleProvider,
@@ -17,13 +15,10 @@ const {
   Region,
   RegionProvider,
   TestFailedError,
-  TestResultsStatus,
-  UserAgent
-} = require('eyes.sdk');
-const {
+  UserAgent,
   ArgumentGuard,
   SimplePropertyHandler
-} = require('eyes.utils');
+} = require('@applitools/eyes.sdk.core');
 
 const ImageProviderFactory = require('./capture/ImageProviderFactory');
 const CssTranslatePositionProvider = require('./positioning/CssTranslatePositionProvider');
@@ -84,6 +79,12 @@ class Eyes extends EyesBase {
     this._hideScrollbars = null;
     /** @type {boolean} */
     this._checkFrameOrElement = false;
+
+    /** @type {String} */
+    this._originalDefaultContentOverflow = false;
+    /** @type {String} */
+    this._originalFrameOverflow = false;
+
     /** @type {String} */
     this._originalOverflow = null;
     /** @type {EyesJsExecutor} */
@@ -160,35 +161,16 @@ class Eyes extends EyesBase {
   }
 
 
-  async close(throwEx = true) {
-    try {
-      const results = await super.close.call(this, false);
-      const status = results.getStatus();
-      if (throwEx && status !== TestResultsStatus.Passed) {
-        const status = results.getStatus();
-        const sessionResultsUrl = results.getUrl();
-        if (status === TestResultsStatus.Unresolved) {
-          if (results.getIsNew()) {
-            const instructions = 'Please approve the new baseline at ' + sessionResultsUrl;
-            const message = `'${this._sessionStartInfo.getScenarioIdOrName()}' of '${this._sessionStartInfo.getAppIdOrName()}'. ${instructions}`;
-            return this.getPromiseFactory().reject(new NewTestError(results, message));
-          } else {
-            const instructions = `See details at ${sessionResultsUrl}`;
-            const message = `Test '${this._sessionStartInfo.getScenarioIdOrName()}' of '${this._sessionStartInfo.getAppIdOrName()} detected differences!'. ${instructions}`;
-            return this.getPromiseFactory().reject(new DiffsFoundError(results, message));
-          }
-        } else if (status === TestResultsStatus.Failed) {
-          const instructions = `See details at ${sessionResultsUrl}`;
-          const message = `'${this._sessionStartInfo.getScenarioIdOrName()}' of '${this._sessionStartInfo.getAppIdOrName()}'. ${instructions}`;
-          return this.getPromiseFactory().reject(new TestFailedError(results, message));
-        }
-      } else {
+  /* todo remove this
+    async close(throwEx = true) {
+      try {
+        const results = await super.close.call(this, false);
         return this.getPromiseFactory().resolve(results);
+      } catch (e) {
+        console.error(e);
       }
-    } catch (e) {
-      console.error(e);
     }
-  }
+  */
 
 
   /**
@@ -246,14 +228,21 @@ class Eyes extends EyesBase {
    * Switches into the given frame, takes a snapshot of the application under test and matches a region specified by the given selector.
    *
    * @param {String} frameNameOrId The name or id of the frame to switch to. (as would be used in a call to driver.switchTo().frame()).
-   * @param {By} locator A Selector specifying the region to check.
+   * @param {By} selector A Selector specifying the region to check.
    * @param {int|null} matchTimeout The amount of time to retry matching. (Milliseconds)
    * @param {String} tag An optional tag to be associated with the snapshot.
    * @param {boolean} stitchContent If {@code true}, stitch the internal content of the region (i.e., perform {@link #checkElement(By, int, String)} on the region.
    * @return {Promise} A promise which is resolved when the validation is finished.
    */
-  checkRegionInFrame(frameNameOrId, locator, matchTimeout = USE_DEFAULT_MATCH_TIMEOUT, tag, stitchContent) {
-    return this.check(tag, Target.region(locator, frameNameOrId).timeout(matchTimeout).stitchContent(stitchContent));
+  async checkRegionInFrame(frameNameOrId, selector, matchTimeout = USE_DEFAULT_MATCH_TIMEOUT, tag, stitchContent) {
+    try {
+      // await this._driver.switchTo().frame(frameNameOrId);
+
+      return this.check(tag, Target.region(selector, frameNameOrId).timeout(matchTimeout).stitchContent(stitchContent));
+    } finally {
+      // this._stitchContent = false;
+      // await this._driver.switchTo().parentFrame();
+    }
   }
 
 
@@ -271,18 +260,18 @@ class Eyes extends EyesBase {
 
   /**
    *
-   * @param name
+   * @param tag
    * @param {WebdriverioCheckSettings} checkSettings
    * @returns {Promise.<*>}
    */
-  async check(name, checkSettings) {
+  async check(tag, checkSettings) {
     ArgumentGuard.notNull(checkSettings, 'checkSettings');
 
     let result;
 
     let switchedToFrameCount;
     try {
-      this._logger.verbose(`check("${name}", checkSettings) - begin`);
+      this._logger.verbose(`check("${tag}", checkSettings) - begin`);
       this._stitchContent = checkSettings.getStitchContent();
       const targetRegion = checkSettings.getTargetRegion();
 
@@ -291,7 +280,7 @@ class Eyes extends EyesBase {
       this._regionToCheck = null;
 
       if (targetRegion) {
-        result = await super.checkWindowBase(new RegionProvider(targetRegion, this.getPromiseFactory()), name, false, checkSettings);
+        result = await super.checkWindowBase(new RegionProvider(targetRegion, this.getPromiseFactory()), tag, false, checkSettings);
       } else if (checkSettings) {
         const targetSelector = checkSettings.targetSelector;
         let targetElement = checkSettings.targetElement;
@@ -302,18 +291,18 @@ class Eyes extends EyesBase {
         if (targetElement) {
           this._targetElement = targetElement instanceof EyesWebElement ? targetElement : new EyesWebElement(this._logger, this._driver, targetElement);
           if (this._stitchContent) {
-            result = await this._checkElement(name, checkSettings);
+            result = await this._checkElement(tag, checkSettings);
           } else {
-            result = await this._checkRegion(name, checkSettings);
+            result = await this._checkRegion(tag, checkSettings);
           }
-        } else if (checkSettings.frameChain.length > 0) {
+        } else if (checkSettings.getFrameChain().length > 0) {
           if (this._stitchContent) {
-            result = await this._checkFullFrameOrElement(name, checkSettings);
+            result = await this._checkFullFrameOrElement(tag, checkSettings);
           } else {
-            result = await this._checkFrameFluent(name, checkSettings);
+            result = await this._checkFrameFluent(tag, checkSettings);
           }
         } else {
-          result = await super.checkWindowBase(new NullRegionProvider(this.getPromiseFactory()), name, false, checkSettings);
+          result = await super.checkWindowBase(new NullRegionProvider(this.getPromiseFactory()), tag, false, checkSettings);
         }
       }
 
@@ -373,10 +362,13 @@ class Eyes extends EyesBase {
       if (displayStyle !== 'inline') {
         this._elementPositionProvider = new ElementPositionProvider(this._logger, this._driver, eyesElement);
       }
-      originalOverflow = await eyesElement.getOverflow();
 
-      // Set overflow to "hidden".
-      await eyesElement.setOverflow('hidden');
+      if (this._hideScrollbars) {
+        originalOverflow = await eyesElement.getOverflow();
+
+        // Set overflow to "hidden".
+        await eyesElement.setOverflow('hidden');
+      }
 
       const elementWidth = await eyesElement.getClientWidth();
       const elementHeight = await eyesElement.getClientHeight();
@@ -487,7 +479,7 @@ class Eyes extends EyesBase {
           screenshot = await screenshot.init();
 
           that._logger.verbose("replacing regionToCheck");
-          that.regionToCheck = screenshot.getFrameWindow();
+          that.setRegionToCheck(screenshot.getFrameWindow());
         }
 
         return that.getPromiseFactory().resolve(Region.EMPTY);
@@ -508,7 +500,7 @@ class Eyes extends EyesBase {
    */
   async _checkFrameFluent(name, checkSettings) {
     try {
-      const frameChain = new FrameChain(this._logger, this._driver.frameChain);
+      const frameChain = new FrameChain(this._logger, this._driver.getFrameChain());
       const targetFrame = frameChain.pop();
       this._targetElement = targetFrame.getReference();
 
@@ -543,7 +535,7 @@ class Eyes extends EyesBase {
       return this.getPromiseFactory().resolve(0);
     }
 
-    const frameChain = checkSettings.frameChain;
+    const frameChain = checkSettings.getFrameChain();
     let switchedToFrameCount = 0;
     for (const frameLocator of frameChain) {
       const isSuccess = await this._switchToFrameLocator(frameLocator);
@@ -581,6 +573,131 @@ class Eyes extends EyesBase {
     }
 
     return false;
+  }
+
+
+  /**
+   * Adds a mouse trigger.
+   *
+   * @param {MouseTrigger.MouseAction} action  Mouse action.
+   * @param {Region} control The control on which the trigger is activated (context relative coordinates).
+   * @param {Location} cursor  The cursor's position relative to the control.
+   */
+  addMouseTrigger(action, control, cursor) {
+    if (this.getIsDisabled()) {
+      this._logger.verbose(`Ignoring ${action} (disabled)`);
+      return;
+    }
+
+    // Triggers are actually performed on the previous window.
+    if (!this._lastScreenshot) {
+      this._logger.verbose(`Ignoring ${action} (no screenshot)`);
+      return;
+    }
+
+    if (!FrameChain.isSameFrameChain(this._driver.getFrameChain(), this._lastScreenshot.getFrameChain())) {
+      this._logger.verbose(`Ignoring ${action} (different frame)`);
+      return;
+    }
+
+    super.addMouseTriggerBase(action, control, cursor);
+  }
+
+  // noinspection JSUnusedGlobalSymbols
+  /**
+   * Adds a mouse trigger.
+   *
+   * @param {MouseTrigger.MouseAction} action  Mouse action.
+   * @param {WebElement} element The WebElement on which the click was called.
+   * @return {Promise}
+   */
+  addMouseTriggerForElement(action, element) {
+    if (this.getIsDisabled()) {
+      this._logger.verbose(`Ignoring ${action} (disabled)`);
+      return this.getPromiseFactory().resolve();
+    }
+
+    // Triggers are actually performed on the previous window.
+    if (!this._lastScreenshot) {
+      this._logger.verbose(`Ignoring ${action} (no screenshot)`);
+      return this.getPromiseFactory().resolve();
+    }
+
+    if (!FrameChain.isSameFrameChain(this._driver.getFrameChain(), this._lastScreenshot.getFrameChain())) {
+      this._logger.verbose(`Ignoring ${action} (different frame)`);
+      return this.getPromiseFactory().resolve();
+    }
+
+    ArgumentGuard.notNull(element, "element");
+
+    let p1;
+    return element.getLocation().then(loc => {
+      p1 = loc;
+      return element.getSize();
+    }).then(ds => {
+      const elementRegion = new Region(p1.x, p1.y, ds.width, ds.height);
+      super.addMouseTriggerBase(action, elementRegion, elementRegion.getMiddleOffset());
+    });
+  }
+
+  /**
+   * Adds a keyboard trigger.
+   *
+   * @param {Region} control The control on which the trigger is activated (context relative coordinates).
+   * @param {String} text  The trigger's text.
+   */
+  addTextTrigger(control, text) {
+    if (this.getIsDisabled()) {
+      this._logger.verbose(`Ignoring ${text} (disabled)`);
+      return;
+    }
+
+    // Triggers are actually performed on the previous window.
+    if (!this._lastScreenshot) {
+      this._logger.verbose(`Ignoring ${text} (no screenshot)`);
+      return;
+    }
+
+    if (!FrameChain.isSameFrameChain(this._driver.getFrameChain(), this._lastScreenshot.getFrameChain())) {
+      this._logger.verbose(`Ignoring ${text} (different frame)`);
+      return;
+    }
+
+    super.addTextTriggerBase(control, text);
+  }
+
+  /**
+   * Adds a keyboard trigger.
+   *
+   * @param {EyesWebElement} element The element for which we sent keys.
+   * @param {String} text  The trigger's text.
+   * @return {Promise}
+   */
+  addTextTriggerForElement(element, text) {
+    if (this.getIsDisabled()) {
+      this._logger.verbose(`Ignoring ${text} (disabled)`);
+      return this.getPromiseFactory().resolve();
+    }
+
+    // Triggers are actually performed on the previous window.
+    if (!this._lastScreenshot) {
+      this._logger.verbose(`Ignoring ${text} (no screenshot)`);
+      return this.getPromiseFactory().resolve();
+    }
+
+    if (!FrameChain.isSameFrameChain(this._driver.getFrameChain(), this._lastScreenshot.getFrameChain())) {
+      this._logger.verbose(`Ignoring ${text} (different frame)`);
+      return this.getPromiseFactory().resolve();
+    }
+
+    ArgumentGuard.notNull(element, "element");
+
+    return element.getLocation().then(p1 => {
+      return element.getSize().then(ds => {
+        const elementRegion = new Region(Math.ceil(p1.x), Math.ceil(p1.y), ds.width, ds.height);
+        super.addTextTrigger(elementRegion, text);
+      });
+    });
   }
 
 
@@ -718,28 +835,80 @@ class Eyes extends EyesBase {
   }
 
 
-  /**
-   * @override
-   */
-  async beforeOpen() {
-    await this._tryHideScrollbars();
+  /** @override */
+  beforeOpen() {
+    return this._tryHideScrollbars();
+  }
+
+  /** @override */
+  beforeMatchWindow() {
+    return this._tryHideScrollbars();
   }
 
   /**
-   * @override
+   * @private
+   * @return {Promise}
    */
-  async beforeMatchWindow() {
-    await this._tryHideScrollbars();
-  }
-
   async _tryHideScrollbars() {
     if (this._hideScrollbars) {
       try {
-        this._originalOverflow = EyesWDIOUtils.hideScrollbars(this._jsExecutor, DEFAULT_WAIT_SCROLL_STABILIZATION);
-      } catch (e) {
-        this._logger.verbose(`WARNING: Failed to hide scrollbars! Error: ${e}`);
+        const originalFC = new FrameChain(this._logger, this._driver.getFrameChain());
+        const fc = new FrameChain(this._logger, this._driver.getFrameChain());
+        this._originalOverflow = await EyesWDIOUtils.hideScrollbars(this._jsExecutor, 200);
+        await this._tryHideScrollbarsLoop(fc);
+
+        await this._driver.switchTo().frames(originalFC);
+      } catch (err) {
+        this._logger.log("WARNING: Failed to hide scrollbars! Error: " + err);
       }
     }
+
+    return this.getPromiseFactory().resolve();
+  }
+
+  /**
+   * @private
+   * @param {FrameChain} fc
+   * @return {Promise}
+   */
+  async _tryHideScrollbarsLoop(fc) {
+    if (fc.size() > 0) {
+      await this._driver.getRemoteWebDriver().switchTo().parentFrame();
+      const frame = fc.pop();
+      await EyesWDIOUtils.hideScrollbars(this._jsExecutor, 200);
+      await this._tryHideScrollbarsLoop(fc);
+    }
+
+    return this.getPromiseFactory().resolve();
+  }
+
+  /**
+   * @private
+   * @return {Promise}
+   */
+  async _tryRestoreScrollbars() {
+    if (this._hideScrollbars) {
+      const originalFC = new FrameChain(this._logger, this._driver.getFrameChain());
+      const fc = new FrameChain(this._logger, this._driver.getFrameChain());
+      await this._tryRestoreScrollbarsLoop(fc);
+      return this._driver.switchTo().frames(originalFC);
+    }
+  }
+
+  /**
+   * @private
+   * @param {FrameChain} fc
+   * @return {Promise}
+   */
+  async _tryRestoreScrollbarsLoop(fc) {
+    if (fc.size() > 0) {
+      await this._driver.remoteWebDriver.switchTo().parentFrame();
+      const frame = fc.pop();
+      await frame.getReference().setOverflow(frame.getOriginalOverflow());
+      await this._tryRestoreScrollbarsLoop(fc);
+    }
+
+    return this.getPromiseFactory().resolve();
   }
 
 
@@ -752,28 +921,14 @@ class Eyes extends EyesBase {
     const scaleProviderFactory = await this.updateScalingParams();
 
 
-    let originalOverflow, originalBodyOverflow;
-    if (this._hideScrollbars) {
-      try {
-        originalOverflow = EyesWDIOUtils.hideScrollbars(this.jsExecutor, DEFAULT_WAIT_SCROLL_STABILIZATION);
-
-        if (this._stitchMode === StitchMode.CSS) {
-          const isBodyOverflowHidden = await EyesWDIOUtils.isBodyOverflowHidden(this._jsExecutor);
-          if (isBodyOverflowHidden) {
-            originalBodyOverflow = await EyesWDIOUtils.setBodyOverflow(this._jsExecutor, "initial");
-          }
-        }
-      } catch (e) {
-        this._logger.verbose('WARNING: Failed to hide scrollbars! Error: ', e);
-      }
-    }
+    let originalBodyOverflow;
 
     let result;
     try {
       const screenshotFactory = new EyesWDIOScreenshotFactory(this._logger, this._driver, this.getPromiseFactory());
 
-      const originalFrameChain = new FrameChain(this._logger, this._driver.frameChain);
-      const algo = new FullPageCaptureAlgorithm(this._logger, this._userAgent, this.getPromiseFactory());
+      const originalFrameChain = new FrameChain(this._logger, this._driver.getFrameChain());
+      const algo = new FullPageCaptureAlgorithm(this._logger, this._userAgent, this._jsExecutor, this.getPromiseFactory());
       const switchTo = this._driver.switchTo();
 
       if (this._checkFrameOrElement) {
@@ -787,6 +942,11 @@ class Eyes extends EyesBase {
           this.getWaitBeforeScreenshots(), this._debugScreenshotsProvider, screenshotFactory,
           this.getStitchOverlap(), this._regionPositionCompensation
         );
+        /*
+                const {FileDebugScreenshotsProvider} = require('@applitools/eyes.sdk.core');
+                const debugScreenshotsProvider = new FileDebugScreenshotsProvider();
+                await debugScreenshotsProvider.save(entireFrameOrElement, "entireFrameOrElement");
+        */
 
         this._logger.verbose("Building screenshot object...");
         let screenshot = new EyesWDIOScreenshot(this._logger, this._driver, entireFrameOrElement, this.getPromiseFactory());
@@ -808,7 +968,7 @@ class Eyes extends EyesBase {
         const screenshot = new EyesWDIOScreenshot(this._logger, this._driver, fullPageImage, this.getPromiseFactory());
         result = await screenshot.init(null, originalFramePosition);
       } else {
-        await this._ensureElementVisible(this.targetElement);
+        await this._ensureElementVisible(this._targetElement);
 
         this._logger.verbose("Screenshot requested...");
         let screenshotImage = await this._imageProvider.getImage();
@@ -837,14 +997,6 @@ class Eyes extends EyesBase {
     } catch (e) {
       throw e;
     } finally {
-      if (this._hideScrollbars) {
-        try {
-          await EyesWDIOUtils.setOverflow(this._jsExecutor, originalOverflow);
-        } catch (e) {
-          // Bummer, but we'll continue with the screenshot anyway :)
-          this._logger.log("WARNING: Failed to revert overflow! Error: " + e);
-        }
-      }
       if (originalBodyOverflow) {
         await EyesWDIOUtils.setBodyOverflow(this._jsExecutor, originalBodyOverflow);
       }
@@ -921,10 +1073,13 @@ class Eyes extends EyesBase {
       await this._ensureFrameVisible();
       const p = await element.getLocation();
 
-      elementLocation = new Location(p.x, p.y);
+      elementLocation = new Location(p.getX(), p.getY());
 
-      if (originalFC.size() > 0 && !EyesWebElement.equals(element, originalFC.peek().reference)) {
-        return switchTo.frames(originalFC);
+      if (originalFC.size() > 0) {
+        const equals = await EyesWebElement.equals(element, originalFC.peek().getReference());
+        if (!equals) {
+          await switchTo.frames(originalFC);
+        }
       }
 
       return this._positionProvider.setPosition(elementLocation);
@@ -936,8 +1091,8 @@ class Eyes extends EyesBase {
    * @return {Promise.<FrameChain>}
    */
   async _ensureFrameVisible() {
-    const originalFC = new FrameChain(this._logger, this._driver.frameChain);
-    const fc = new FrameChain(this._logger, this._driver.frameChain);
+    const originalFC = new FrameChain(this._logger, this._driver.getFrameChain());
+    const fc = new FrameChain(this._logger, this._driver.getFrameChain());
     await ensureFrameVisibleLoop(this._positionProvider, fc, this._driver.switchTo(), this.getPromiseFactory());
     await this._driver.switchTo().frames(originalFC);
     return originalFC;
@@ -1084,7 +1239,7 @@ class Eyes extends EyesBase {
    *
    * @param {Region} regionToCheck
    */
-  set regionToCheck(regionToCheck) {
+  setRegionToCheck(regionToCheck) {
     this._regionToCheck = regionToCheck;
   }
 

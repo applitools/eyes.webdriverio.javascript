@@ -1,6 +1,6 @@
 'use strict';
 
-const {PositionMemento, Location} = require('eyes.sdk');
+const {PositionMemento, Location} = require('@applitools/eyes.sdk.core');
 
 /**
  * Encapsulates state for {@link ElementPositionProvider} instances.

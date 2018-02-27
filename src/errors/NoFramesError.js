@@ -1,6 +1,6 @@
 'use strict';
 
-const {EyesError} = require('eyes.sdk');
+const {EyesError} = require('@applitools/eyes.sdk.core');
 
 class NoFramesError extends EyesError {
 }

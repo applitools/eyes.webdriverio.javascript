@@ -1,6 +1,8 @@
 'use strict';
 
 const TargetLocator = require('../TargetLocator');
+const WebElement = require('../wrappers/WebElement');
+const SeleniumService = require('../services/selenium/SeleniumService');
 
 
 class WebDriver {
@@ -18,8 +20,9 @@ class WebDriver {
    * @param {By} locator
    * @return {WebElement}
    */
-  findElement(locator) {
-    return this._remoteWebDriver.element(locator.value);
+  async findElement(locator) {
+    const {value: element} = await this._remoteWebDriver.element(locator.value);
+    return new WebElement(this, element);
   }
 
 
@@ -71,6 +74,16 @@ class WebDriver {
 
 
   getCapabilities() {}
+
+
+  /**
+   * @param {Command} cmd
+   * @returns {Promise<void>}
+   */
+  async executeCommand(cmd) {
+    const seleniumService = new SeleniumService(this.remoteWebDriver);
+    return seleniumService.execute(cmd);
+  }
 
 }
 

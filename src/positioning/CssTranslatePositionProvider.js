@@ -1,6 +1,6 @@
 'use strict';
 
-const {PositionProvider, ArgumentGuard} = require('eyes.sdk');
+const {PositionProvider, ArgumentGuard} = require('@applitools/eyes.sdk.core');
 
 const EyesWDIOUtils = require('../EyesWDIOUtils');
 const CssTranslatePositionMemento = require('./CssTranslatePositionMemento');

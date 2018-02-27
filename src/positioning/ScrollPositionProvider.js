@@ -1,6 +1,6 @@
 'use strict';
 
-const {ArgumentGuard, PositionProvider, Location} = require('eyes.sdk');
+const {ArgumentGuard, PositionProvider, Location} = require('@applitools/eyes.sdk.core');
 
 const EyesWDIOUtils = require('../EyesWDIOUtils');
 const ScrollPositionMemento = require('./ScrollPositionMemento');
@@ -83,6 +83,13 @@ class ScrollPositionProvider extends PositionProvider {
   async restoreState(state) {
     await this.setPosition(new Location(state.getX(), state.getY()));
     this._logger.verbose("Position restored.");
+  }
+
+  /**
+   * @return {Promise}
+   */
+  scrollToBottomRight() {
+    return EyesWDIOUtils.scrollToBottomRight(this._executor);
   }
 }
 

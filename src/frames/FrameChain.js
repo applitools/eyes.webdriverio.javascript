@@ -1,6 +1,6 @@
 'use strict';
 
-const {ArgumentGuard, Location} = require('eyes.sdk');
+const {ArgumentGuard, Location} = require('@applitools/eyes.sdk.core');
 const Frame = require('./Frame');
 const NoFramesError = require('./../errors/NoFramesError');
 
@@ -20,13 +20,14 @@ class FrameChain {
 
     if (other) {
       this._logger.verbose("Frame chain copy constructor (size " + other.size() + ")");
-      for(const otherFrame of other.frames) {
+      for(const otherFrame of other.getFrames()) {
         this._frames.push(new Frame(logger,
           otherFrame.getReference(),
           otherFrame.getLocation(),
           otherFrame.getSize(),
           otherFrame.getInnerSize(),
-          otherFrame.getOriginalLocation()
+          otherFrame.getOriginalLocation(),
+          otherFrame.getOriginalOverflow()
         ));
       }
       this._logger.verbose("Done!");
@@ -50,7 +51,7 @@ class FrameChain {
     }
 
     for (let i = 0; i < lc1; ++i) {
-      if (c1.frames[i].reference !== c2.frames[i].reference) {
+      if (c1.getFrames()[i].reference !== c2.getFrames()[i].getReference()) {
         return false;
       }
     }
@@ -61,7 +62,7 @@ class FrameChain {
   /**
    * @return {Array.<Frame>} frames stored in chain
    */
-  get frames() {
+  getFrames() {
     return this._frames;
   }
 

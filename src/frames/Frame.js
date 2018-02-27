@@ -1,6 +1,6 @@
 'use strict';
 
-const {ArgumentGuard} = require('eyes.sdk');
+const {ArgumentGuard} = require('@applitools/eyes.sdk.core');
 
 /**
  * Encapsulates a frame/iframe. This is a generic type class,
@@ -16,8 +16,9 @@ class Frame {
    * @param {RectangleSize} size The frame element size (i.e., the size of the frame on the screen, not the internal document size).
    * @param {RectangleSize} innerSize The frame element inner size (i.e., the size of the frame actual size, without borders).
    * @param {Location} originalLocation The scroll location of the frame.
+   * @param {String} originalOverflow The original overflow value of the frame.
    */
-  constructor(logger, reference, location, size, innerSize, originalLocation) {
+  constructor(logger, reference, location, size, innerSize, originalLocation, originalOverflow) {
     ArgumentGuard.notNull(logger, "logger");
     ArgumentGuard.notNull(reference, "reference");
     ArgumentGuard.notNull(location, "location");
@@ -33,6 +34,7 @@ class Frame {
     this._size = size;
     this._innerSize = innerSize;
     this._originalLocation = originalLocation;
+    this._originalOverflow = originalOverflow;
   }
 
   /**
@@ -68,6 +70,13 @@ class Frame {
    */
   getOriginalLocation() {
     return this._originalLocation;
+  }
+
+  /**
+   * @return {String}
+   */
+  getOriginalOverflow() {
+    return this._originalOverflow;
   }
 }
 

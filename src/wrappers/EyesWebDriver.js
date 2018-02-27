@@ -1,6 +1,6 @@
 'use strict';
 
-const {ArgumentGuard, ImageUtils, MutableImage} = require('eyes.sdk');
+const {ArgumentGuard, MutableImage} = require('@applitools/eyes.sdk.core');
 const FrameChain = require('../frames/FrameChain');
 const EyesWebElement = require('./EyesWebElement');
 const EyesTargetLocator = require('./EyesTargetLocator');
@@ -31,7 +31,7 @@ class EyesWebDriver {
    * @param {Object} logger
    **/
   constructor(webDriver, eyes, logger) {
-    this._driver = webDriver;
+    this._tsInstance = webDriver;
     this._eyes = eyes;
     this._logger = logger;
 
@@ -52,11 +52,11 @@ class EyesWebDriver {
 
   //noinspection JSUnusedGlobalSymbols
   get webDriver() {
-    return this._driver;
+    return this._tsInstance;
   }
 
   get remoteWebDriver() {
-    return this._driver.remoteWebDriver;
+    return this._tsInstance.remoteWebDriver;
   }
 
   /**
@@ -68,18 +68,18 @@ class EyesWebDriver {
 
 
   sleep(ms) {
-    return this._driver.sleep(ms);
+    return this._tsInstance.sleep(ms);
   }
 
 
   /** @override */
   getCapabilities() {
-    return this._driver.remoteWebDriver.getCapabilities();
+    return this._tsInstance.remoteWebDriver.getCapabilities();
   }
 
 
   quit() {
-    return this._driver.quit();
+    return this._tsInstance.quit();
   }
 
 
@@ -123,7 +123,7 @@ class EyesWebDriver {
 
     promise = promise.then(() => {
       that._logger.verbose("Extracting viewport size...");
-      return EyesWDIOUtils.getViewportSizeOrDisplaySize(that._logger, that._driver);
+      return EyesWDIOUtils.getViewportSizeOrDisplaySize(that._logger, that._tsInstance);
     }).then(defaultContentViewportSize => {
       that._defaultContentViewportSize = defaultContentViewportSize;
       that._logger.verbose("Done! Viewport size: ", that._defaultContentViewportSize);
@@ -156,7 +156,7 @@ class EyesWebDriver {
   /**
    * @returns {FrameChain}
    */
-  get frameChain() {
+  getFrameChain() {
     return this._frameChain;
   }
 
@@ -167,7 +167,7 @@ class EyesWebDriver {
    */
   switchTo() {
     this._logger.verbose("switchTo()");
-    return new EyesTargetLocator(this._logger, this, this._driver.switchTo());
+    return new EyesTargetLocator(this._logger, this, this._tsInstance.switchTo());
   }
 
 
@@ -177,7 +177,7 @@ class EyesWebDriver {
    */
   async findElement(locator) {
     let {value: element} = await this.remoteWebDriver.element(locator.value);
-    return new EyesWebElement(this._logger, this, new WebElement(this._driver, element));
+    return new EyesWebElement(this._logger, this, new WebElement(this._tsInstance, element));
   }
 
 
@@ -189,7 +189,7 @@ class EyesWebDriver {
   async findElements(locator) {
     const {value: elements} = await this.remoteWebDriver.elements(locator.value);
     return elements.map((element) => {
-      return new EyesWebElement(this._logger, this, new WebElement(this._driver, element));
+      return new EyesWebElement(this._logger, this, new WebElement(this._tsInstance, element));
     });
   }
 
@@ -233,9 +233,9 @@ class EyesWebDriver {
   /** @override */
   async takeScreenshot() {
     // Get the image as base64.
-    const screenshot64 = await this._driver.takeScreenshot();
+    const screenshot64 = await this._tsInstance.takeScreenshot();
     let screenshot = new MutableImage(screenshot64, this.getPromiseFactory());
-    screenshot = await EyesWebDriver.normalizeRotation(this._logger, this._driver, screenshot, this._rotation, this.getPromiseFactory());
+    screenshot = await EyesWebDriver.normalizeRotation(this._logger, this._tsInstance, screenshot, this._rotation, this.getPromiseFactory());
 
     return screenshot.getImageBase64();
   }

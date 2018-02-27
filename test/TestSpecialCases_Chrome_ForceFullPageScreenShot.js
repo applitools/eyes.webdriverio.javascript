@@ -1,11 +1,11 @@
 'use strict';
 
-const {TestClassicApi} = require('./TestClassicApi');
+const {TestSpecialCases} = require('./TestSpecialCases');
 const Common = require('./lib/Common');
 
 
-const appName = 'Eyes Selenium SDK - Classic API';
-const testedPageUrl = 'http://applitools.github.io/demo/TestPages/FramesTestPage/';
+const appName = 'Eyes Selenium SDK - Special Cases - ForceFPS';
+const testedPageUrl = 'http://applitools.github.io/demo/TestPages/WixLikeTestPage/index.html';
 
 
 const test = new Common({testedPageUrl});
@@ -14,7 +14,7 @@ const test = new Common({testedPageUrl});
 describe(appName, function () {
 
   before(function () {
-    test.beforeTest({});
+    test.beforeTest({fps: true});
   });
 
   beforeEach(async function () {
@@ -22,13 +22,10 @@ describe(appName, function () {
   });
 
   afterEach(async function () {
-    try {
-      await test.afterEachTest();
-    } catch (ignored) {
-    }
+    await test.afterEachTest();
   });
 
 
-  TestClassicApi.shouldBehaveLike('TestClassicApi', test);
+  TestSpecialCases.shouldBehaveLike('TestSpecialCases', test);
 
 });
