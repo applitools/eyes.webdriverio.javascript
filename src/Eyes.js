@@ -977,15 +977,15 @@ class Eyes extends EyesBase {
         const scaleProvider = scaleProviderFactory.getScaleProvider(screenshotImage.getWidth());
         if (scaleProvider.getScaleRatio() !== 1) {
           this._logger.verbose("scaling...");
-          const screenshotImage = await screenshotImage.scale(scaleProvider.getScaleRatio());
-          return this._debugScreenshotsProvider.save(screenshotImage, "scaled");
+          screenshotImage = await screenshotImage.scale(scaleProvider.getScaleRatio());
+          await this._debugScreenshotsProvider.save(screenshotImage, "scaled");
         }
 
         const cutProvider = this._cutProviderHandler.get();
         if (!(cutProvider instanceof NullCutProvider)) {
           this._logger.verbose("cutting...");
           const screenshotImage = await cutProvider.cut(screenshotImage);
-          return this._debugScreenshotsProvider.save(screenshotImage, "cut");
+          await this._debugScreenshotsProvider.save(screenshotImage, "cut");
         }
 
         this._logger.verbose("Creating screenshot object...");
@@ -1311,6 +1311,9 @@ class Eyes extends EyesBase {
     this._hideScrollbars = shouldHide;
   }
 
+  getScreenshotUrl() {
+    return this.getPromiseFactory().resolve(undefined);
+  }
 }
 
 /**
