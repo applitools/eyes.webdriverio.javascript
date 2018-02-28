@@ -65,7 +65,7 @@ class Eyes extends EyesBase {
    * @param {Boolean} [isDisabled=false] Set to true to disable Applitools Eyes and use the webdriver directly.
    * @param {PromiseFactory} [promiseFactory] If not specified will be created using `Promise` object
    **/
-  constructor(serverUrl = EyesBase.DEFAULT_EYES_SERVER, isDisabled = false, promiseFactory) {
+  constructor(serverUrl = EyesBase.getDefaultServerUrl(), isDisabled = false, promiseFactory) {
     super(serverUrl, isDisabled, promiseFactory);
 
     /** @type {EyesWebDriver} */

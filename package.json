@@ -4,7 +4,7 @@
   "description": "Applitools Eyes SDK for Webdriverio ",
   "main": "index.js",
   "scripts": {
-    "test": "mocha ./test/Test*.js -t 300000"
+    "test": "mocha ./test/Test*.js -t 300000 --require babel-core/register"
   },
   "author": "Applitools Team <team@applitools.com> (http://www.applitools.com/)",
   "license": "Apache-2.0",
@@ -13,10 +13,12 @@
     "webdriverio": "4.9.8"
   },
   "devDependencies": {
-    "mocha": "^4.0.1",
+    "babel-core": "^6.26.0",
+    "babel-preset-es2015-node6": "^0.4.0",
+    "mocha": "4.0.1",
     "shared-examples-for": "^0.1.3"
   },
   "engines": {
-    "node": ">=8"
+    "node": ">=6"
   }
 }

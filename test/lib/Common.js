@@ -118,9 +118,9 @@ class Common {
         deepEqual(this._expectedFloatingsRegions, floating);
       }
     } catch (ignored) {
+      await this._eyes.abortIfNotClosed();
     } finally {
       await this._browser.end();
-      await this._eyes.abortIfNotClosed();
     }
   }
 
