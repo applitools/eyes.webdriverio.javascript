@@ -4,7 +4,7 @@
   "description": "Applitools Eyes SDK for Webdriverio ",
   "main": "index.js",
   "scripts": {
-    "test": "mocha ./test/Test*.js -t 300000 --require babel-core/register"
+    "test": "mocha ./test/Test*.js -t 300000 --compilers js:babel-register"
   },
   "author": "Applitools Team <team@applitools.com> (http://www.applitools.com/)",
   "license": "Apache-2.0",
