@@ -35,9 +35,10 @@ describe(appName, function () {
   const teardown = async function () {
     try {
       return await eyes.close(false);
+    } catch(e) {
+      await eyes.abortIfNotClosed();
     } finally {
       await browser.end();
-      await eyes.abortIfNotClosed();
     }
   };
 
