@@ -2,10 +2,9 @@
 
 const {deepEqual} = require('assert');
 const webdriverio = require('webdriverio');
-const {Eyes, StitchMode} = require('../../index');
+const {Eyes, NetHelper, StitchMode} = require('../index');
 const {BatchInfo, ConsoleLogHandler, FloatingMatchSettings, RectangleSize} = require('@applitools/eyes.sdk.core');
 const {URL} = require('url');
-const netHelper = require('./NetHelper');
 
 let batchInfo = new BatchInfo('Java3 Tests');
 
@@ -111,7 +110,7 @@ class Common {
         apiSessionUri.searchParams.append('AccessToken', results.getSecretToken());
         apiSessionUri.searchParams.append('apiKey', this.eyes.getApiKey());
 
-        const res = await netHelper.get(apiSessionUri);
+        const res = await NetHelper.get(apiSessionUri);
 
         const resultObject = JSON.parse(res);
         const actualAppOutput = resultObject.actualAppOutput;

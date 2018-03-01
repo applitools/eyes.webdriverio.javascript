@@ -1,7 +1,7 @@
 'use strict';
 
 const {TestSpecialCases} = require('./TestSpecialCases');
-const Common = require('./lib/Common');
+const Common = require('./Common');
 
 
 const appName = 'Eyes Selenium SDK - Special Cases';

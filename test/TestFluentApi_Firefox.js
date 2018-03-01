@@ -1,7 +1,7 @@
 'use strict';
 
 const {TestFluentApi} = require('./TestFluentApi');
-const Common = require('./lib/Common');
+const Common = require('./Common');
 
 
 const appName = 'Eyes Selenium SDK - Fluent API';

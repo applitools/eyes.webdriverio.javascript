@@ -7,4 +7,5 @@ exports.EyesWebDriver = require('./src/wrappers/EyesWebDriver');
 exports.WebdriverioCheckSettings = require('./src/fluent/WebdriverioCheckSettings');
 exports.EyesWDIOScreenshot = require('./src/capture/EyesWDIOScreenshot');
 exports.EyesWDIOUtils = require('./src/EyesWDIOUtils');
+exports.NetHelper = require('./src/services/NetHelper');
 exports.StitchMode = require('./src/StitchMode');
