@@ -4,6 +4,7 @@ const webdriverio = require('webdriverio');
 const {equal} = require('assert');
 const {Eyes, Target} = require('../index');
 const {RectangleSize} = require('@applitools/eyes.sdk.core');
+const Common = require('./lib/Common');
 
 
 const appName = 'TestServerStatus';
@@ -11,7 +12,7 @@ const testedPageUrl = 'http://applitools.github.io/demo/TestPages/FramesTestPage
 
 let eyes, browser;
 
-describe(appName, function () {
+describe.skip(appName, function () {
 
   before(function () {
     eyes = new Eyes();
@@ -20,15 +21,7 @@ describe(appName, function () {
   });
 
   beforeEach(async function () {
-    const chrome = {
-      desiredCapabilities: {
-        browserName: 'chrome',
-        chromeOptions: {
-          args: ['disable-infobars']
-        }
-      }
-    };
-    const driver = webdriverio.remote(chrome);
+    const driver = webdriverio.remote(Common.CHROME);
     browser = driver.init();
   });
 

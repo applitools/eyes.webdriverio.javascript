@@ -11,7 +11,7 @@ const testedPageUrl = 'http://applitools.github.io/demo/TestPages/WixLikeTestPag
 const test = new Common({testedPageUrl});
 
 
-describe(appName, function () {
+describe.skip(appName, function () {
 
   before(function () {
     test.beforeTest({fps: true});

@@ -28,7 +28,11 @@ class Common {
   static get FIREFOX() {
     return {
       desiredCapabilities: {
-        browserName: 'firefox'
+        browserName: 'firefox',
+        "moz:firefoxOptions": {
+          // flag to activate Firefox headless mode (see https://github.com/mozilla/geckodriver/blob/master/README.md#firefox-capabilities for more details about moz:firefoxOptions)
+          args: ['-headless']
+        }
       }
     }
   };
