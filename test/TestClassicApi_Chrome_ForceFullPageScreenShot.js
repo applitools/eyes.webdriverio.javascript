@@ -1,6 +1,5 @@
 'use strict';
 
-import 'babel-polyfill';
 const {TestClassicApi} = require('./TestClassicApi');
 const Common = require('./Common');
 
