@@ -161,18 +161,6 @@ class Eyes extends EyesBase {
   }
 
 
-  /* todo remove this
-    async close(throwEx = true) {
-      try {
-        const results = await super.close.call(this, false);
-        return this.getPromiseFactory().resolve(results);
-      } catch (e) {
-        console.error(e);
-      }
-    }
-  */
-
-
   /**
    * @private
    * @return {Promise<ScaleProviderFactory>}
