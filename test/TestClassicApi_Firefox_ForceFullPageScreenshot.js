@@ -1,7 +1,7 @@
 'use strict';
 
 const {TestClassicApi} = require('./TestClassicApi');
-const Common = require('./lib/Common');
+const Common = require('./Common');
 
 
 const appName = 'Eyes Selenium SDK - Classic API - ForceFPS';

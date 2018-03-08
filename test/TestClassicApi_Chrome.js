@@ -1,7 +1,8 @@
 'use strict';
 
+const chromedriver = require('chromedriver');
 const {TestClassicApi} = require('./TestClassicApi');
-const Common = require('./lib/Common');
+const Common = require('./Common');
 
 
 const appName = 'Eyes Selenium SDK - Classic API';
@@ -14,11 +15,20 @@ const test = new Common({testedPageUrl});
 describe(appName, function () {
 
   before(function () {
+    chromedriver.start();
     test.beforeTest({});
   });
 
   beforeEach(async function () {
-    await test.beforeEachTest({appName: appName, testName: this.currentTest.title, browserOptions: Common.CHROME});
+    const browserOptions = Common.CHROME;
+    browserOptions.port = '9515';
+    browserOptions.path = '/';
+    await test.beforeEachTest({
+      appName: appName,
+      testName: this.currentTest.title,
+      browserOptions: browserOptions,
+      test: this
+    });
   });
 
   afterEach(async function () {
@@ -28,6 +38,9 @@ describe(appName, function () {
     }
   });
 
+  after(async function () {
+    chromedriver.stop();
+  });
 
   TestClassicApi.shouldBehaveLike('TestClassicApi', test);
 

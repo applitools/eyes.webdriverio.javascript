@@ -142,11 +142,11 @@ class EyesWebDriver {
   //noinspection JSUnusedGlobalSymbols
   async getUserAgent() {
     try {
-      let {value: userAgent} = await this.remoteWebDriver.execute('return navigator.userAgent');
-      this._logger.verbose("user agent: " + userAgent);
+      const {value: userAgent} = await this.remoteWebDriver.execute('return navigator.userAgent');
+      this._logger.verbose(`user agent: ${userAgent}`);
       return userAgent;
     } catch (e) {
-      this._logger.verbose("Failed to obtain user-agent string");
+      this._logger.verbose('Failed to obtain user-agent string');
       return null;
     }
   }

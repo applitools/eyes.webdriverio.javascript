@@ -2,10 +2,9 @@
 
 const {deepEqual} = require('assert');
 const webdriverio = require('webdriverio');
-const {Eyes, StitchMode} = require('../../index');
+const {Eyes, NetHelper, StitchMode} = require('../index');
 const {BatchInfo, ConsoleLogHandler, FloatingMatchSettings, RectangleSize} = require('@applitools/eyes.sdk.core');
 const {URL} = require('url');
-const netHelper = require('./NetHelper');
 
 let batchInfo = new BatchInfo('Java3 Tests');
 
@@ -28,7 +27,11 @@ class Common {
   static get FIREFOX() {
     return {
       desiredCapabilities: {
-        browserName: 'firefox'
+        browserName: 'firefox',
+        "moz:firefoxOptions": {
+          // flag to activate Firefox headless mode (see https://github.com/mozilla/geckodriver/blob/master/README.md#firefox-capabilities for more details about moz:firefoxOptions)
+          args: ['-headless']
+        }
       }
     }
   };
@@ -81,17 +84,33 @@ class Common {
                          rectangleSize = {
                            width: 800,
                            height: 600
-                         }, testedPageUrl = this._testedPageUrl
+                         },
+                         testedPageUrl = this._testedPageUrl,
+                         test
                        }) {
-    const driver = webdriverio.remote(browserOptions);
-    this._browser = driver.init();
-    const viewportSize = rectangleSize ? new RectangleSize(rectangleSize) : null;
-    if (this._eyes.getForceFullPageScreenshot()) {
-      testName += '_FPS';
+    try {
+      if (process.env.SELENIUM_SERVER_URL) {
+        const seleniumServerUrl = new URL(process.env.SELENIUM_SERVER_URL);
+        // todo
+        // browserOptions.host = seleniumServerUrl.hostname;
+      }
+
+      const driver = webdriverio.remote(browserOptions);
+      this._browser = driver.init();
+      const viewportSize = rectangleSize ? new RectangleSize(rectangleSize) : null;
+      if (this._eyes.getForceFullPageScreenshot()) {
+        testName += '_FPS';
+      }
+      await this._eyes.open(this._browser, appName, testName, viewportSize);
+      await this._browser.url(testedPageUrl);
+      this._expectedFloatingsRegions = null;
+    } catch (e) {
+      if (test) {
+        test.skip();
+      } else {
+        throw e;
+      }
     }
-    await this._eyes.open(this._browser, appName, testName, viewportSize);
-    await this._browser.url(testedPageUrl);
-    this._expectedFloatingsRegions = null;
   }
 
   async afterEachTest() {
@@ -107,7 +126,7 @@ class Common {
         apiSessionUri.searchParams.append('AccessToken', results.getSecretToken());
         apiSessionUri.searchParams.append('apiKey', this.eyes.getApiKey());
 
-        const res = await netHelper.get(apiSessionUri);
+        const res = await NetHelper.get(apiSessionUri);
 
         const resultObject = JSON.parse(res);
         const actualAppOutput = resultObject.actualAppOutput;
@@ -118,10 +137,13 @@ class Common {
         deepEqual(this._expectedFloatingsRegions, floating);
       }
     } catch (ignored) {
+      await this._eyes.abortIfNotClosed();
     } finally {
       await this._browser.end();
-      await this._eyes.abortIfNotClosed();
     }
+  }
+
+  async afterTest() {
   }
 
   get eyes() {
