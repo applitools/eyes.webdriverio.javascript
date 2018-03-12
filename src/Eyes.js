@@ -125,9 +125,7 @@ class Eyes extends EyesBase {
     ArgumentGuard.notNull(driver, 'driver');
 
     this.getPromiseFactory().setFactoryMethod(asyncAction => {
-      return driver.call(() => {
-        return new Promise(asyncAction);
-      });
+      return new Promise(asyncAction);
     });
 
     this._logger.verbose('Running using Webdriverio module');
