@@ -6,7 +6,7 @@
   "scripts": {
     "compile": "babel --presets es2015-node6 --plugins transform-es2015-object-super -d lib/ src/",
     "compile.test": "babel --presets es2015-node6 --plugins transform-es2015-object-super -d tests/ test/",
-    "test": "npm run compile && mocha ./tests/Test*.js -t 300000 --require babel-register",
+    "test": "npm run compile && npm run compile.test && mocha ./tests/Test*.js -t 300000 --require babel-register",
     "prepublish": "npm run compile"
   },
   "author": "Applitools Team <team@applitools.com> (http://www.applitools.com/)",
@@ -19,7 +19,6 @@
     "babel-cli": "^6.26.0",
     "babel-core": "^6.26.0",
     "babel-plugin-transform-es2015-object-super": "^6.24.1",
-    "babel-preset-es2015": "^6.24.1",
     "babel-preset-es2015-node6": "^0.4.0",
     "chromedriver": "^2.35.0",
     "mocha": "4.0.1",
