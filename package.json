@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "compile": "babel --presets es2015-node6 --plugins transform-es2015-object-super -d lib/ src/",
-    "test": "npm run compile && mocha ./test/Test*.js -t 300000 --require babel-register",
+    "compile.test": "babel --presets es2015-node6 --plugins transform-es2015-object-super -d tests/ test/",
+    "test": "npm run compile && mocha ./tests/Test*.js -t 300000 --require babel-register",
     "prepublish": "npm run compile"
   },
   "author": "Applitools Team <team@applitools.com> (http://www.applitools.com/)",
