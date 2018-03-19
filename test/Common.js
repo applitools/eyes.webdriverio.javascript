@@ -6,7 +6,7 @@ const {Eyes, NetHelper, StitchMode} = require('../index');
 const {BatchInfo, ConsoleLogHandler, FloatingMatchSettings, RectangleSize} = require('@applitools/eyes.sdk.core');
 const {URL} = require('url');
 
-let batchInfo = new BatchInfo('Java3 Tests');
+let batchInfo = new BatchInfo('WebDriverIO Tests');
 
 class Common {
 
