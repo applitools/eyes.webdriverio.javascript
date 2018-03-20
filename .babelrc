@@ -1,4 +1,4 @@
 {
-  "presets": ["es2015"],
+  "presets": ["node8"],
   "plugins": ["transform-es2015-object-super", "transform-async-to-generator"]
 }
