@@ -4,7 +4,7 @@
   "description": "Applitools Eyes SDK for Webdriverio ",
   "main": "index.js",
   "scripts": {
-    "compile": "babel --presets node8 --plugins transform-es2015-object-super,transform-async-to-generator -d lib/ src/",
+    "compile": "babel --presets es2015 --plugins transform-es2015-object-super,transform-async-to-generator -d lib/ src/",
     "test": "npm run compile && mocha ./test/Test*.js -t 300000 --require babel-register",
     "prepublish": "npm run compile"
   },
