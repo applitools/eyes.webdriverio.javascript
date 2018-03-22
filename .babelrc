@@ -1,4 +1,6 @@
 {
-  "presets": ["es2015-node6"],
-  "plugins": ["transform-es2015-object-super"]
+  "presets": [
+    ["es2015-node6", { "exclude": ["transform-es2015-classes"] }]
+  ],
+  "plugins": ["transform-async-to-generator", "transform-runtime"]
 }
