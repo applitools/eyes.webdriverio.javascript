@@ -95,6 +95,20 @@ class Common {
         // browserOptions.host = seleniumServerUrl.hostname;
       }
 
+      if (process.env.SELENIUM_SERVER_URL === 'http://ondemand.saucelabs.com/wd/hub'
+        && process.env.SAUCE_USERNAME && process.env.SAUCE_ACCESS_KEY) {
+
+        const seleniumServerUrl = new URL(process.env.SELENIUM_SERVER_URL);
+        browserOptions.host = seleniumServerUrl.hostname;
+
+        browserOptions.port = '80';
+        browserOptions.path = '/wd/hub';
+
+        browserOptions.desiredCapabilities.baseUrl = `http://${process.env.SAUCE_USERNAME}:${process.env.SAUCE_ACCESS_KEY}@ondemand.saucelabs.com:80/wd/hub`;
+        browserOptions.desiredCapabilities.username = process.env.SAUCE_USERNAME;
+        browserOptions.desiredCapabilities.accesskey = process.env.SAUCE_ACCESS_KEY;
+      }
+
       const driver = webdriverio.remote(browserOptions);
       this._browser = driver.init();
       const viewportSize = rectangleSize ? new RectangleSize(rectangleSize) : null;
