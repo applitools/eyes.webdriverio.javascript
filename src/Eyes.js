@@ -266,7 +266,7 @@ class Eyes extends EyesBase {
       this._regionToCheck = null;
 
       if (targetRegion) {
-        result = await super.checkWindowBase(new RegionProvider(targetRegion, this.getPromiseFactory()), tag, false, checkSettings);
+        result = await EyesBase.prototype.checkWindowBase.call(this, new RegionProvider(targetRegion, this.getPromiseFactory()), tag, false, checkSettings);
       } else if (checkSettings) {
         const targetSelector = checkSettings.targetSelector;
         let targetElement = checkSettings.targetElement;
@@ -288,7 +288,7 @@ class Eyes extends EyesBase {
             result = await this._checkFrameFluent(tag, checkSettings);
           }
         } else {
-          result = await super.checkWindowBase(new NullRegionProvider(this.getPromiseFactory()), tag, false, checkSettings);
+          result = await EyesBase.prototype.checkWindowBase.call(this, new NullRegionProvider(this.getPromiseFactory()), tag, false, checkSettings);
         }
       }
 
@@ -320,7 +320,7 @@ class Eyes extends EyesBase {
     };
 
     try {
-      return super.checkWindowBase(new RegionProviderImpl(), name, false, checkSettings);
+      return EyesBase.prototype.checkWindowBase.call(this, new RegionProviderImpl(), name, false, checkSettings);
     } finally {
       this._logger.verbose("Done! trying to scroll back to original position..");
     }
@@ -371,7 +371,7 @@ class Eyes extends EyesBase {
       this._logger.verbose("replacing regionToCheck");
       this._regionToCheck = elementRegion;
 
-      return await super.checkWindowBase(new NullRegionProvider(this.getPromiseFactory()), name, false, checkSettings);
+      return await EyesBase.prototype.checkWindowBase.call(this, new NullRegionProvider(this.getPromiseFactory()), name, false, checkSettings);
     } catch (e) {
       error = e;
     } finally {
@@ -473,7 +473,7 @@ class Eyes extends EyesBase {
     };
 
     try {
-      return await super.checkWindowBase(new RegionProviderImpl(), name, false, checkSettings);
+      return await EyesBase.prototype.checkWindowBase.call(this, new RegionProviderImpl(), name, false, checkSettings);
     } finally {
       that._checkFrameOrElement = false;
     }
@@ -586,7 +586,7 @@ class Eyes extends EyesBase {
       return;
     }
 
-    super.addMouseTriggerBase(action, control, cursor);
+    EyesBase.prototype.addMouseTriggerBase.call(this, action, control, cursor);
   }
 
   // noinspection JSUnusedGlobalSymbols
@@ -622,7 +622,7 @@ class Eyes extends EyesBase {
       return element.getSize();
     }).then(ds => {
       const elementRegion = new Region(p1.x, p1.y, ds.width, ds.height);
-      super.addMouseTriggerBase(action, elementRegion, elementRegion.getMiddleOffset());
+      EyesBase.prototype.addMouseTriggerBase.call(this, action, elementRegion, elementRegion.getMiddleOffset());
     });
   }
 
@@ -649,7 +649,7 @@ class Eyes extends EyesBase {
       return;
     }
 
-    super.addTextTriggerBase(control, text);
+    EyesBase.prototype.addTextTriggerBase.call(this, control, text);
   }
 
   /**
@@ -681,7 +681,7 @@ class Eyes extends EyesBase {
     return element.getLocation().then(p1 => {
       return element.getSize().then(ds => {
         const elementRegion = new Region(Math.ceil(p1.x), Math.ceil(p1.y), ds.width, ds.height);
-        super.addTextTrigger(elementRegion, text);
+        EyesBase.prototype.addTextTrigger.call(this, elementRegion, text);
       });
     });
   }
@@ -1141,7 +1141,7 @@ class Eyes extends EyesBase {
       mode = FailureReports.ON_CLOSE;
     }
 
-    super.setFailureReport(mode);
+    EyesBase.prototype.setFailureReport.call(this, mode);
   };
 
   // noinspection JSUnusedGlobalSymbols

@@ -1,4 +1,18 @@
 {
-  "presets": ["es2015"],
-  "plugins": ["transform-es2015-object-super", "transform-async-to-generator"]
+  "presets": [
+//    ["node6", "stage-0"]
+    ["es2015-node6", { "exclude": ["transform-es2015-classes"] }]
+//    ["es2015"]
+  ],
+/*
+  "plugins": [
+    ["transform-async-to-module-method", {
+      "module": "bluebird",
+      "method": "coroutine"
+    }],
+    ["transform-runtime"],
+    ["transform-es2015-object-super"]
+  ]
+*/
+  "plugins": ["transform-async-to-generator", "transform-runtime"]
 }
