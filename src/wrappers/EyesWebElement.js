@@ -353,25 +353,28 @@ class EyesWebElement extends WebElement {
   /**
    * @override
    * @inheritDoc
-   * @returns {RectangleSize}
+   * @returns {Promise<RectangleSize>}
    */
-  async getSize() {
-    let {width, height} = await EyesWebElement.prototype.getSize.call(this);
-    return new RectangleSize(width, height);
+  getSize() {
+    return this.getWebElement().getSize().then(res => {
+      return new RectangleSize(res.width, res.height);
+    });
   }
 
   // noinspection JSCheckFunctionSignatures
   /**
    * @override
    * @inheritDoc
-   * @returns {Location}
+   * @returns {Promise<Location>}
    */
-  async getLocation() {
+  getLocation() {
     // The workaround is similar to Java one, but in js we always get raw data with decimal value which we should round up.
-    let {x = 0, y = 0} = await EyesWebElement.prototype.getLocation.call(this);
-    x = Math.ceil(x);
-    y = Math.ceil(y);
-    return new Location(x, y);
+    return this.getWebElement().getLocation().then(value => {
+      const x = Math.ceil(value.x) || 0;
+      // noinspection JSSuspiciousNameCombination
+      const y = Math.ceil(value.y) || 0;
+      return new Location(x, y);
+    });
   }
 
   /**
