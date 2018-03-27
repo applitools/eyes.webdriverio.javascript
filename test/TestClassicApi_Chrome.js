@@ -17,15 +17,16 @@ describe(appName, function () {
     test.beforeTest({});
   });
 
-  beforeEach(async function () {
-    await test.beforeEachTest({appName: appName, testName: this.currentTest.title, browserOptions: Common.CHROME});
+  beforeEach(function() {
+    return test.beforeEachTest({appName: appName, testName: this.currentTest.title, browserOptions: Common.CHROME});
   });
 
-  afterEach(async function () {
-    try {
-      await test.afterEachTest();
-    } catch (ignored) {
-    }
+  afterEach(function () {
+    return test.afterEachTest().then(() => {
+
+    }).catch(e => {
+
+    });
   });
 
 

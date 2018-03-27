@@ -16,9 +16,9 @@ class CssTranslatePositionProvider extends PositionProvider {
    * @param {EyesJsExecutor} executor
    */
   constructor(logger, executor) {
-    super();
     ArgumentGuard.notNull(logger, "logger");
     ArgumentGuard.notNull(executor, "executor");
+    super();
 
     this._logger = logger;
     this._executor = executor;
@@ -40,33 +40,39 @@ class CssTranslatePositionProvider extends PositionProvider {
    * @override
    * @inheritDoc
    */
-  async setPosition(location) {
+  setPosition(location) {
     ArgumentGuard.notNull(location, "location");
 
+    const that = this;
     this._logger.verbose(`CssTranslatePositionProvider - Setting position to: ${location}`);
-    await EyesWDIOUtils.translateTo(this._executor, location);
-    this._logger.verbose("Done!");
-    this._lastSetPosition = location;
+    return EyesWDIOUtils.translateTo(this._executor, location).then(() => {
+      that._logger.verbose("Done!");
+      that._lastSetPosition = location;
+    });
   }
 
   /**
    * @override
    * @inheritDoc
    */
-  async getEntireSize() {
-    const entireSize = await EyesWDIOUtils.getCurrentFrameContentEntireSize(this._executor);
-    this._logger.verbose(`CssTranslatePositionProvider - Entire size: ${entireSize}`);
-    return entireSize;
+  getEntireSize() {
+    const that = this;
+    return EyesWDIOUtils.getCurrentFrameContentEntireSize(this._executor).then(entireSize => {
+      that._logger.verbose(`CssTranslatePositionProvider - Entire size: ${entireSize}`);
+      return entireSize;
+    });
   }
 
   /**
    * @override
    * @return {Promise.<CssTranslatePositionMemento>}
    */
-  async getState() {
-    const transforms = await EyesWDIOUtils.getCurrentTransform(this._executor);
-    this._logger.verbose("Current transform", transforms);
-    return new CssTranslatePositionMemento(transforms, this._lastSetPosition);
+  getState() {
+    const that = this;
+    return EyesWDIOUtils.getCurrentTransform(this._executor).then(transforms => {
+      that._logger.verbose("Current transform", transforms);
+      return new CssTranslatePositionMemento(transforms, that._lastSetPosition);
+    });
   }
 
   // noinspection JSCheckFunctionSignatures
@@ -75,10 +81,12 @@ class CssTranslatePositionProvider extends PositionProvider {
    * @param {CssTranslatePositionMemento} state The initial state of position
    * @return {Promise}
    */
-  async restoreState(state) {
-    await EyesWDIOUtils.setTransforms(this._executor, state.transform);
-    this._logger.verbose("Transform (position) restored.");
-    this._lastSetPosition = state.position;
+  restoreState(state) {
+    const that = this;
+    return EyesWDIOUtils.setTransforms(this._executor, state.transform).then(() => {
+      that._logger.verbose("Transform (position) restored.");
+      that._lastSetPosition = state.position;
+    });
   }
 }
 
