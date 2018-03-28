@@ -125,9 +125,7 @@ class Eyes extends EyesBase {
     ArgumentGuard.notNull(driver, 'driver');
 
     this.getPromiseFactory().setFactoryMethod(asyncAction => {
-      return driver.call(() => {
-        return new Promise(asyncAction);
-      });
+      return new Promise(asyncAction);
     });
 
     this._logger.verbose('Running using Webdriverio module');
@@ -161,18 +159,6 @@ class Eyes extends EyesBase {
       return that._driver;
     });
   }
-
-
-  /* todo remove this
-    async close(throwEx = true) {
-      try {
-        const results = await super.close.call(this, false);
-        return this.getPromiseFactory().resolve(results);
-      } catch (e) {
-        console.error(e);
-      }
-    }
-  */
 
 
   /**
@@ -625,7 +611,7 @@ class Eyes extends EyesBase {
       return;
     }
 
-    super.addMouseTriggerBase(action, control, cursor);
+    EyesBase.prototype.addMouseTriggerBase.call(this, action, control, cursor);
   }
 
   // noinspection JSUnusedGlobalSymbols
@@ -661,7 +647,7 @@ class Eyes extends EyesBase {
       return element.getSize();
     }).then(ds => {
       const elementRegion = new Region(p1.x, p1.y, ds.width, ds.height);
-      super.addMouseTriggerBase(action, elementRegion, elementRegion.getMiddleOffset());
+      EyesBase.prototype.addMouseTriggerBase.call(this, action, elementRegion, elementRegion.getMiddleOffset());
     });
   }
 
@@ -688,7 +674,7 @@ class Eyes extends EyesBase {
       return;
     }
 
-    super.addTextTriggerBase(control, text);
+    EyesBase.prototype.addTextTriggerBase.call(this, control, text);
   }
 
   /**
@@ -720,7 +706,7 @@ class Eyes extends EyesBase {
     return element.getLocation().then(p1 => {
       return element.getSize().then(ds => {
         const elementRegion = new Region(Math.ceil(p1.x), Math.ceil(p1.y), ds.width, ds.height);
-        super.addTextTrigger(elementRegion, text);
+        EyesBase.prototype.addTextTrigger.call(this, elementRegion, text);
       });
     });
   }
@@ -1204,7 +1190,7 @@ class Eyes extends EyesBase {
       mode = FailureReports.ON_CLOSE;
     }
 
-    super.setFailureReport(mode);
+    EyesBase.prototype.setFailureReport.call(this, mode);
   };
 
   // noinspection JSUnusedGlobalSymbols
@@ -1360,6 +1346,9 @@ class Eyes extends EyesBase {
     this._hideScrollbars = shouldHide;
   }
 
+  getScreenshotUrl() {
+    return this.getPromiseFactory().resolve(undefined);
+  }
 }
 
 /**

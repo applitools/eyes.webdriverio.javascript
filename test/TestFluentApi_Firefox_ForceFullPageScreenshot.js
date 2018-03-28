@@ -1,7 +1,7 @@
 'use strict';
 
 const {TestFluentApi} = require('./TestFluentApi');
-const Common = require('./lib/Common');
+const Common = require('./Common');
 
 
 const appName = 'Eyes Selenium SDK - Fluent API - ForceFPS';
@@ -10,7 +10,7 @@ const testedPageUrl = 'http://applitools.github.io/demo/TestPages/FramesTestPage
 const test = new Common({testedPageUrl});
 
 
-describe(appName, function () {
+describe.skip(appName, function () {
 
   before(function () {
     test.beforeTest({fps: true});

@@ -2,10 +2,9 @@
 
 const {deepEqual} = require('assert');
 const webdriverio = require('webdriverio');
-const {Eyes, StitchMode} = require('../../index');
+const {Eyes, NetHelper, StitchMode} = require('../index');
 const {BatchInfo, ConsoleLogHandler, FloatingMatchSettings, RectangleSize} = require('@applitools/eyes.sdk.core');
 const {URL} = require('url');
-const netHelper = require('./NetHelper');
 
 let batchInfo = new BatchInfo('Java3 Tests');
 
@@ -28,7 +27,11 @@ class Common {
   static get FIREFOX() {
     return {
       desiredCapabilities: {
-        browserName: 'firefox'
+        browserName: 'firefox',
+        "moz:firefoxOptions": {
+          // flag to activate Firefox headless mode (see https://github.com/mozilla/geckodriver/blob/master/README.md#firefox-capabilities for more details about moz:firefoxOptions)
+          args: ['-headless']
+        }
       }
     }
   };
@@ -125,6 +128,9 @@ class Common {
     }).then(() => {
       return that._browser.end();
     });
+  }
+
+  async afterTest() {
   }
 
   get eyes() {

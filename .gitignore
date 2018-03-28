@@ -35,8 +35,10 @@ node_modules
 package-lock.json
 yarn.lock
 
-tests
-
 
 #temp
 temp
+
+
+#lib
+lib

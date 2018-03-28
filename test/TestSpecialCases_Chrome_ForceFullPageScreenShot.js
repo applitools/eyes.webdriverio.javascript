@@ -1,7 +1,7 @@
 'use strict';
 
 const {TestSpecialCases} = require('./TestSpecialCases');
-const Common = require('./lib/Common');
+const Common = require('./Common');
 
 
 const appName = 'Eyes Selenium SDK - Special Cases - ForceFPS';
@@ -11,7 +11,7 @@ const testedPageUrl = 'http://applitools.github.io/demo/TestPages/WixLikeTestPag
 const test = new Common({testedPageUrl});
 
 
-describe(appName, function () {
+describe.skip(appName, function () {
 
   before(function () {
     test.beforeTest({fps: true});
