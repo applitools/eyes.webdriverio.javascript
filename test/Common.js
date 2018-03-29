@@ -86,18 +86,19 @@ class Common {
                      height: 600
                    }, testedPageUrl = this._testedPageUrl
                  }) {
-    const driver = webdriverio.remote(browserOptions);
-    this._browser = driver.init();
-    const viewportSize = rectangleSize ? new RectangleSize(rectangleSize) : null;
-    if (this._eyes.getForceFullPageScreenshot()) {
-      testName += '_FPS';
-    }
     const that = this;
-    return this._eyes.open(this._browser, appName, testName, viewportSize).then(() => {
-      return that._browser.url(testedPageUrl);
-    }).then(() => {
+    this._browser = webdriverio.remote(browserOptions);
+    return this._browser.init().then(() => {
+      const viewportSize = rectangleSize ? new RectangleSize(rectangleSize) : null;
+
+      if (that._eyes.getForceFullPageScreenshot()) {
+        testName += '_FPS';
+      }
+
+      return this._eyes.open(this._browser, appName, testName, viewportSize);
+    }).url(testedPageUrl).then(()=>{
       that._expectedFloatingsRegions = null;
-    })
+    });
   }
 
   afterEachTest() {
@@ -130,7 +131,7 @@ class Common {
     });
   }
 
-  async afterTest() {
+  afterTest() {
   }
 
   get eyes() {

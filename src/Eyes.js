@@ -320,7 +320,7 @@ class Eyes extends EyesBase {
       getRegion() {
         return that._targetElement.getLocation().then(p => {
           return that._targetElement.getSize().then(d => {
-            return new Region(Math.ceil(p.x), Math.ceil(p.y), d.width, d.height, CoordinatesType.CONTEXT_RELATIVE);
+            return new Region(Math.ceil(p.getX()), Math.ceil(p.getY()), d.getWidth(), d.getHeight(), CoordinatesType.CONTEXT_RELATIVE);
           });
         });
       }
@@ -485,8 +485,8 @@ class Eyes extends EyesBase {
               }).then(screenshot => {
                 that._logger.verbose("replacing regionToCheck");
                 that.setRegionToCheck(screenshot.getFrameWindow());
-
-                return screenshot.getFrameWindow();
+                // return screenshot.getFrameWindow();
+                return that.getPromiseFactory().resolve(Region.EMPTY);
               });
             });
           });
@@ -965,8 +965,7 @@ class Eyes extends EyesBase {
             that._imageProvider, that._regionToCheck, that._positionProvider,
             that.getElementPositionProvider(), scaleProviderFactory, that._cutProviderHandler.get(),
             that.getWaitBeforeScreenshots(), that._debugScreenshotsProvider, screenshotFactory,
-            that.getStitchOverlap(), that._regionPositionCompensation
-          );
+            that.getStitchOverlap(), that._regionPositionCompensation);
         }).then(entireFrameOrElement => {
           that._logger.verbose("Building screenshot object...");
           const screenshot = new EyesWDIOScreenshot(that._logger, that._driver, entireFrameOrElement, that.getPromiseFactory());
@@ -975,9 +974,7 @@ class Eyes extends EyesBase {
           result = screenshot;
         });
 
-      }
-
-      if (that._forceFullPageScreenshot || that._stitchContent) {
+      } else if (that._forceFullPageScreenshot || that._stitchContent) {
         that._logger.verbose("Full page screenshot requested.");
 
         // Save the current frame path.
@@ -1109,8 +1106,8 @@ class Eyes extends EyesBase {
         let elementLocation;
         return that._ensureFrameVisible().then(() => {
           return element.getLocation();
-        }).then(p => {
-          elementLocation = new Location(p.x, p.y);
+        }).then(l => {
+          elementLocation = l;
 
           if (originalFC.size() > 0 && !EyesWebElement.equals(element, originalFC.peek().getReference())) {
             return switchTo.frames(originalFC);

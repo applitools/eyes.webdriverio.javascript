@@ -476,10 +476,8 @@ class EyesWDIOUtils {
       if (retries === 0) {
         return browser.eyes.getPromiseFactory().reject("Failed to set browser size: retries is out.");
       }
-    }).then(() => {
+
       return EyesWDIOUtils._setBrowserSizeLoop(logger, browser, requiredSize, sleep, retries - 1);
-    }).catch(e => {
-      return browser.eyes.getPromiseFactory().reject(new Error(e));
     })
   }
 

@@ -55,6 +55,11 @@ class EyesWDIOScreenshot extends EyesScreenshot {
      *
      * @type {Region} */
     this._frameWindow = null;
+
+    /**
+     * @type {Region}
+     */
+    this._regionWindow = null;
   }
 
   // noinspection JSUnusedGlobalSymbols
@@ -275,7 +280,8 @@ class EyesWDIOScreenshot extends EyesScreenshot {
     // We calculate intersection based on as-is coordinates.
     const asIsSubScreenshotRegion = this.getIntersectedRegion(region, CoordinatesType.SCREENSHOT_AS_IS);
 
-    if (asIsSubScreenshotRegion.isEmpty() || (throwIfClipped && !asIsSubScreenshotRegion.getSize().equals(region.getSize()))) {
+    // todo isSizeEmpty
+    if ((asIsSubScreenshotRegion.getWidth() <= 0 && asIsSubScreenshotRegion.getHeight() <= 0) || (throwIfClipped && !asIsSubScreenshotRegion.getSize().equals(region.getSize()))) {
       throw new OutOfBoundsError(`Region [${region}] is out of screenshot bounds [${this._frameWindow}]`);
     }
 
@@ -317,6 +323,10 @@ class EyesWDIOScreenshot extends EyesScreenshot {
       if ((from === CoordinatesType.CONTEXT_RELATIVE || from === CoordinatesType.CONTEXT_AS_IS) && to === CoordinatesType.SCREENSHOT_AS_IS) {
         // If this is not a sub-screenshot, this will have no effect.
         result = result.offset(this._frameLocationInScreenshot.getX(), this._frameLocationInScreenshot.getY());
+
+        // FIXME: 18/03/2018 Region workaround
+        // If this is not a region subscreenshot, this will have no effect.
+        // result = result.offset(-this._regionWindow.getLeft(), -this._regionWindow.getTop());
       } else if (from === CoordinatesType.SCREENSHOT_AS_IS && (to === CoordinatesType.CONTEXT_RELATIVE || to === CoordinatesType.CONTEXT_AS_IS)) {
         result = result.offset(-this._frameLocationInScreenshot.getX(), -this._frameLocationInScreenshot.getY());
       }

@@ -35,6 +35,13 @@ shared.examplesFor('TestClassicApi', function (test) {
       equal(result.asExpected, true);
     });
   });
+
+  it.skip('TestCheckInnerFrame', function () {
+    // todo
+    // driver.switchTo().defaultContent();
+    // driver.switchTo().frame(webDriver.findElement(By.name("frame1")));
+    // eyes.checkFrame("frame1-1", "inner-frame");
+  });
 });
 
 module.exports.TestClassicApi = shared;

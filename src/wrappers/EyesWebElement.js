@@ -189,7 +189,7 @@ class EyesWebElement extends WebElement {
    * @return {Promise.<int>}
    */
   getClientWidth() {
-    return this.executeScript(JS_GET_SCROLL_WIDTH).then(r => {
+    return this.executeScript(JS_GET_CLIENT_WIDTH).then(r => {
       const {value} = r;
       return Math.ceil(parseFloat(value));
     });
@@ -199,7 +199,7 @@ class EyesWebElement extends WebElement {
    * @return {Promise.<int>}
    */
   getClientHeight() {
-    return this.executeScript(JS_GET_SCROLL_HEIGHT).then(r => {
+    return this.executeScript(JS_GET_CLIENT_HEIGHT).then(r => {
       const {value} = r;
       return Math.ceil(parseFloat(value));
     });
