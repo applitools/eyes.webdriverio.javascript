@@ -4,9 +4,7 @@
   "description": "Applitools Eyes SDK for Webdriverio ",
   "main": "index.js",
   "scripts": {
-    "compile": "babel --presets es2015-node6 --plugins transform-es2015-object-super -d lib/ src/",
-    "test": "npm run compile && mocha ./test/Test*.js -t 300000 --require babel-register",
-    "prepublish": "npm run compile"
+    "test": "mocha ./test/Test*.js -t 300000"
   },
   "author": "Applitools Team <team@applitools.com> (http://www.applitools.com/)",
   "license": "See LICENSE file",
@@ -16,12 +14,6 @@
     "webdriverio": "4.9.8"
   },
   "devDependencies": {
-    "babel-cli": "^6.26.0",
-    "babel-core": "^6.26.0",
-    "babel-plugin-transform-es2015-object-super": "^6.24.1",
-    "babel-preset-es2015": "^6.24.1",
-    "babel-preset-es2015-node6": "^0.4.0",
-    "chromedriver": "^2.35.0",
     "mocha": "4.0.1",
     "shared-examples-for": "^0.1.3"
   },

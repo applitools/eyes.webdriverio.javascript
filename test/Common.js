@@ -77,48 +77,34 @@ class Common {
     // this._eyes.setSaveDebugScreenshots(true);
   }
 
-  async beforeEachTest({
-                         appName,
-                         testName,
-                         browserOptions: browserOptions,
-                         rectangleSize = {
-                           width: 800,
-                           height: 600
-                         },
-                         testedPageUrl = this._testedPageUrl,
-                         test
-                       }) {
-    try {
-      if (process.env.SELENIUM_SERVER_URL) {
-        const seleniumServerUrl = new URL(process.env.SELENIUM_SERVER_URL);
-        // todo
-        // browserOptions.host = seleniumServerUrl.hostname;
-      }
-
-      const driver = webdriverio.remote(browserOptions);
-      this._browser = driver.init();
+  beforeEachTest({
+                   appName,
+                   testName,
+                   browserOptions: browserOptions,
+                   rectangleSize = {
+                     width: 800,
+                     height: 600
+                   }, testedPageUrl = this._testedPageUrl
+                 }) {
+    const that = this;
+    this._browser = webdriverio.remote(browserOptions);
+    return this._browser.init().then(() => {
       const viewportSize = rectangleSize ? new RectangleSize(rectangleSize) : null;
-      if (this._eyes.getForceFullPageScreenshot()) {
+
+      if (that._eyes.getForceFullPageScreenshot()) {
         testName += '_FPS';
       }
-      await this._eyes.open(this._browser, appName, testName, viewportSize);
-      await this._browser.url(testedPageUrl);
-      this._expectedFloatingsRegions = null;
-    } catch (e) {
-      if (test) {
-        test.skip();
-      } else {
-        throw e;
-      }
-    }
+
+      return this._eyes.open(this._browser, appName, testName, viewportSize);
+    }).url(testedPageUrl).then(()=>{
+      that._expectedFloatingsRegions = null;
+    });
   }
 
-  async afterEachTest() {
-    try {
-      /**@type {TestResults} */
-      const results = await this._eyes.close(false);
-
-      if (this._expectedFloatingsRegions) {
+  afterEachTest() {
+    const that = this;
+    return this._eyes.close(false).then(results => {
+      if (that._expectedFloatingsRegions) {
         const apiSessionUrl = results.getApiUrls().session;
 
         const apiSessionUri = new URL(apiSessionUrl);
@@ -126,24 +112,26 @@ class Common {
         apiSessionUri.searchParams.append('AccessToken', results.getSecretToken());
         apiSessionUri.searchParams.append('apiKey', this.eyes.getApiKey());
 
-        const res = await NetHelper.get(apiSessionUri);
+        return netHelper.get(apiSessionUri).then(res => {
+          const resultObject = JSON.parse(res);
+          const actualAppOutput = resultObject.actualAppOutput;
+          const f = actualAppOutput[0].imageMatchSettings.floating[0];
 
-        const resultObject = JSON.parse(res);
-        const actualAppOutput = resultObject.actualAppOutput;
-        const f = actualAppOutput[0].imageMatchSettings.floating[0];
+          const floating = new FloatingMatchSettings(f.left, f.top, f.width, f.height, f.maxUpOffset, f.maxDownOffset, f.maxLeftOffset, f.maxRightOffset);
 
-        const floating = new FloatingMatchSettings(f.left, f.top, f.width, f.height, f.maxUpOffset, f.maxDownOffset, f.maxLeftOffset, f.maxRightOffset);
-
-        deepEqual(this._expectedFloatingsRegions, floating);
+          deepEqual(that._expectedFloatingsRegions, floating);
+        });
+      } else {
+        return Promise.resolve()
       }
-    } catch (ignored) {
-      await this._eyes.abortIfNotClosed();
-    } finally {
-      await this._browser.end();
-    }
+    }).catch(() => {
+      return that._eyes.abortIfNotClosed();
+    }).then(() => {
+      return that._browser.end();
+    });
   }
 
-  async afterTest() {
+  afterTest() {
   }
 
   get eyes() {

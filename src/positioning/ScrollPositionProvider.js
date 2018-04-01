@@ -28,50 +28,48 @@ class ScrollPositionProvider extends PositionProvider {
    * @override
    * @inheritDoc
    */
-  async getCurrentPosition() {
-    let result;
-    try {
-      this._logger.verbose("ScrollPositionProvider - getCurrentPosition()");
-      result = await EyesWDIOUtils.getCurrentScrollPosition(this._executor);
+  getCurrentPosition() {
+    this._logger.verbose("ScrollPositionProvider - getCurrentPosition()");
+
+    const that = this;
+    return EyesWDIOUtils.getCurrentScrollPosition(this._executor).catch(err => {
+      throw new EyesDriverOperationError("Failed to extract current scroll position!", err);
+    }).then(result => {
+      that._logger.verbose(`Current position: ${result}`);
       return result;
-    } catch (e) {
-      throw new EyesDriverOperationError("Failed to extract current scroll position!", e);
-    } finally {
-      this._logger.verbose(`Current position: ${result}`);
-    }
+    });
   }
 
   /**
    * @override
    * @inheritDoc
    */
-  async setPosition(location) {
-    this._logger.verbose(`ScrollPositionProvider - Scrolling to ${location}`);
-    await EyesWDIOUtils.setCurrentScrollPosition(this._executor, location);
-    this._logger.verbose("ScrollPositionProvider - Done scrolling!");
+  setPosition(location) {
+    const that = this;
+    that._logger.verbose(`ScrollPositionProvider - Scrolling to ${location}`);
+    return EyesWDIOUtils.setCurrentScrollPosition(this._executor, location).then(() => {
+      that._logger.verbose("ScrollPositionProvider - Done scrolling!");
+    });
   }
 
   /**
    * @override
    * @inheritDoc
    */
-  async getEntireSize() {
-    let result;
-    try {
-      result = await EyesWDIOUtils.getCurrentFrameContentEntireSize(this._executor);
+  getEntireSize() {
+    const that = this;
+    return EyesWDIOUtils.getCurrentFrameContentEntireSize(this._executor).then(result => {
+      that._logger.verbose(`ScrollPositionProvider - Entire size: ${result}`);
       return result;
-    } finally {
-      this._logger.verbose(`ScrollPositionProvider - Entire size: ${result}`);
-    }
+    });
   }
 
   /**
    * @override
    * @return {Promise.<ScrollPositionMemento>}
    */
-  async getState() {
-    const position = await this.getCurrentPosition();
-    return new ScrollPositionMemento(position);
+  getState() {
+    return this.getCurrentPosition().then(position => new ScrollPositionMemento(position));
   }
 
   // noinspection JSCheckFunctionSignatures
@@ -80,9 +78,11 @@ class ScrollPositionProvider extends PositionProvider {
    * @param {ScrollPositionMemento} state The initial state of position
    * @return {Promise}
    */
-  async restoreState(state) {
-    await this.setPosition(new Location(state.getX(), state.getY()));
-    this._logger.verbose("Position restored.");
+  restoreState(state) {
+    const that = this;
+    return this.setPosition(new Location(state.getX(), state.getY())).then(() => {
+      that._logger.verbose("Position restored.");
+    });
   }
 
   /**
