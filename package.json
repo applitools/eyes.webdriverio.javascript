@@ -9,8 +9,9 @@
   "author": "Applitools Team <team@applitools.com> (http://www.applitools.com/)",
   "license": "Apache-2.0",
   "dependencies": {
-    "@applitools/eyes.sdk.core": "^1.0.0",
-    "webdriverio": "4.9.8"
+    "@applitools/eyes.sdk.core": "^1.5.1",
+    "chromedriver": "^2.37.0",
+    "webdriverio": "4.12.0"
   },
   "devDependencies": {
     "mocha": "4.0.1",

@@ -60,7 +60,7 @@ shared.examplesFor('TestFluentApi', function (test) {
     });
   });
 
-  it('TestCheckFrameInFrame_Fully_Fluent2', function () {
+  it.skip('TestCheckFrameInFrame_Fully_Fluent2', function () {
     return test.eyes.check("Fluent - Window with Ignore region 2", Target.window().fully()).then(result => {
       equal(result.asExpected, true);
 
