@@ -7,19 +7,21 @@ const {By, Target} = require('../index');
 
 shared.examplesFor('TestSpecialCases', function (test) {
 
-  it('TestCheckRegionInAVeryBigFrame', async function () {
-    const result = await test.eyes.check('map', Target.frame('frame1').region(By.tagName('img')));
-    equal(result.asExpected, true);
+  it('TestCheckRegionInAVeryBigFrame', function () {
+    return test.eyes.check('map', Target.frame('frame1').region(By.tagName('img'))).then(result => {
+      equal(result.asExpected, true);
+    });
   });
 
-  it('TestCheckRegionInAVeryBigFrameAfterManualSwitchToFrame', async function () {
+  it('TestCheckRegionInAVeryBigFrameAfterManualSwitchToFrame', function () {
     const driver = test.eyes.getDriver();
-    await driver.switchTo().frame("frame1");
-
-    const {value: element} = await test.browser.element('img');
-    driver.executeScript('arguments[0].scrollIntoView(true);', element);
-
-    await test.eyes.check('', Target.region(By.cssSelector('img')));
+    return driver.switchTo().frame("frame1").then(() => {
+      return test.browser.element('img');
+    }).then(r => {
+      const {value: element} = r;
+      driver.executeScript('arguments[0].scrollIntoView(true);', element);
+      return test.eyes.check('', Target.region(By.cssSelector('img')));
+    });
   });
 });
 

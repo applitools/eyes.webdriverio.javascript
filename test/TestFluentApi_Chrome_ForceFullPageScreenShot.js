@@ -1,5 +1,6 @@
 'use strict';
 
+const chromedriver = require('chromedriver');
 const {TestFluentApi} = require('./TestFluentApi');
 const Common = require('./Common');
 
@@ -13,17 +14,21 @@ const test = new Common({testedPageUrl});
 describe.skip(appName, function () {
 
   before(function () {
+    chromedriver.start();
     test.beforeTest({fps: true});
   });
 
-  beforeEach(async function () {
-    await test.beforeEachTest({appName: appName, testName: this.currentTest.title, browserOptions: Common.CHROME});
+  beforeEach( function () {
+    return test.beforeEachTest({appName: appName, testName: this.currentTest.title, browserOptions: Common.CHROME});
   });
 
-  afterEach(async function () {
-    await test.afterEachTest();
+  afterEach(function () {
+    return test.afterEachTest();
   });
 
+  after(function () {
+    chromedriver.stop();
+  });
 
   TestFluentApi.shouldBehaveLike('TestFluentApi', test);
 

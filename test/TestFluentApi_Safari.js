@@ -16,12 +16,12 @@ describe.skip(appName, function () {
     test.beforeTest({});
   });
 
-  beforeEach(async function () {
-    await test.beforeEachTest({appName: appName, testName: this.currentTest.title, browserOptions: Common.SAFARI});
+  beforeEach(function () {
+    return test.beforeEachTest({appName: appName, testName: this.currentTest.title, browserOptions: Common.SAFARI});
   });
 
-  afterEach(async function () {
-    await test.afterEachTest();
+  afterEach(function () {
+    return test.afterEachTest();
   });
 
 

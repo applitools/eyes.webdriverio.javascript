@@ -17,12 +17,12 @@ describe(appName, function () {
     test.beforeTest({fps: true});
   });
 
-  beforeEach(async function () {
-    await test.beforeEachTest({appName: appName, testName: this.currentTest.title, browserOptions: Common.FIREFOX});
+  beforeEach(function () {
+    return test.beforeEachTest({appName: appName, testName: this.currentTest.title, browserOptions: Common.FIREFOX});
   });
 
-  afterEach(async function () {
-    await test.afterEachTest();
+  afterEach(function () {
+    return test.afterEachTest();
   });
 
 
