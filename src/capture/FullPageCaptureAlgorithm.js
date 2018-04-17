@@ -55,27 +55,40 @@ class FullPageCaptureAlgorithm {
     this._logger.verbose(`Region to check: ${region}`);
 
     const that = this;
-    let originalPosition, currentPosition, /** @type {MutableImage} */ image, scaleProvider, pixelRatio, regionInScreenshot, entireSize;
+    let originalPosition,
+      originalStitchedState,
+      currentPosition,
+      /** @type {MutableImage} */ image,
+      scaleProvider,
+      pixelRatio,
+      regionInScreenshot,
+      entireSize;
 
     // Saving the original position (in case we were already in the outermost frame).
     return originProvider.getState().then(originalPosition_ => {
       originalPosition = originalPosition_;
 
-      return _setPositionLoop(originProvider, new Location(0, 0), 3, waitBeforeScreenshots, that._promiseFactory).then(currentPosition_ => {
-        currentPosition = currentPosition_;
+      return positionProvider.getState();
+    }).then(originalStitchedState_ => {
+      originalStitchedState = originalStitchedState_;
 
-        if (currentPosition.getX() !== 0 || currentPosition.getY() !== 0) {
-          return originProvider.restoreState(originalPosition).then(() => {
-            throw new Error("Couldn't set position to the top/left corner!");
-          });
-        }
-      });
+/*
+      return _setPositionLoop(originProvider, new Location(0, 0), 3, waitBeforeScreenshots, that._promiseFactory);
+    }).then(currentPosition_ => {
+      currentPosition = currentPosition_;
+
+      if (currentPosition.getX() !== 0 || currentPosition.getY() !== 0) {
+        return originProvider.restoreState(originalPosition).then(() => {
+          throw new Error("Couldn't set position to the top/left corner!");
+        });
+      }
     }).then(() => {
+*/
       that._logger.verbose("Getting top/left image...");
-      return imageProvider.getImage().then(image_ => {
-        image = image_;
-        return debugScreenshotsProvider.save(image, "original");
-      });
+      return imageProvider.getImage();
+    }).then(image_ => {
+      image = image_;
+      return debugScreenshotsProvider.save(image, "original");
     }).then(() => {
       // FIXME - scaling should be refactored
       scaleProvider = scaleProviderFactory.getScaleProvider(image.getWidth());
@@ -104,7 +117,7 @@ class FullPageCaptureAlgorithm {
         regionInScreenshot = _getRegionInScreenshot(that._logger, region, image, pixelRatio, screenshot, regionPositionCompensation);
       }
 
-      if (!regionInScreenshot.isEmpty()) {
+      if (!(regionInScreenshot.getWidth() <= 0 || regionInScreenshot.getHeight() <= 0)) {
         return image.getImagePart(regionInScreenshot).then(image_ => {
           image = image_;
           return _saveDebugScreenshotPart(debugScreenshotsProvider, image, region, "cropped");
@@ -121,6 +134,8 @@ class FullPageCaptureAlgorithm {
       const checkingAnElement = !region.isEmpty();
       return positionProvider.getEntireSize().then(entireSize_ => {
         entireSize = entireSize_;
+        that._logger.verbose(`Entire size of region context: ${entireSize}`);
+/*
         if (!checkingAnElement) {
           const spp = new ScrollPositionProvider(that._logger, that._jsExecutor);
           let originalCurrentPosition;
@@ -142,6 +157,11 @@ class FullPageCaptureAlgorithm {
             entireSize = new RectangleSize(image.getWidth(), image.getHeight());
           });
         }
+*/
+      }).catch(err => {
+        that._logger.log("WARNING: Failed to extract entire size of region context" + err);
+        that._logger.log(`Using image size instead: ${image.getWidth()}x${image.getHeight()}`);
+        entireSize = new RectangleSize(image.getWidth(), image.getHeight());
       });
     }).then(() => {
       // Notice that this might still happen even if we used "getImagePart", since "entirePageSize" might be that of a frame.
@@ -150,7 +170,7 @@ class FullPageCaptureAlgorithm {
       }
 
       // These will be used for storing the actual stitched size (it is sometimes less than the size extracted via "getEntireSize").
-      let lastSuccessfulLocation, lastSuccessfulPartSize, originalStitchedState, /** @type {MutableImage} */ partImage;
+      let lastSuccessfulLocation, lastSuccessfulPartSize, /** @type {MutableImage} */ partImage;
 
       // The screenshot part is a bit smaller than the screenshot size, in order to eliminate duplicate bottom scroll bars, as well as fixed position footers.
       const partImageSize = new RectangleSize(image.getWidth(), Math.max(image.getHeight() - stitchingOverlap, MIN_SCREENSHOT_PART_HEIGHT));
@@ -176,9 +196,6 @@ class FullPageCaptureAlgorithm {
         lastSuccessfulLocation = new Location(0, 0);
         lastSuccessfulPartSize = new RectangleSize(image.getWidth(), image.getHeight());
 
-        return positionProvider.getState().then(originalStitchedState_ => {
-          originalStitchedState = originalStitchedState_;
-        });
       }).then(() => {
         // Take screenshot and stitch for each screenshot part.
         that._logger.verbose("Getting the rest of the image parts...");
@@ -186,9 +203,9 @@ class FullPageCaptureAlgorithm {
         return imageParts.reduce((promise, partRegion) => {
           return promise.then(() => {
             // Skipping screenshot for 0,0 (already taken)
-            if (partRegion.getLeft() === 0 && partRegion.getTop() === 0) {
-              return;
-            }
+            // if (partRegion.getLeft() === 0 && partRegion.getTop() === 0) {
+            //   return;
+            // }
 
             that._logger.verbose("Taking screenshot for " + partRegion);
 

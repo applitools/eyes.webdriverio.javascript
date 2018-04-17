@@ -9,7 +9,7 @@ shared.examplesFor('TestSpecialCases', function (test) {
 
   it('TestCheckRegionInAVeryBigFrame', function () {
     return test.eyes.check('map', Target.frame('frame1').region(By.tagName('img'))).then(result => {
-      equal(result.asExpected, true);
+      equal(result.getAsExpected(), true);
     });
   });
 

@@ -11,7 +11,7 @@ class By {
   }
 
   static id(id) {
-    return new By('#' + id);
+    return new By('body #' + id);
   }
 
 

@@ -37,6 +37,7 @@ const StitchMode = require('./StitchMode');
 const Target = require('./fluent/Target');
 const WDIOJSExecutor = require('./WDIOJSExecutor');
 const WebDriver = require('./wrappers/WebDriver');
+const ReadOnlyPropertyHandler = require("@applitools/eyes.sdk.core/index").ReadOnlyPropertyHandler;
 
 const VERSION = require('../package.json').version;
 
@@ -108,6 +109,8 @@ class Eyes extends EyesBase {
     this._waitBeforeScreenshots = DEFAULT_WAIT_BEFORE_SCREENSHOTS;
     /** @type {int} */
     this._stitchingOverlap = DEFAULT_STITCHING_OVERLAP;
+    /** @type {Region} */
+    this._effectiveViewport = Region.EMPTY;
   }
 
 
@@ -257,11 +260,13 @@ class Eyes extends EyesBase {
 
       let switchedToFrameCount;
       return this._switchToFrame(checkSettings).then(switchedToFrameCount_ => {
-        that._regionToCheck = null;
         switchedToFrameCount = switchedToFrameCount_;
+        that._regionToCheck = null;
 
         if (targetRegion) {
-          return super.checkWindowBase(new RegionProvider(targetRegion, that.getPromiseFactory()), name, false, checkSettings);
+          return this._tryHideScrollbars().then(() => {
+            return super.checkWindowBase(new RegionProvider(targetRegion, that.getPromiseFactory()), name, false, checkSettings);
+          });
         }
 
         if (checkSettings) {
@@ -271,27 +276,48 @@ class Eyes extends EyesBase {
             targetElement = that._driver.findElement(targetSelector);
           }
 
-          if (targetElement) {
-            if (!targetElement.then) {
-              targetElement = Promise.resolve(targetElement);
-            }
-            return targetElement.then(targetElement => {
+          if (targetElement && !targetElement.then) {
+            targetElement = that.getPromiseFactory().resolve(targetElement);
+          } else {
+            targetElement = Promise.resolve(targetElement);
+          }
+
+          return targetElement.then(targetElement_ => {
+            targetElement = targetElement_;
+            if (targetElement) {
               that._targetElement = targetElement instanceof EyesWebElement ? targetElement : new EyesWebElement(that._logger, that._driver, targetElement);
               if (that._stitchContent) {
                 return that._checkElement(name, checkSettings);
               } else {
                 return that._checkRegion(name, checkSettings);
               }
-            });
-          } else if (checkSettings.getFrameChain().length > 0) {
-            if (that._stitchContent) {
-              return that._checkFullFrameOrElement(name, checkSettings);
+            } else if (checkSettings.getFrameChain().length > 0) {
+              if (that._stitchContent) {
+                return that._checkFullFrameOrElement(name, checkSettings);
+              } else {
+                return that._checkFrameFluent(name, checkSettings);
+              }
             } else {
-              return that._checkFrameFluent(name, checkSettings);
+              let res;
+              let originalPosition;
+
+              return this._driver.switchTo().defaultContent().then(() => {
+                return that._positionProvider.getState();
+              }).then(originalPosition_ => {
+                originalPosition = originalPosition_;
+                return that._positionProvider.setPosition(Location.ZERO);
+              }).then(() => {
+                return that._tryHideScrollbars();
+              }).then(() => {
+                return super.checkWindowBase(new NullRegionProvider(that.getPromiseFactory()), name, false, checkSettings);
+              }).then(res_ => {
+                res = res_;
+                return that._positionProvider.restoreState(originalPosition);
+              }).then(() => {
+                return res;
+              });
             }
-          } else {
-            return super.checkWindowBase(new NullRegionProvider(that.getPromiseFactory()), name, false, checkSettings);
-          }
+          });
         }
       }).then(r => {
         result = r;
@@ -339,13 +365,24 @@ class Eyes extends EyesBase {
    */
   _checkElement(name, checkSettings) {
     const eyesElement = this._targetElement;
-    const originalPositionProvider = this._positionProvider;
-    const scrollPositionProvider = new ScrollPositionProvider(this._logger, this._jsExecutor);
+
+    this._regionToCheck = null;
+    let originalPositionMemento;
 
     let result;
     const that = this;
     let originalScrollPosition, originalOverflow, error;
-    return scrollPositionProvider.getCurrentPosition().then(originalScrollPosition_ => {
+    const originalPositionProvider = this._positionProvider;
+    const scrollPositionProvider = new ScrollPositionProvider(this._logger, this._jsExecutor);
+
+    return this._positionProvider.getState().then(originalPositionMemento_ => {
+      originalPositionMemento = originalPositionMemento_;
+
+      return this._ensureElementVisible(eyesElement)
+    }).then(() => {
+      // return Promise.resolve().then(() => {
+      return scrollPositionProvider.getCurrentPosition();
+    }).then(originalScrollPosition_ => {
       originalScrollPosition = originalScrollPosition_;
       return eyesElement.getLocation();
     }).then(pl => {
@@ -355,6 +392,8 @@ class Eyes extends EyesBase {
       return eyesElement.getComputedStyle("display").then(displayStyle => {
         if (displayStyle !== "inline") {
           that._elementPositionProvider = new ElementPositionProvider(that._logger, that._driver, eyesElement);
+        } else {
+          that._elementPositionProvider = null;
         }
       }).then(() => {
         if (that._hideScrollbars) {
@@ -377,14 +416,18 @@ class Eyes extends EyesBase {
           });
         });
       }).then(() => {
-        const elementRegion = new Region(elementLocation, elementSize, CoordinatesType.CONTEXT_RELATIVE);
+        const elementRegion = new Region(elementLocation, elementSize, CoordinatesType.CONTEXT_AS_IS);
 
         that._logger.verbose("Element region: " + elementRegion);
 
         that._logger.verbose("replacing regionToCheck");
         that._regionToCheck = elementRegion;
 
-        return super.checkWindowBase(new NullRegionProvider(this.getPromiseFactory()), name, false, checkSettings);
+        if (!(that._effectiveViewport.getWidth() <= 0 || that._effectiveViewport.getHeight() <= 0)) {
+          that._regionToCheck.intersect(that._effectiveViewport);
+        }
+
+        return super.checkWindowBase(new NullRegionProvider(that.getPromiseFactory()), name, false, checkSettings);
       });
     }).catch(error_ => {
       error = error_;
@@ -399,6 +442,8 @@ class Eyes extends EyesBase {
       that._regionToCheck = null;
       that._elementPositionProvider = null;
 
+      return originalPositionProvider.restoreState(originalPositionMemento);
+    }).then(() => {
       return scrollPositionProvider.setPosition(originalScrollPosition);
     }).then(() => {
       if (error) {
@@ -737,7 +782,7 @@ class Eyes extends EyesBase {
   setViewportSize(viewportSize) {
     if (this._viewportSizeHandler instanceof ReadOnlyPropertyHandler) {
       this._logger.verbose("Ignored (viewport size given explicitly)");
-      return;
+      return Promise.resolve();
     }
 
     ArgumentGuard.notNull(viewportSize, "viewportSize");
@@ -752,6 +797,8 @@ class Eyes extends EyesBase {
         });
       });
     }).then(() => {
+      that._effectiveViewport = new Region(Location.ZERO, viewportSize);
+
       return that._driver.switchTo().frames(originalFrame);
     }).then(() => {
       that._viewportSizeHandler.set(new RectangleSize(viewportSize));
@@ -1109,7 +1156,9 @@ class Eyes extends EyesBase {
         }).then(l => {
           elementLocation = l;
 
-          if (originalFC.size() > 0 && !EyesWebElement.equals(element, originalFC.peek().getReference())) {
+          return EyesWebElement.equals(element, originalFC.peek());
+        }).then(equals => {
+          if (originalFC.size() > 0 && !equals) {
             return switchTo.frames(originalFC);
           }
         }).then(() => {
@@ -1128,7 +1177,7 @@ class Eyes extends EyesBase {
     const originalFC = new FrameChain(this._logger, this._driver.getFrameChain());
     const fc = new FrameChain(this._logger, this._driver.getFrameChain());
     // noinspection JSValidateTypes
-    return ensureFrameVisibleLoop(this._positionProvider, fc, this._driver.switchTo(), this.getPromiseFactory()).then(() => {
+    return ensureFrameVisibleLoop(this, this._positionProvider, fc, this._driver.switchTo(), this.getPromiseFactory()).then(() => {
       return that._driver.switchTo().frames(originalFC);
     }).then(() => originalFC);
   }
@@ -1152,13 +1201,6 @@ class Eyes extends EyesBase {
       });
     });
   }
-
-
-  setViewportSize(size) {
-    // noinspection JSUnusedGlobalSymbols
-    this._viewportSize = size;
-    return EyesWDIOUtils.setViewportSize(this._logger, this._driver, size);
-  };
 
 
   // noinspection JSUnusedGlobalSymbols
@@ -1349,20 +1391,25 @@ class Eyes extends EyesBase {
 }
 
 /**
+ * @param that
  * @param positionProvider
  * @param frameChain
  * @param switchTo
  * @param promiseFactory
  * @return {Promise}
  */
-function ensureFrameVisibleLoop(positionProvider, frameChain, switchTo, promiseFactory) {
+function ensureFrameVisibleLoop(that, positionProvider, frameChain, switchTo, promiseFactory) {
   return promiseFactory.resolve().then(() => {
     if (frameChain.size() > 0) {
       return switchTo.parentFrame().then(() => {
         const frame = frameChain.pop();
+
+        const reg = new Region(Location.ZERO, frame.getInnerSize());
+        that._effectiveViewport.intersect(reg);
+
         return positionProvider.setPosition(frame.getLocation());
       }).then(() => {
-        return ensureFrameVisibleLoop(positionProvider, frameChain, switchTo, promiseFactory);
+        return ensureFrameVisibleLoop(that, positionProvider, frameChain, switchTo, promiseFactory);
       });
     }
   });

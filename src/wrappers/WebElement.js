@@ -2,6 +2,7 @@
 
 
 const command = require('../services/selenium/Command');
+const EyesWebElement = require('./EyesWebElement');
 
 /**
  * Wrapper for Webdriverio element
@@ -81,12 +82,16 @@ class WebElement {
 
 
   static equals(a, b) {
-    if (a === b) {
-      return true;
-    }
-
     if (a == undefined || b == undefined) {
       return false;
+    }
+
+    if (!(a instanceof this) || !(b instanceof this)) {
+      return false;
+    }
+
+    if (a === b) {
+      return true;
     }
 
     const elementA = a.getWebElement().element.ELEMENT;
@@ -102,6 +107,8 @@ class WebElement {
     return a._driver.executeCommand(cmd).then(r => {
       const {value} = r;
       return value;
+    }).catch(e => {
+      throw e;
     });
   }
 

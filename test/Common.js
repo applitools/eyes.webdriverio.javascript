@@ -84,19 +84,21 @@ class Common {
                    rectangleSize = {
                      width: 800,
                      height: 600
-                   }, testedPageUrl = this._testedPageUrl
+                   }, testedPageUrl = this._testedPageUrl,
+                   platform = Common.getDefaultPlatform()
                  }) {
     const that = this;
     this._browser = webdriverio.remote(browserOptions);
     return this._browser.init().then(() => {
       const viewportSize = rectangleSize ? new RectangleSize(rectangleSize) : null;
 
+      testName += `_${platform}`;
       if (that._eyes.getForceFullPageScreenshot()) {
         testName += '_FPS';
       }
 
       return this._eyes.open(this._browser, appName, testName, viewportSize);
-    }).url(testedPageUrl).then(()=>{
+    }).url(testedPageUrl).then(() => {
       that._expectedFloatingsRegions = null;
     });
   }
@@ -149,6 +151,24 @@ class Common {
   setExpectedFloatingsRegions(expectedFloatingsRegions) {
     /** @type {FloatingMatchSettings} */
     this._expectedFloatingsRegions = expectedFloatingsRegions;
+  }
+
+  static getDefaultPlatform() {
+    let platform = process.platform;
+
+    switch(process.platform){
+      case 'win32':
+        platform = 'Windows';
+        break;
+      case 'linux':
+        platform = 'Linux';
+        break;
+      case 'darwin':
+        platform = 'macOS';
+        break;
+    }
+
+    return platform;
   }
 
 }

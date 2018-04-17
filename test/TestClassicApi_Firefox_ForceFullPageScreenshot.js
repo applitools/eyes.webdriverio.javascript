@@ -1,5 +1,6 @@
 'use strict';
 
+const geckodriver = require('geckodriver');
 const {TestClassicApi} = require('./TestClassicApi');
 const Common = require('./Common');
 
@@ -14,6 +15,7 @@ const test = new Common({testedPageUrl});
 describe(appName, function () {
 
   before(function () {
+    geckodriver.start();
     test.beforeTest({fps: true});
   });
 
@@ -25,6 +27,9 @@ describe(appName, function () {
     return test.afterEachTest();
   });
 
+  after(function () {
+    geckodriver.stop();
+  });
 
   TestClassicApi.shouldBehaveLike('TestClassicApi', test);
 

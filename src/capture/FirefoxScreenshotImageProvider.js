@@ -38,9 +38,10 @@ class FirefoxScreenshotImageProvider extends ImageProvider {
       return that._eyes.getDebugScreenshotsProvider().save(image, "FIREFOX_FRAME").then(() => {
         const frameChain = that._tsInstance.getFrameChain();
         if (frameChain.size() > 0) {
+          let fullImage;
           //Frame frame = frameChain.peek();
           //Region region = eyes.getRegionToCheck();
-          const screenshot = new EyesWDIOScreenshot(that._logger, that._eyes, image, that._eyes.getPromiseFactory());
+          const screenshot = new EyesWDIOScreenshot(that._logger, that._tsInstance, image, that._eyes.getPromiseFactory());
           return screenshot.init().then(() => {
             return that._eyes.getViewportSize();
           }).then(viewportSize => {
@@ -51,7 +52,11 @@ class FirefoxScreenshotImageProvider extends ImageProvider {
             viewportSize = viewportSize.scale(scaleRatio);
             loc = loc.scale(scaleRatio);
 
-            return image.crop(new Region(loc, viewportSize));
+            fullImage = MutableImage.newImage(viewportSize.getWidth(), viewportSize.getHeight(), that._eyes.getPromiseFactory());
+
+            return fullImage.copyRasterData(loc.getX(), loc.getY(), image);
+          }).then(() => {
+            return fullImage;
           });
         }
 
