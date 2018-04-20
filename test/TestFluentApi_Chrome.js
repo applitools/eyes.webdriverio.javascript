@@ -11,7 +11,7 @@ const testedPageUrl = 'http://applitools.github.io/demo/TestPages/FramesTestPage
 const test = new Common({testedPageUrl});
 
 
-describe.skip(appName, function () {
+describe(appName, function () {
 
   before(function () {
     chromedriver.start();
@@ -34,5 +34,4 @@ describe.skip(appName, function () {
   });
 
   TestFluentApi.shouldBehaveLike('TestFluentApi', test);
-
 });

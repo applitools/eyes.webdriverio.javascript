@@ -7,14 +7,17 @@ const {FloatingMatchSettings, Region} = require('@applitools/eyes.sdk.core');
 
 
 shared.examplesFor('TestFluentApi', function (test) {
+
   it('TestCheckWindowWithIgnoreRegion_Fluent', function () {
-    return test.eyes.getDriver().webDriver.findElement(By.tagName("input")).sendKeys("My Input").then(() => {
+    return test.eyes.getDriver().webDriver.findElement(By.tagName('input')).then(element => {
+      return element.sendKeys('My Input');
+    }).then(() => {
       return test.eyes.check('Fluent - Window with Ignore region', Target.window()
         .fully()
         .timeout(5000)
-        .ignore(new Region(50, 50, 100, 100))).then(result => {
-        equal(result.getAsExpected(), true);
-      });
+        .ignore(new Region(50, 50, 100, 100)));
+    }).then(result => {
+      equal(result.getAsExpected(), true);
     });
   });
 
@@ -93,17 +96,14 @@ shared.examplesFor('TestFluentApi', function (test) {
   });
 
   it('TestCheckElementFully_Fluent', function () {
-    return test.browser.element('#overflowing-div-image').then(r_ => {
-      const {value: element} = r_;
-      const webElement = new WebElement(test.eyes.getDriver(), element);
-
+    return test.eyes.getDriver().webDriver.findElement(By.id('overflowing-div-image')).then(webElement => {
       return test.eyes.check('Fluent - Region by element - fully', Target.region(webElement).fully());
     }).then(result => {
       equal(result.getAsExpected(), true);
     });
   });
 
-  it('TestCheckElementWithIgnoreRegionByElement_Fluent', function () {
+  it('TestCheckElementWithIgnoreRegionByElementOutsideTheViewport_Fluent', function () {
     let element;
     return test.eyes.getDriver().webDriver.findElement(By.id('overflowing-div-image')).then(element_ => {
       element = element_;
@@ -115,13 +115,12 @@ shared.examplesFor('TestFluentApi', function (test) {
     });
   });
 
-  it('TestCheckElement_Fluent', function () {
-    return test.browser.element('#overflowing-div-image').then(r_ => {
-      const {value: element} = r_;
-      const webElement = new WebElement(test.eyes.getDriver(), element);
-      return test.eyes.check("Fluent - Region by element", Target.region(webElement));
+  it('TestCheckElementWithIgnoreRegionBySameElement_Fluent', function () {
+    return test.eyes.getDriver().webDriver.findElement(By.id('overflowing-div-image')).then(webElement => {
+      return test.eyes.check("Fluent - Region by element", Target.region(webElement).ignore(webElement));
     }).then(result => {
       equal(result.getAsExpected(), true);
+      test.setExpectedIgnoreRegions(new Region(0, 0, 304, 184));
     });
   });
 });

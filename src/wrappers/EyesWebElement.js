@@ -331,13 +331,8 @@ class EyesWebElement extends WebElement {
    * @Override
    * @inheritDoc
    */
-  sendKeys(...keysToSend) {
-    const that = this;
-    return keysToSend.reduce((promise, keys) => {
-      return promise.then(() => that._eyesWebDriver.eyes.addTextTriggerForElement(this.getWebElement(), String(keys)));
-    }, that._eyesWebDriver.getPromiseFactory().resolve()).then(() => {
-      return that.getWebElement().sendKeys(...keysToSend);
-    });
+  sendKeys(keysToSend) {
+    return super.sendKeys(keysToSend);
   }
 
   /**

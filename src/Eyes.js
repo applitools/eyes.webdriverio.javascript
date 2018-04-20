@@ -253,7 +253,7 @@ class Eyes extends EyesBase {
 
     let result;
     const that = this;
-    return that.getPromiseFactory().resolve().then(() => {
+    return that._positionProvider.setPosition(Location.ZERO).then(() => {
       that._logger.verbose(`check("${name}", checkSettings) - begin`);
       that._stitchContent = checkSettings.getStitchContent();
       const targetRegion = checkSettings.getTargetRegion();
@@ -378,7 +378,7 @@ class Eyes extends EyesBase {
     return this._positionProvider.getState().then(originalPositionMemento_ => {
       originalPositionMemento = originalPositionMemento_;
 
-      return this._ensureElementVisible(eyesElement)
+      return this._ensureElementVisible(eyesElement);
     }).then(() => {
       // return Promise.resolve().then(() => {
       return scrollPositionProvider.getCurrentPosition();

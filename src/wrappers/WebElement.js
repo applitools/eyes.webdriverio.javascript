@@ -114,6 +114,18 @@ class WebElement {
 
 
   /**
+   * @param keysToSend
+   * @returns {Promise}
+   */
+  sendKeys(keysToSend) {
+    const that = this;
+    return that._driver.remoteWebDriver.elementIdClick(this._element.ELEMENT).then(() => {
+      return that._driver.remoteWebDriver.keys(keysToSend);
+    });
+  }
+
+
+  /**
    * @returns {EyesWebDriver}
    */
   getDriver() {

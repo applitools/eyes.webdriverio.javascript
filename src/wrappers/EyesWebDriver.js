@@ -31,7 +31,9 @@ class EyesWebDriver {
    * @param {Object} logger
    **/
   constructor(webDriver, eyes, logger) {
+    /** @type {WebDriver} */
     this._tsInstance = webDriver;
+    /** @type {Eyes} */
     this._eyes = eyes;
     this._logger = logger;
 

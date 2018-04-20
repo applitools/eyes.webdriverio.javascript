@@ -11,7 +11,7 @@ const testedPageUrl = 'http://applitools.github.io/demo/TestPages/FramesTestPage
 const test = new Common({testedPageUrl});
 
 
-describe.skip(appName, function () {
+describe(appName, function () {
 
   before(function () {
     chromedriver.start();
@@ -19,7 +19,10 @@ describe.skip(appName, function () {
   });
 
   beforeEach( function () {
-    return test.beforeEachTest({appName: appName, testName: this.currentTest.title, browserOptions: Common.CHROME});
+    const browserOptions = Common.CHROME;
+    browserOptions.port = '9515';
+    browserOptions.path = '/';
+    return test.beforeEachTest({appName: appName, testName: this.currentTest.title, browserOptions: browserOptions});
   });
 
   afterEach(function () {

@@ -1,10 +1,11 @@
 'use strict';
 
-const {deepEqual} = require('assert');
+const {AssertionError, deepEqual} = require('assert');
 const webdriverio = require('webdriverio');
-const {Eyes, StitchMode} = require('../index');
-const {BatchInfo, ConsoleLogHandler, FloatingMatchSettings, RectangleSize} = require('@applitools/eyes.sdk.core');
-const {URL} = require('url');
+const {Eyes, NetHelper, StitchMode} = require('../index');
+const {BatchInfo, ConsoleLogHandler, FloatingMatchSettings, metadata, RectangleSize, Region} = require('@applitools/eyes.sdk.core');
+const {ActualAppOutput, ImageMatchSettings, SessionResults} = metadata;
+const url = require('url');
 
 let batchInfo = new BatchInfo('Java3 Tests');
 
@@ -104,32 +105,52 @@ class Common {
   }
 
   afterEachTest() {
+    let error;
     const that = this;
     return this._eyes.close(false).then(results => {
-      if (that._expectedFloatingsRegions) {
-        const apiSessionUrl = results.getApiUrls().session;
 
-        const apiSessionUri = new URL(apiSessionUrl);
-        apiSessionUri.searchParams.append('format', 'json');
-        apiSessionUri.searchParams.append('AccessToken', results.getSecretToken());
-        apiSessionUri.searchParams.append('apiKey', this.eyes.getApiKey());
+      const query = `?format=json&AccessToken=${results.getSecretToken()}&apiKey=${that.eyes.getApiKey()}`;
+      const apiSessionUrl = results.getApiUrls().getSession() + query;
 
-        return netHelper.get(apiSessionUri).then(res => {
-          const resultObject = JSON.parse(res);
-          const actualAppOutput = resultObject.actualAppOutput;
-          const f = actualAppOutput[0].imageMatchSettings.floating[0];
+      const apiSessionUri = url.parse(apiSessionUrl);
+      // apiSessionUri.searchParams.append('format', 'json');
+      // apiSessionUri.searchParams.append('AccessToken', results.getSecretToken());
+      // apiSessionUri.searchParams.append('apiKey', this.eyes.getApiKey());
 
+      return NetHelper.get(apiSessionUri).then(res => {
+        const resultObject = JSON.parse(res);
+        /** @type {SessionResults} */
+        const sessionResults = SessionResults.fromObject(resultObject);
+        /** @type {ActualAppOutput} */
+        const actualAppOutput = ActualAppOutput.fromObject(sessionResults.getActualAppOutput()[0]);
+        /** @type {ImageMatchSettings} */
+        const imageMatchSettings = ImageMatchSettings.fromObject(actualAppOutput.getImageMatchSettings());
+
+        if (that._expectedFloatingsRegions) {
+          const f = imageMatchSettings.getFloating()[0];
           const floating = new FloatingMatchSettings(f.left, f.top, f.width, f.height, f.maxUpOffset, f.maxDownOffset, f.maxLeftOffset, f.maxRightOffset);
 
-          deepEqual(that._expectedFloatingsRegions, floating);
-        });
-      } else {
-        return Promise.resolve()
+          deepEqual(that._expectedFloatingsRegions, floating, 'Floating regions lists differ');
+        }
+
+        if (that._expectedIgnoreRegions) {
+          const ignoreRegions = Region.fromObject(imageMatchSettings.getIgnore()[0]);
+
+          deepEqual(that._expectedIgnoreRegions, ignoreRegions, 'Ignore regions lists differ');
+        }
+      });
+    }).catch(e => {
+      if (e instanceof AssertionError) {
+        error = e;
       }
-    }).catch(() => {
+
       return that._eyes.abortIfNotClosed();
     }).then(() => {
       return that._browser.end();
+    }).then(() => {
+      if (error) {
+        throw error;
+      }
     });
   }
 
@@ -145,7 +166,13 @@ class Common {
   }
 
   /**
-   *
+   * @param {Region} expectedIgnoreRegions
+   */
+  setExpectedIgnoreRegions(expectedIgnoreRegions) {
+    this._expectedIgnoreRegions = expectedIgnoreRegions;
+  }
+
+  /**
    * @param {FloatingMatchSettings} expectedFloatingsRegions
    */
   setExpectedFloatingsRegions(expectedFloatingsRegions) {
@@ -153,10 +180,11 @@ class Common {
     this._expectedFloatingsRegions = expectedFloatingsRegions;
   }
 
+
   static getDefaultPlatform() {
     let platform = process.platform;
 
-    switch(process.platform){
+    switch (process.platform) {
       case 'win32':
         platform = 'Windows';
         break;
