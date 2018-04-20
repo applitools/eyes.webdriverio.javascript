@@ -26,12 +26,8 @@ class WDIOJSExecutor extends EyesJsExecutor {
    * @override
    * @inheritDoc
    */
-  async executeScript(script, ...args) {
-    try {
-      return await this._driver.remoteWebDriver.execute(script, args);
-    } catch (e) {
-      console.error(e);
-    }
+  executeScript(script, ...args) {
+    return this._driver.remoteWebDriver.execute(script, args);
   }
 
   /**

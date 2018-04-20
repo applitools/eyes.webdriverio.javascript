@@ -20,9 +20,11 @@ class WebDriver {
    * @param {By} locator
    * @return {WebElement}
    */
-  async findElement(locator) {
-    const {value: element} = await this._remoteWebDriver.element(locator.value);
-    return new WebElement(this, element);
+  findElement(locator) {
+    return this._remoteWebDriver.element(locator.value).then(r => {
+      const {value: element} = r;
+      return new WebElement(this, element);
+    });
   }
 
 
@@ -30,7 +32,7 @@ class WebDriver {
    * Save a screenshot as a base64 encoded PNG
    * @return {Promise.Buffer} returns base64 string buffer
    */
-  async takeScreenshot() {
+  takeScreenshot() {
     return this._remoteWebDriver.saveScreenshot();
   }
 
@@ -73,14 +75,15 @@ class WebDriver {
   }
 
 
-  getCapabilities() {}
+  getCapabilities() {
+  }
 
 
   /**
    * @param {Command} cmd
    * @returns {Promise<void>}
    */
-  async executeCommand(cmd) {
+  executeCommand(cmd) {
     const seleniumService = new SeleniumService(this.remoteWebDriver);
     return seleniumService.execute(cmd);
   }

@@ -13,7 +13,7 @@ class SeleniumService {
    * @param cmd
    * returns {Promise}
    */
-  async execute(cmd) {
+  execute(cmd) {
     const requestHandler = this._driver.requestHandler;
     cmd.setParameter('sessionId', requestHandler.sessionID);
 

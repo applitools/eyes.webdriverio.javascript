@@ -1,5 +1,6 @@
 'use strict';
 
+const chromedriver = require('chromedriver');
 const {TestSpecialCases} = require('./TestSpecialCases');
 const Common = require('./Common');
 
@@ -14,17 +15,24 @@ const test = new Common({testedPageUrl});
 describe.skip(appName, function () {
 
   before(function () {
+    chromedriver.start();
     test.beforeTest({});
   });
 
-  beforeEach(async function () {
-    await test.beforeEachTest({appName: appName, testName: this.currentTest.title, browserOptions: Common.CHROME});
+  beforeEach(function () {
+    const chrome = Common.CHROME;
+    chrome.port = '9515';
+    chrome.path = '/';
+    return test.beforeEachTest({appName: appName, testName: this.currentTest.title, browserOptions: chrome});
   });
 
-  afterEach(async function () {
-    await test.afterEachTest();
+  afterEach(function () {
+    return test.afterEachTest();
   });
 
+  after(function () {
+    chromedriver.stop();
+  });
 
   TestSpecialCases.shouldBehaveLike('TestSpecialCases', test);
 
