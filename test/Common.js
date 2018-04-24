@@ -90,7 +90,7 @@ class Common {
                  }) {
 
     if (process.env.SELENIUM_SERVER_URL) {
-      const seleniumServerUrl = new URL(process.env.SELENIUM_SERVER_URL);
+      const seleniumServerUrl = url.parse(process.env.SELENIUM_SERVER_URL);
       // todo
       // browserOptions.host = seleniumServerUrl.hostname;
     }
@@ -98,7 +98,7 @@ class Common {
     if (process.env.SELENIUM_SERVER_URL === 'http://ondemand.saucelabs.com/wd/hub'
       && process.env.SAUCE_USERNAME && process.env.SAUCE_ACCESS_KEY) {
 
-      const seleniumServerUrl = new URL(process.env.SELENIUM_SERVER_URL);
+      const seleniumServerUrl = url.parse(process.env.SELENIUM_SERVER_URL);
       browserOptions.host = seleniumServerUrl.hostname;
 
       browserOptions.port = '80';

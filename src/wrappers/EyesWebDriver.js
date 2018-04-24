@@ -148,7 +148,7 @@ class EyesWebDriver {
       let {value: userAgent} = res_;
       that._logger.verbose("user agent: " + userAgent);
       return userAgent;
-    }).catch(() => {
+    }).catch(e => {
       this._logger.verbose("Failed to obtain user-agent string");
       return null;
     });

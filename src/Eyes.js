@@ -27,7 +27,6 @@ const RegionPositionCompensationFactory = require('./positioning/RegionPositionC
 const EyesWebDriver = require('./wrappers/EyesWebDriver');
 const EyesWebElement = require('./wrappers/EyesWebElement');
 const EyesWDIOScreenshot = require('./capture/EyesWDIOScreenshot');
-const Frame = require('./frames/Frame');
 const FrameChain = require('./frames/FrameChain');
 const FullPageCaptureAlgorithm = require('./capture/FullPageCaptureAlgorithm');
 const EyesWDIOScreenshotFactory = require('./capture/EyesWDIOScreenshotFactory');
@@ -253,7 +252,6 @@ class Eyes extends EyesBase {
 
     const that = this;
     let result;
-    const that = this;
     return that._positionProvider.setPosition(Location.ZERO).then(() => {
       that._logger.verbose(`check("${name}", checkSettings) - begin`);
       that._stitchContent = checkSettings.getStitchContent();
