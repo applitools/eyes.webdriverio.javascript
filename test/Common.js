@@ -89,12 +89,6 @@ class Common {
                    platform = Common.getDefaultPlatform()
                  }) {
 
-    if (process.env.SELENIUM_SERVER_URL) {
-      const seleniumServerUrl = url.parse(process.env.SELENIUM_SERVER_URL);
-      // todo
-      // browserOptions.host = seleniumServerUrl.hostname;
-    }
-
     if (process.env.SELENIUM_SERVER_URL === 'http://ondemand.saucelabs.com/wd/hub'
       && process.env.SAUCE_USERNAME && process.env.SAUCE_ACCESS_KEY) {
 
@@ -107,6 +101,7 @@ class Common {
       browserOptions.desiredCapabilities.baseUrl = `http://${process.env.SAUCE_USERNAME}:${process.env.SAUCE_ACCESS_KEY}@ondemand.saucelabs.com:80/wd/hub`;
       browserOptions.desiredCapabilities.username = process.env.SAUCE_USERNAME;
       browserOptions.desiredCapabilities.accesskey = process.env.SAUCE_ACCESS_KEY;
+      browserOptions.desiredCapabilities.platform = platform;
     }
 
     const that = this;
