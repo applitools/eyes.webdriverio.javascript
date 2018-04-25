@@ -1,13 +1,14 @@
 {
   "name": "@applitools/eyes.webdriverio",
-  "version": "0.0.1",
+  "version": "1.1.0",
   "description": "Applitools Eyes SDK for Webdriverio ",
   "main": "index.js",
   "scripts": {
     "test": "mocha ./test/Test*.js -t 300000"
   },
   "author": "Applitools Team <team@applitools.com> (http://www.applitools.com/)",
-  "license": "Apache-2.0",
+  "license": "See LICENSE file",
+  "repository": "https://github.com/applitools/eyes.webdriverio.javascript",
   "dependencies": {
     "@applitools/eyes.sdk.core": "^1.5.1",
     "chromedriver": "^2.37.0",
