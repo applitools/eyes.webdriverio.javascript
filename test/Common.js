@@ -2,6 +2,8 @@
 
 const {AssertionError, deepEqual} = require('assert');
 const webdriverio = require('webdriverio');
+const chromedriver = require('chromedriver');
+const geckodriver = require('geckodriver');
 const {Eyes, NetHelper, StitchMode} = require('../index');
 const {BatchInfo, ConsoleLogHandler, FloatingMatchSettings, metadata, RectangleSize, Region} = require('@applitools/eyes.sdk.core');
 const {ActualAppOutput, ImageMatchSettings, SessionResults} = metadata;
@@ -49,11 +51,13 @@ class Common {
    *
    * @param {Object} options
    */
-  constructor({testedPageUrl}) {
+  constructor({testedPageUrl, browserName}) {
     this._eyes = null;
     this._browser = null;
+    this._browserName = browserName;
     this._testedPageUrl = testedPageUrl;
     this._forceFullPageScreenshot = false;
+    this._seleniumStandAloneMode = Common.getSeleniumStandAloneMode();
   }
 
   beforeTest({batchName: batchName, fps = false, stitchMode = StitchMode.CSS}) {
@@ -76,6 +80,15 @@ class Common {
     this._eyes.setBatch(batchInfo);
 
     // this._eyes.setSaveDebugScreenshots(true);
+
+    if (!this._seleniumStandAloneMode && !(process.env.SELENIUM_SERVER_URL === 'http://ondemand.saucelabs.com/wd/hub'
+        && process.env.SAUCE_USERNAME && process.env.SAUCE_ACCESS_KEY)) {
+      if (this._browserName === 'chrome') {
+        chromedriver.start();
+      } else if (this._browserName === 'firefox') {
+        geckodriver.start();
+      }
+    }
   }
 
   beforeEachTest({
@@ -102,6 +115,13 @@ class Common {
       browserOptions.desiredCapabilities.username = process.env.SAUCE_USERNAME;
       browserOptions.desiredCapabilities.accesskey = process.env.SAUCE_ACCESS_KEY;
       browserOptions.desiredCapabilities.platform = platform;
+    } else if (!this._seleniumStandAloneMode) {
+      if (browserOptions.desiredCapabilities.browserName === 'chrome') {
+        browserOptions.port = '9515';
+        browserOptions.path = '/';
+      } else if (browserOptions.desiredCapabilities.browserName === 'firefox') {
+        browserOptions.path = '/';
+      }
     }
 
     const that = this;
@@ -171,6 +191,14 @@ class Common {
   }
 
   afterTest() {
+    if (!this._seleniumStandAloneMode && !(process.env.SELENIUM_SERVER_URL === 'http://ondemand.saucelabs.com/wd/hub'
+        && process.env.SAUCE_USERNAME && process.env.SAUCE_ACCESS_KEY)) {
+      if (this._browserName === 'chrome') {
+        chromedriver.stop();
+      } else if (this._browserName === 'firefox') {
+        geckodriver.stop();
+      }
+    }
   }
 
   get eyes() {
@@ -215,6 +243,9 @@ class Common {
     return platform;
   }
 
+  static getSeleniumStandAloneMode() {
+    return process.env.SELENIUM_STANDALONE_MODE ? eval(process.env.SELENIUM_STANDALONE_MODE): false;
+  }
 }
 
 module.exports = Common;

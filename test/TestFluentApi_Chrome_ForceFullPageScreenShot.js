@@ -1,28 +1,22 @@
 'use strict';
 
-const chromedriver = require('chromedriver');
 const {TestFluentApi} = require('./TestFluentApi');
 const Common = require('./Common');
-
 
 const appName = 'Eyes Selenium SDK - Fluent API - ForceFPS';
 const testedPageUrl = 'http://applitools.github.io/demo/TestPages/FramesTestPage/';
 
-const test = new Common({testedPageUrl});
+const test = new Common({testedPageUrl: testedPageUrl, browserName: 'chrome'});
 
 
 describe(appName, function () {
 
   before(function () {
-    chromedriver.start();
     test.beforeTest({fps: true});
   });
 
   beforeEach( function () {
-    const browserOptions = Common.CHROME;
-    browserOptions.port = '9515';
-    browserOptions.path = '/';
-    return test.beforeEachTest({appName: appName, testName: this.currentTest.title, browserOptions: browserOptions});
+    return test.beforeEachTest({appName: appName, testName: this.currentTest.title, browserOptions: Common.CHROME});
   });
 
   afterEach(function () {
@@ -30,9 +24,8 @@ describe(appName, function () {
   });
 
   after(function () {
-    chromedriver.stop();
+    test.afterTest();
   });
 
   TestFluentApi.shouldBehaveLike('TestFluentApi', test);
-
 });
