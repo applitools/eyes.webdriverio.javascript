@@ -8,7 +8,7 @@ const {FloatingMatchSettings, Region} = require('@applitools/eyes.sdk.core');
 
 shared.examplesFor('TestFluentApi', function (test) {
 
-  it('TestCheckWindowWithIgnoreRegion_Fluent', function () {
+  it.skip('TestCheckWindowWithIgnoreRegion_Fluent', function () {
     return test.eyes.getDriver().webDriver.findElement(By.tagName('input')).then(element => {
       return element.sendKeys('My Input');
     }).then(() => {

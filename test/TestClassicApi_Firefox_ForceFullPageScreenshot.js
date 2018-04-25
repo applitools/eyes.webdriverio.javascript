@@ -1,21 +1,18 @@
 'use strict';
 
-const geckodriver = require('geckodriver');
 const {TestClassicApi} = require('./TestClassicApi');
 const Common = require('./Common');
-
 
 const appName = 'Eyes Selenium SDK - Classic API - ForceFPS';
 const testedPageUrl = 'http://applitools.github.io/demo/TestPages/FramesTestPage/';
 
 
-const test = new Common({testedPageUrl});
+const test = new Common({testedPageUrl: testedPageUrl, browserName: 'firefox'});
 
 
 describe(appName, function () {
 
   before(function () {
-    geckodriver.start();
     test.beforeTest({fps: true});
   });
 
@@ -28,7 +25,7 @@ describe(appName, function () {
   });
 
   after(function () {
-    geckodriver.stop();
+    test.afterTest();
   });
 
   TestClassicApi.shouldBehaveLike('TestClassicApi', test);
