@@ -9,7 +9,7 @@ const {BatchInfo, ConsoleLogHandler, FloatingMatchSettings, metadata, RectangleS
 const {ActualAppOutput, ImageMatchSettings, SessionResults} = metadata;
 const url = require('url');
 
-let batchInfo = new BatchInfo('Java3 Tests');
+let batchInfo = new BatchInfo('WebDriverIO Tests');
 
 class Common {
 
