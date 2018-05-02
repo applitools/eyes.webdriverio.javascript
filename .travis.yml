@@ -2,3 +2,11 @@ language: node_js
 node_js:
   - "node"
   - "6"
+
+
+before_script:
+  - "export APPLITOOLS_BATCH_ID=$TRAVIS_COMMIT"
+  - "echo $APPLITOOLS_BATCH_ID"
+
+script:
+  npm test

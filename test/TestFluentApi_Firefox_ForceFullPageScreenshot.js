@@ -9,7 +9,7 @@ const testedPageUrl = 'http://applitools.github.io/demo/TestPages/FramesTestPage
 const test = new Common({testedPageUrl: testedPageUrl, browserName: 'firefox'});
 
 
-describe.skip(appName, function () {
+describe(appName, function () {
 
   before(function () {
     test.beforeTest({fps: true});
