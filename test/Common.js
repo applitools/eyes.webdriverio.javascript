@@ -82,11 +82,13 @@ class Common {
     // this._eyes.setSaveDebugScreenshots(true);
 
     if (!this._seleniumStandAloneMode && !(process.env.SELENIUM_SERVER_URL === 'http://ondemand.saucelabs.com/wd/hub'
-        && process.env.SAUCE_USERNAME && process.env.SAUCE_ACCESS_KEY)) {
+      && process.env.SAUCE_USERNAME && process.env.SAUCE_ACCESS_KEY)) {
       if (this._browserName === 'chrome') {
         chromedriver.start();
+        this._eyes._logger.verbose('Chromedriver is started');
       } else if (this._browserName === 'firefox') {
         geckodriver.start();
+        this._eyes._logger.verbose('Geckodriver is started');
       }
     }
   }
@@ -99,11 +101,12 @@ class Common {
                      width: 800,
                      height: 600
                    }, testedPageUrl = this._testedPageUrl,
-                   platform = Common.getDefaultPlatform()
+                   platform = Common.getPlatform(browserOptions)
                  }) {
 
     if (process.env.SELENIUM_SERVER_URL === 'http://ondemand.saucelabs.com/wd/hub'
       && process.env.SAUCE_USERNAME && process.env.SAUCE_ACCESS_KEY) {
+      this._eyes._logger.verbose('Sauce is used');
 
       const seleniumServerUrl = url.parse(process.env.SELENIUM_SERVER_URL);
       browserOptions.host = seleniumServerUrl.hostname;
@@ -192,7 +195,7 @@ class Common {
 
   afterTest() {
     if (!this._seleniumStandAloneMode && !(process.env.SELENIUM_SERVER_URL === 'http://ondemand.saucelabs.com/wd/hub'
-        && process.env.SAUCE_USERNAME && process.env.SAUCE_ACCESS_KEY)) {
+      && process.env.SAUCE_USERNAME && process.env.SAUCE_ACCESS_KEY)) {
       if (this._browserName === 'chrome') {
         chromedriver.stop();
       } else if (this._browserName === 'firefox') {
@@ -225,26 +228,32 @@ class Common {
   }
 
 
-  static getDefaultPlatform() {
-    let platform = process.platform;
+  static getPlatform(browserOptions) {
+    let platform;
+    if (browserOptions && browserOptions.desiredCapabilities && browserOptions.desiredCapabilities.platform) {
+      platform = browserOptions.desiredCapabilities.platform;
+    } else {
+      platform = process.platform;
 
-    switch (process.platform) {
-      case 'win32':
-        platform = 'Windows';
-        break;
-      case 'linux':
-        platform = 'Linux';
-        break;
-      case 'darwin':
-        platform = 'macOS';
-        break;
+      switch (process.platform) {
+        case 'win32':
+          platform = 'Windows';
+          break;
+        case 'linux':
+          platform = 'Linux';
+          break;
+        case 'darwin':
+          platform = 'macOS';
+          break;
+        default:
+      }
     }
 
     return platform;
   }
 
   static getSeleniumStandAloneMode() {
-    return process.env.SELENIUM_STANDALONE_MODE ? eval(process.env.SELENIUM_STANDALONE_MODE): false;
+    return process.env.SELENIUM_STANDALONE_MODE ? eval(process.env.SELENIUM_STANDALONE_MODE) : false;
   }
 }
 
