@@ -1,34 +1,24 @@
 'use strict';
 
 const {TestSpecialCases} = require('./TestMobile');
-const webdriverio = require('webdriverio');
-const {Eyes} = require('../index');
-const {BatchInfo, ConsoleLogHandler} = require('@applitools/eyes.sdk.core');
-const url = require('url');
+const Common = require('./Common');
 
 const appName = 'Eyes Selenium SDK - Mobile';
-const testedPageUrl = 'http://applitools.github.io/demo/TestPages/WixLikeTestPage/index.html';
+const testedPageUrl = 'http://applitools.github.io/demo/TestPages/FramesTestPage/';
 
-let batchInfo = new BatchInfo('WebDriverIO Mobile Tests');
-const test = {};
+
+const test = new Common({testedPageUrl: testedPageUrl, mobileBrowser: true});
 
 describe(appName, function () {
 
   before(function () {
-    test.eyes = new Eyes();
-    test.eyes.setApiKey(process.env.APPLITOOLS_API_KEY);
-    test.eyes.setLogHandler(new ConsoleLogHandler(true));
-
-    test.eyes.setHideScrollbars(true);
-
-    test.eyes.setBatch(batchInfo);
-
-    // eyes.setSaveDebugScreenshots(true);
+    test.beforeTest({});
   });
 
   beforeEach(function () {
     const caps = {};
     caps['browserName'] = 'Chrome';
+    caps['appiumVersion'] = '1.7.2';
     caps['deviceName'] = 'Android Emulator';
     caps['deviceOrientation'] = 'portrait';
     caps['platformVersion'] = '6';
@@ -36,31 +26,16 @@ describe(appName, function () {
 
     const browserOptions = {desiredCapabilities: caps};
 
-    const seleniumServerUrl = url.parse(process.env.SELENIUM_SERVER_URL);
-    browserOptions.host = seleniumServerUrl.hostname;
-
-    browserOptions.port = '80';
-    browserOptions.path = '/wd/hub';
-
-    browserOptions.desiredCapabilities.baseUrl = `http://${process.env.SAUCE_USERNAME}:${process.env.SAUCE_ACCESS_KEY}@ondemand.saucelabs.com:80/wd/hub`;
-    browserOptions.desiredCapabilities.username = process.env.SAUCE_USERNAME;
-    browserOptions.desiredCapabilities.accesskey = process.env.SAUCE_ACCESS_KEY;
-    browserOptions.desiredCapabilities.platform = 'Linux';
-
-    test.browser = webdriverio.remote(browserOptions);
-    return test.browser.init().then(() => {
-      return test.eyes.open(test.browser, appName, this.currentTest.title);
-    }).url(testedPageUrl);
+    return test.beforeEachTest({appName: appName, testName: this.currentTest.title, browserOptions: browserOptions});
   });
 
   afterEach(function () {
-    return test.eyes.close(false).catch(() => {
-      return test.eyes.abortIfNotClosed();
-    }).then(() => {
-      return test.browser.end();
-    });
+    return test.afterEachTest();
   });
 
+  after(function () {
+    test.afterTest();
+  });
 
   TestSpecialCases.shouldBehaveLike('TestMobile', test);
 });

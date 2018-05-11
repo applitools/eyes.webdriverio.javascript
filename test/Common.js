@@ -51,13 +51,14 @@ class Common {
    *
    * @param {Object} options
    */
-  constructor({testedPageUrl, browserName}) {
+  constructor({testedPageUrl, browserName, mobileBrowser = false}) {
     this._eyes = null;
     this._browser = null;
     this._browserName = browserName;
     this._testedPageUrl = testedPageUrl;
     this._forceFullPageScreenshot = false;
     this._seleniumStandAloneMode = Common.getSeleniumStandAloneMode();
+    this._mobileBrowser = mobileBrowser;
   }
 
   beforeTest({batchName: batchName, fps = false, stitchMode = StitchMode.CSS}) {
@@ -130,9 +131,11 @@ class Common {
     const that = this;
     this._browser = webdriverio.remote(browserOptions);
     return this._browser.init().then(() => {
-      const viewportSize = rectangleSize ? new RectangleSize(rectangleSize) : null;
+      const viewportSize = !that._mobileBrowser && rectangleSize ? new RectangleSize(rectangleSize) : null;
 
-      testName += `_${platform}`;
+      if (!that._mobileBrowser) {
+        testName += `_${platform}`;
+      }
       if (that._eyes.getForceFullPageScreenshot()) {
         testName += '_FPS';
       }
@@ -230,8 +233,13 @@ class Common {
 
   static getPlatform(browserOptions) {
     let platform;
-    if (browserOptions && browserOptions.desiredCapabilities && browserOptions.desiredCapabilities.platform) {
-      platform = browserOptions.desiredCapabilities.platform;
+    if (browserOptions && browserOptions.desiredCapabilities
+      && (browserOptions.desiredCapabilities.platform || browserOptions.desiredCapabilities.platformName)) {
+      if (browserOptions.desiredCapabilities.platform) {
+        platform = browserOptions.desiredCapabilities.platform;
+      } else {
+        platform = browserOptions.desiredCapabilities.platformName;
+      }
     } else {
       platform = process.platform;
 
