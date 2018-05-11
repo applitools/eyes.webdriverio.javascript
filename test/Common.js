@@ -51,13 +51,14 @@ class Common {
    *
    * @param {Object} options
    */
-  constructor({testedPageUrl, browserName}) {
+  constructor({testedPageUrl, browserName, mobileBrowser = false}) {
     this._eyes = null;
     this._browser = null;
     this._browserName = browserName;
     this._testedPageUrl = testedPageUrl;
     this._forceFullPageScreenshot = false;
     this._seleniumStandAloneMode = Common.getSeleniumStandAloneMode();
+    this._mobileBrowser = mobileBrowser;
   }
 
   beforeTest({batchName: batchName, fps = false, stitchMode = StitchMode.CSS}) {
@@ -82,11 +83,13 @@ class Common {
     // this._eyes.setSaveDebugScreenshots(true);
 
     if (!this._seleniumStandAloneMode && !(process.env.SELENIUM_SERVER_URL === 'http://ondemand.saucelabs.com/wd/hub'
-        && process.env.SAUCE_USERNAME && process.env.SAUCE_ACCESS_KEY)) {
+      && process.env.SAUCE_USERNAME && process.env.SAUCE_ACCESS_KEY)) {
       if (this._browserName === 'chrome') {
         chromedriver.start();
+        this._eyes._logger.verbose('Chromedriver is started');
       } else if (this._browserName === 'firefox') {
         geckodriver.start();
+        this._eyes._logger.verbose('Geckodriver is started');
       }
     }
   }
@@ -99,11 +102,12 @@ class Common {
                      width: 800,
                      height: 600
                    }, testedPageUrl = this._testedPageUrl,
-                   platform = Common.getDefaultPlatform()
+                   platform = Common.getPlatform(browserOptions)
                  }) {
 
     if (process.env.SELENIUM_SERVER_URL === 'http://ondemand.saucelabs.com/wd/hub'
       && process.env.SAUCE_USERNAME && process.env.SAUCE_ACCESS_KEY) {
+      this._eyes._logger.verbose('Sauce is used');
 
       const seleniumServerUrl = url.parse(process.env.SELENIUM_SERVER_URL);
       browserOptions.host = seleniumServerUrl.hostname;
@@ -127,9 +131,11 @@ class Common {
     const that = this;
     this._browser = webdriverio.remote(browserOptions);
     return this._browser.init().then(() => {
-      const viewportSize = rectangleSize ? new RectangleSize(rectangleSize) : null;
+      const viewportSize = !that._mobileBrowser && rectangleSize ? new RectangleSize(rectangleSize) : null;
 
-      testName += `_${platform}`;
+      if (!that._mobileBrowser) {
+        testName += `_${platform}`;
+      }
       if (that._eyes.getForceFullPageScreenshot()) {
         testName += '_FPS';
       }
@@ -192,7 +198,7 @@ class Common {
 
   afterTest() {
     if (!this._seleniumStandAloneMode && !(process.env.SELENIUM_SERVER_URL === 'http://ondemand.saucelabs.com/wd/hub'
-        && process.env.SAUCE_USERNAME && process.env.SAUCE_ACCESS_KEY)) {
+      && process.env.SAUCE_USERNAME && process.env.SAUCE_ACCESS_KEY)) {
       if (this._browserName === 'chrome') {
         chromedriver.stop();
       } else if (this._browserName === 'firefox') {
@@ -225,26 +231,37 @@ class Common {
   }
 
 
-  static getDefaultPlatform() {
-    let platform = process.platform;
+  static getPlatform(browserOptions) {
+    let platform;
+    if (browserOptions && browserOptions.desiredCapabilities
+      && (browserOptions.desiredCapabilities.platform || browserOptions.desiredCapabilities.platformName)) {
+      if (browserOptions.desiredCapabilities.platform) {
+        platform = browserOptions.desiredCapabilities.platform;
+      } else {
+        platform = browserOptions.desiredCapabilities.platformName;
+      }
+    } else {
+      platform = process.platform;
 
-    switch (process.platform) {
-      case 'win32':
-        platform = 'Windows';
-        break;
-      case 'linux':
-        platform = 'Linux';
-        break;
-      case 'darwin':
-        platform = 'macOS';
-        break;
+      switch (process.platform) {
+        case 'win32':
+          platform = 'Windows';
+          break;
+        case 'linux':
+          platform = 'Linux';
+          break;
+        case 'darwin':
+          platform = 'macOS';
+          break;
+        default:
+      }
     }
 
     return platform;
   }
 
   static getSeleniumStandAloneMode() {
-    return process.env.SELENIUM_STANDALONE_MODE ? eval(process.env.SELENIUM_STANDALONE_MODE): false;
+    return process.env.SELENIUM_STANDALONE_MODE ? eval(process.env.SELENIUM_STANDALONE_MODE) : false;
   }
 }
 
