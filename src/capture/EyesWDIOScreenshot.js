@@ -409,7 +409,7 @@ class EyesWDIOScreenshot extends EyesScreenshot {
    * @return {Region}
    */
   getIntersectedRegion(region, resultCoordinatesType) {
-    if (region.isEmpty()) {
+    if (region.getWidth() <= 0 || region.getHeight() <= 0) {
       return new Region(region);
     }
 
