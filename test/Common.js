@@ -133,8 +133,16 @@ class Common {
     return this._browser.init().then(() => {
       const viewportSize = !that._mobileBrowser && rectangleSize ? new RectangleSize(rectangleSize) : null;
 
+      if (!that._mobileBrowser) {
+        testName += `_${platform}`;
+      }
+
       if (that._eyes.getForceFullPageScreenshot()) {
         testName += '_FPS';
+      }
+
+      if (that._mobileBrowser) {
+        testName += '_Mobile';
       }
 
       return this._eyes.open(this._browser, appName, testName, viewportSize);

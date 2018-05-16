@@ -1,6 +1,16 @@
 'use strict';
 
-const {ArgumentGuard, EyesScreenshot, CoordinatesType, Region, Location, RectangleSize, CoordinatesTypeConversionError, OutOfBoundsError} = require('@applitools/eyes.sdk.core');
+const {
+  ArgumentGuard,
+  BrowserNames,
+  EyesScreenshot,
+  CoordinatesType,
+  Region,
+  Location,
+  RectangleSize,
+  CoordinatesTypeConversionError,
+  OutOfBoundsError
+} = require('@applitools/eyes.sdk.core');
 
 const WDIOJSExecutor = require('../WDIOJSExecutor');
 const ScrollPositionProvider = require('../positioning/ScrollPositionProvider');
@@ -239,7 +249,10 @@ class EyesWDIOScreenshot extends EyesScreenshot {
           viewportSize = viewportSize.scale(pixelRatio);
         }
 
-        if (image.getWidth() <= viewportSize.getWidth() && image.getHeight() <= viewportSize.getHeight()) {
+        if (image.getWidth() <= viewportSize.getWidth() && image.getHeight() <= viewportSize.getHeight()
+        || (that._driver.eyes._checkSettings.getFrameChain().length > 0
+            && that._driver.eyes._userAgent.getBrowser() === BrowserNames.Firefox
+            && parseInt(that._driver.eyes._userAgent.getBrowserMajorVersion(), 10) < 48)) {
           return ScreenshotType.VIEWPORT;
         } else {
           return ScreenshotType.ENTIRE_FRAME;
@@ -409,7 +422,7 @@ class EyesWDIOScreenshot extends EyesScreenshot {
    * @return {Region}
    */
   getIntersectedRegion(region, resultCoordinatesType) {
-    if (region.isEmpty()) {
+    if (region.getWidth() <= 0 || region.getHeight() <= 0) {
       return new Region(region);
     }
 

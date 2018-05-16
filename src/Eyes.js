@@ -251,6 +251,8 @@ class Eyes extends EyesBase {
   check(name, checkSettings) {
     ArgumentGuard.notNull(checkSettings, "checkSettings");
 
+    this._checkSettings = checkSettings;
+
     let result;
     const that = this;
     return that._positionProvider.setPosition(Location.ZERO).then(() => {
