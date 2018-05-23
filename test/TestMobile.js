@@ -2,7 +2,6 @@
 
 const {equal} = require('assert');
 const shared = require('shared-examples-for');
-const {By, Target} = require('../index');
 
 
 shared.examplesFor('TestMobile', function (test) {
