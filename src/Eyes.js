@@ -1051,14 +1051,6 @@ class Eyes extends EyesBase {
       return that._ensureElementVisible(that._targetElement).then(() => {
         that._logger.verbose("Screenshot requested...");
         return that._imageProvider.getImage();
-      }).then(/** @type {MutableImage}*/screenshotImage_ => {
-        // workaround: crop the image to viewport size if the browser is firefox version < 48
-        if (that._viewportSizeHandler.get() && that._userAgent.getBrowser() === BrowserNames.Firefox && parseInt(that._userAgent.getBrowserMajorVersion(), 10) < 48) {
-          const region = new Region(Location.ZERO, that._viewportSizeHandler.get());
-          return screenshotImage_.crop(region);
-        } else {
-          return Promise.resolve(screenshotImage_);
-        }
       }).then(screenshotImage_ => {
         screenshotImage = screenshotImage_;
         return that._debugScreenshotsProvider.save(screenshotImage, "original");

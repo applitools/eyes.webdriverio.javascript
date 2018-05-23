@@ -250,7 +250,7 @@ class EyesWDIOScreenshot extends EyesScreenshot {
         }
 
         if (image.getWidth() <= viewportSize.getWidth() && image.getHeight() <= viewportSize.getHeight()
-        || (that._driver.eyes._checkSettings.getFrameChain().length > 0
+        || (that._driver.eyes._checkSettings.getFrameChain().length > 0 // workaround: define screenshotType as VIEWPORT
             && that._driver.eyes._userAgent.getBrowser() === BrowserNames.Firefox
             && parseInt(that._driver.eyes._userAgent.getBrowserMajorVersion(), 10) < 48)) {
           return ScreenshotType.VIEWPORT;
