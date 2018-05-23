@@ -5,7 +5,7 @@ const {ArgumentGuard, Location, Region, RectangleSize, CoordinatesType, GeneralU
 const NullRegionPositionCompensation = require('../positioning/NullRegionPositionCompensation');
 const ScrollPositionProvider = require('../positioning/ScrollPositionProvider');
 
-const MIN_SCREENSHOT_PART_HEIGHT = 10;
+const MIN_SCREENSHOT_PART_DIMENSION = 10;
 
 class FullPageCaptureAlgorithm {
 
@@ -117,6 +117,7 @@ class FullPageCaptureAlgorithm {
         regionInScreenshot = _getRegionInScreenshot(that._logger, region, image, pixelRatio, screenshot, regionPositionCompensation);
       }
 
+      // todo isSizeEmpty
       if (!(regionInScreenshot.getWidth() <= 0 || regionInScreenshot.getHeight() <= 0)) {
         return image.getImagePart(regionInScreenshot).then(image_ => {
           image = image_;
@@ -135,29 +136,6 @@ class FullPageCaptureAlgorithm {
       return positionProvider.getEntireSize().then(entireSize_ => {
         entireSize = entireSize_;
         that._logger.verbose(`Entire size of region context: ${entireSize}`);
-/*
-        if (!checkingAnElement) {
-          const spp = new ScrollPositionProvider(that._logger, that._jsExecutor);
-          let originalCurrentPosition;
-          return spp.getCurrentPosition().then(originalCurrentPosition_ => {
-            originalCurrentPosition = originalCurrentPosition_;
-            return spp.scrollToBottomRight();
-          }).then(() => {
-            return spp.getCurrentPosition();
-          }).then(localCurrentPosition => {
-            entireSize = new RectangleSize(
-              localCurrentPosition.getX() + image.getWidth(),
-              localCurrentPosition.getY() + image.getHeight());
-          }).then(() => {
-            that._logger.verbose(`Entire size of region context: ${entireSize}`);
-            return spp.setPosition(originalCurrentPosition);
-          }).catch(err => {
-            that._logger.log("WARNING: Failed to extract entire size of region context" + err);
-            that._logger.log(`Using image size instead: ${image.getWidth()}x${image.getHeight()}`);
-            entireSize = new RectangleSize(image.getWidth(), image.getHeight());
-          });
-        }
-*/
       }).catch(err => {
         that._logger.log("WARNING: Failed to extract entire size of region context" + err);
         that._logger.log(`Using image size instead: ${image.getWidth()}x${image.getHeight()}`);
@@ -173,7 +151,10 @@ class FullPageCaptureAlgorithm {
       let lastSuccessfulLocation, lastSuccessfulPartSize, /** @type {MutableImage} */ partImage;
 
       // The screenshot part is a bit smaller than the screenshot size, in order to eliminate duplicate bottom scroll bars, as well as fixed position footers.
-      const partImageSize = new RectangleSize(image.getWidth(), Math.max(image.getHeight() - stitchingOverlap, MIN_SCREENSHOT_PART_HEIGHT));
+
+      const w = Math.max(image.getWidth() - stitchingOverlap, MIN_SCREENSHOT_PART_DIMENSION);
+      const h = Math.max(image.getHeight() - stitchingOverlap, MIN_SCREENSHOT_PART_DIMENSION);
+      const partImageSize = new RectangleSize(w, h);
 
       that._logger.verbose(`"Total size: ${entireSize}, image part size: ${partImageSize}`);
 
@@ -236,7 +217,8 @@ class FullPageCaptureAlgorithm {
                 });
               }
             }).then(() => {
-              if (!regionInScreenshot.isEmpty()) {
+              // todo isSizeEmpty
+              if (!(regionInScreenshot.getWidth() <= 0 || regionInScreenshot.getHeight() <= 0)) {
                 that._logger.verbose("cropping...");
                 return partImage.getImagePart(regionInScreenshot).then(partImage_ => {
                   partImage = partImage_;

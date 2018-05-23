@@ -425,6 +425,7 @@ class Eyes extends EyesBase {
         that._logger.verbose("replacing regionToCheck");
         that._regionToCheck = elementRegion;
 
+        // todo isSizeEmpty
         if (!(that._effectiveViewport.getWidth() <= 0 || that._effectiveViewport.getHeight() <= 0)) {
           that._regionToCheck.intersect(that._effectiveViewport);
         }
