@@ -42,6 +42,7 @@ class WebElement {
 
 
   /**
+   * @deprecated
    * @returns {Promise.<{x, y}>}
    */
   getLocation() {
@@ -53,12 +54,24 @@ class WebElement {
 
 
   /**
+   * @deprecated
    * @returns {Promise.<width, height>}
    */
   getSize() {
     return this._driver.remoteWebDriver.elementIdSize(this._element.ELEMENT).then(r => {
       const {value: size} = r;
       return size;
+    });
+  }
+
+
+  /**
+   * @returns {Promise.<x, y, width, height>}
+   */
+  getRect() {
+    return this._driver.remoteWebDriver.elementIdRect(this._element.ELEMENT).then(r => { // todo need to replace elementIdSize to elementIdRect
+      const {value: rect} = r;
+      return rect;
     });
   }
 
@@ -124,6 +137,19 @@ class WebElement {
     });
   }
 
+  /**
+   * @returns {Promise.<{offsetLeft, offsetTop}>}
+   */
+  getElementOffset() {
+    const that = this;
+    let offsetLeft;
+    return that._driver.remoteWebDriver.elementIdAttribute(this._element.ELEMENT, 'offsetLeft').then(offsetLeft_ => {
+      offsetLeft = offsetLeft_.value;
+      return that._driver.remoteWebDriver.elementIdAttribute(this._element.ELEMENT, 'offsetTop');
+    }).then(offsetTop_ => {
+      return {offsetLeft: parseInt(offsetLeft), offsetTop: parseInt(offsetTop_.value)}
+    });
+  }
 
   /**
    * @returns {EyesWebDriver}

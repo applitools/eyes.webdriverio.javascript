@@ -371,7 +371,7 @@ class EyesWebElement extends WebElement {
   /**
    * @override
    * @inheritDoc
-   * @returns {RectangleSize}
+   * @returns {Promise.<RectangleSize>}
    */
   getSize() {
     return super.getSize().then(r => {
@@ -384,7 +384,7 @@ class EyesWebElement extends WebElement {
   /**
    * @override
    * @inheritDoc
-   * @returns {Location}
+   * @returns {Promise.<Location>}
    */
   getLocation() {
     // The workaround is similar to Java one, but in js we always get raw data with decimal value which we should round up.
@@ -442,6 +442,14 @@ class EyesWebElement extends WebElement {
    */
   takeScreenshot(opt_scroll) {
     return this.getWebElement().takeScreenshot(opt_scroll);
+  }
+
+  /**
+   *
+   * @returns {Promise.<{offsetLeft, offsetTop}>}
+   */
+  getElementOffset() {
+    return this.getWebElement().getElementOffset();
   }
 
   // noinspection JSUnusedGlobalSymbols

@@ -6,6 +6,7 @@ const {
   CoordinatesType,
   EyesBase,
   FailureReports,
+  FixedCutProvider,
   FixedScaleProviderFactory,
   Location,
   NullCutProvider,
@@ -137,6 +138,10 @@ class Eyes extends EyesBase {
     if (this._isDisabled) {
       this._logger.verbose('Ignored');
       return this.getPromiseFactory().resolve(driver);
+    }
+
+    if (driver && driver.isMobile) { // set viewportSize to null if browser is mobile
+      viewportSize = null;
     }
 
     this._driver = new EyesWebDriver(new WebDriver(driver), this, this._logger);
@@ -407,6 +412,7 @@ class Eyes extends EyesBase {
           });
         }
       }).then(() => {
+        // return eyesElement.getSize().then(size_ => {
         return eyesElement.getClientWidth().then(elementWidth => {
           return eyesElement.getClientHeight().then(elementHeight => {
             elementSize = new RectangleSize(elementWidth, elementHeight);
@@ -1070,6 +1076,28 @@ class Eyes extends EyesBase {
           return cutProvider.cut(screenshotImage).then(screenshotImage_ => {
             screenshotImage = screenshotImage_;
             return that._debugScreenshotsProvider.save(screenshotImage, "cut");
+          });
+        } else {
+          return this.getViewportSize().then(viewportSize => {
+            if (viewportSize.getWidth() !== screenshotImage.getWidth() || viewportSize.getHeight() !== screenshotImage.getHeight()) {
+
+              const spp = new ScrollPositionProvider(that._logger, that._jsExecutor);
+              return spp.getCurrentPosition().then(location => {
+                const imageCanvas = new Region(0, 0, screenshotImage.getWidth(), screenshotImage.getHeight());
+                const vireportFrame = new Region(0, 0, screenshotImage.getWidth(), screenshotImage.getHeight());
+                const viewportRegion = Region.fromLocationAndSize(new Location(location.getX(), location.getY()), viewportSize);
+                vireportFrame.intersect(viewportRegion);
+
+                const footer = (imageCanvas.getBottom()) - (vireportFrame.getBottom());
+                const right = (imageCanvas.getRight()) - (vireportFrame.getRight());
+                const fcp = new FixedCutProvider(vireportFrame.getTop(), footer, vireportFrame.getLeft(), right);
+
+                return fcp.cut(screenshotImage).then(screenshotImage_ => {
+                  screenshotImage = screenshotImage_;
+                  return that._debugScreenshotsProvider.save(screenshotImage, "cut");
+                });
+              });
+            }
           });
         }
       }).then(() => {

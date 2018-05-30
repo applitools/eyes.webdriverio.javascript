@@ -36,7 +36,7 @@ shared.examplesFor('TestClassicApi', function (test) {
     });
   });
 
-  it('TestCheckInnerFrame', function () {
+  it.skip('TestCheckInnerFrame', function () {
     return test.eyes.getDriver().switchTo().defaultContent().then(() => {
       return test.eyes.getDriver().webDriver.findElement(By.name('frame1'));
     }).then(frame=>{

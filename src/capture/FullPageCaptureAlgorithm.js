@@ -108,7 +108,7 @@ class FullPageCaptureAlgorithm {
 
       // We need the screenshot to be able to convert the region to screenshot coordinates.
       return screenshotFactory.makeScreenshot(image);
-    }).then(screenshot => {
+    }).then(/**@type {EyesScreenshot} */screenshot => {
       that._logger.verbose("Done! Getting region in screenshot...");
 
       regionInScreenshot = _getRegionInScreenshot(that._logger, region, image, pixelRatio, screenshot, regionPositionCompensation);
