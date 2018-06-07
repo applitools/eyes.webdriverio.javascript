@@ -31,7 +31,9 @@ class EyesWebDriver {
    * @param {Object} logger
    **/
   constructor(webDriver, eyes, logger) {
+    /** @type {WebDriver} */
     this._tsInstance = webDriver;
+    /** @type {Eyes} */
     this._eyes = eyes;
     this._logger = logger;
 
@@ -123,7 +125,7 @@ class EyesWebDriver {
 
     promise = promise.then(() => {
       that._logger.verbose("Extracting viewport size...");
-      return EyesWDIOUtils.getViewportSizeOrDisplaySize(that._logger, that._tsInstance);
+      return EyesWDIOUtils.getViewportSizeOrDisplaySize(that._logger, that.eyes.jsExecutor);
     }).then(defaultContentViewportSize => {
       that._defaultContentViewportSize = defaultContentViewportSize;
       that._logger.verbose("Done! Viewport size: ", that._defaultContentViewportSize);

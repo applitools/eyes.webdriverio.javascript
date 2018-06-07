@@ -2,6 +2,7 @@
 
 
 const command = require('../services/selenium/Command');
+const EyesWebElement = require('./EyesWebElement');
 
 /**
  * Wrapper for Webdriverio element
@@ -41,6 +42,7 @@ class WebElement {
 
 
   /**
+   * @deprecated
    * @returns {Promise.<{x, y}>}
    */
   getLocation() {
@@ -52,12 +54,24 @@ class WebElement {
 
 
   /**
+   * @deprecated
    * @returns {Promise.<width, height>}
    */
   getSize() {
     return this._driver.remoteWebDriver.elementIdSize(this._element.ELEMENT).then(r => {
       const {value: size} = r;
       return size;
+    });
+  }
+
+
+  /**
+   * @returns {Promise.<x, y, width, height>}
+   */
+  getRect() {
+    return this._driver.remoteWebDriver.elementIdRect(this._element.ELEMENT).then(r => { // todo need to replace elementIdSize to elementIdRect
+      const {value: rect} = r;
+      return rect;
     });
   }
 
@@ -81,12 +95,16 @@ class WebElement {
 
 
   static equals(a, b) {
-    if (a === b) {
-      return true;
-    }
-
     if (a == undefined || b == undefined) {
       return false;
+    }
+
+    if (!(a instanceof this) || !(b instanceof this)) {
+      return false;
+    }
+
+    if (a === b) {
+      return true;
     }
 
     const elementA = a.getWebElement().element.ELEMENT;
@@ -102,9 +120,36 @@ class WebElement {
     return a._driver.executeCommand(cmd).then(r => {
       const {value} = r;
       return value;
+    }).catch(e => {
+      throw e;
     });
   }
 
+
+  /**
+   * @param keysToSend
+   * @returns {Promise}
+   */
+  sendKeys(keysToSend) {
+    const that = this;
+    return that._driver.remoteWebDriver.elementIdClick(this._element.ELEMENT).then(() => {
+      return that._driver.remoteWebDriver.keys(keysToSend);
+    });
+  }
+
+  /**
+   * @returns {Promise.<{offsetLeft, offsetTop}>}
+   */
+  getElementOffset() {
+    const that = this;
+    let offsetLeft;
+    return that._driver.remoteWebDriver.elementIdAttribute(this._element.ELEMENT, 'offsetLeft').then(offsetLeft_ => {
+      offsetLeft = offsetLeft_.value;
+      return that._driver.remoteWebDriver.elementIdAttribute(this._element.ELEMENT, 'offsetTop');
+    }).then(offsetTop_ => {
+      return {offsetLeft: parseInt(offsetLeft), offsetTop: parseInt(offsetTop_.value)}
+    });
+  }
 
   /**
    * @returns {EyesWebDriver}

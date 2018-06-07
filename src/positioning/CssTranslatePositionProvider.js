@@ -1,9 +1,10 @@
 'use strict';
 
-const {PositionProvider, ArgumentGuard} = require('@applitools/eyes.sdk.core');
+const {PositionProvider, ArgumentGuard, Location} = require('@applitools/eyes.sdk.core');
 
 const EyesWDIOUtils = require('../EyesWDIOUtils');
 const CssTranslatePositionMemento = require('./CssTranslatePositionMemento');
+const ScrollPositionProvider = require('./ScrollPositionProvider');
 
 /**
  * A {@link PositionProvider} which is based on CSS translates. This is
@@ -45,7 +46,11 @@ class CssTranslatePositionProvider extends PositionProvider {
 
     const that = this;
     this._logger.verbose(`CssTranslatePositionProvider - Setting position to: ${location}`);
-    return EyesWDIOUtils.translateTo(this._executor, location).then(() => {
+
+    const spp = new ScrollPositionProvider(this._logger, this._executor);
+    return spp.setPosition(Location.ZERO).then(() => {
+      return EyesWDIOUtils.translateTo(this._executor, location);
+    }).then(() => {
       that._logger.verbose("Done!");
       that._lastSetPosition = location;
     });

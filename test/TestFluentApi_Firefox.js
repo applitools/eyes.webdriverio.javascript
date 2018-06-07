@@ -3,28 +3,29 @@
 const {TestFluentApi} = require('./TestFluentApi');
 const Common = require('./Common');
 
-
 const appName = 'Eyes Selenium SDK - Fluent API';
 const testedPageUrl = 'http://applitools.github.io/demo/TestPages/FramesTestPage/';
 
-const test = new Common({testedPageUrl});
+const test = new Common({testedPageUrl: testedPageUrl, browserName: 'firefox'});
 
 
-describe.skip(appName, function () {
+describe(appName, function () {
 
   before(function () {
     test.beforeTest({});
   });
 
-  beforeEach(async function () {
-    await test.beforeEachTest({appName: appName, testName: this.currentTest.title, browserOptions: Common.FIREFOX});
+  beforeEach(function () {
+    return test.beforeEachTest({appName: appName, testName: this.currentTest.title, browserOptions: Common.FIREFOX});
   });
 
-  afterEach(async function () {
-    await test.afterEachTest();
+  afterEach(function () {
+    return test.afterEachTest();
   });
 
+  after(function () {
+    test.afterTest();
+  });
 
   TestFluentApi.shouldBehaveLike('TestFluentApi', test);
-
 });

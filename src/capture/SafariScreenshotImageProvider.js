@@ -21,7 +21,7 @@ class SafariScreenshotImageProvider extends ImageProvider {
     this._tsInstance = tsInstance;
     this._userAgent = userAgent;
 
-    this._jsExecutor = new WDIOJSExecutor(driver);
+    this._jsExecutor = new WDIOJSExecutor(tsInstance);
   }
 
   /**
