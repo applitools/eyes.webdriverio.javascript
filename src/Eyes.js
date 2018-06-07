@@ -1088,8 +1088,15 @@ class Eyes extends EyesBase {
                 const viewportRegion = Region.fromLocationAndSize(new Location(location.getX(), location.getY()), viewportSize);
                 vireportFrame.intersect(viewportRegion);
 
-                const footer = (imageCanvas.getBottom()) - (vireportFrame.getBottom());
-                const right = (imageCanvas.getRight()) - (vireportFrame.getRight());
+                // todo: use getBottom and getRight when it'll be added to Region
+                // bottom
+                const icBottom = imageCanvas.getTop() + imageCanvas.getHeight();
+                const vfBottom = vireportFrame.getTop() + vireportFrame.getHeight();
+                const footer = (icBottom) - (vfBottom);
+                // right
+                const icRight = imageCanvas.getLeft() + imageCanvas.getWidth();
+                const vfRight = vireportFrame.getLeft() + vireportFrame.getWidth();
+                const right = (icRight) - (vfRight);
                 const fcp = new FixedCutProvider(vireportFrame.getTop(), footer, vireportFrame.getLeft(), right);
 
                 return fcp.cut(screenshotImage).then(screenshotImage_ => {
