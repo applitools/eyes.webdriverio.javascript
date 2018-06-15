@@ -22,7 +22,7 @@ describe(appName, function () {
     const browserOptions = Common.CHROME;
     browserOptions.port = '9515';
     browserOptions.path = '/';
-    return test.beforeEachTest({appName: appName, testName: this.currentTest.title, browserOptions: browserOptions});
+    return test.beforeEachTest({appName: appName, testName: this.currentTest.title, browserOptions: browserOptions, platform: 'Linux'});
   });
 
   afterEach(function () {

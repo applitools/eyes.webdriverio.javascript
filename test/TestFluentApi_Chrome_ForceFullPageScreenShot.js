@@ -16,7 +16,7 @@ describe(appName, function () {
   });
 
   beforeEach( function () {
-    return test.beforeEachTest({appName: appName, testName: this.currentTest.title, browserOptions: Common.CHROME});
+    return test.beforeEachTest({appName: appName, testName: this.currentTest.title, browserOptions: Common.CHROME, platform: 'Linux'});
   });
 
   afterEach(function () {
