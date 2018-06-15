@@ -12,7 +12,7 @@ const test = new Common({testedPageUrl});
 
 let platforms = ['macOS'];
 platforms.forEach(function (platform) {
-  describe.skip(appName, function () {
+  describe(appName, function () {
 
     before(function () {
       test.beforeTest({fps: true});
@@ -28,6 +28,5 @@ platforms.forEach(function (platform) {
 
 
     TestFluentApi.shouldBehaveLike('TestFluentApi', test);
-
   });
 });

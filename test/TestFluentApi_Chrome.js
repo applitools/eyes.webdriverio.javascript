@@ -11,27 +11,35 @@ const testedPageUrl = 'http://applitools.github.io/demo/TestPages/FramesTestPage
 const test = new Common({testedPageUrl});
 
 
-describe(appName, function () {
+const platforms = ['Linux', 'Windows'];
+platforms.forEach(function (platform) {
+  describe(appName, function () {
 
-  before(function () {
-    chromedriver.start();
-    test.beforeTest({});
+    before(function () {
+      chromedriver.start();
+      test.beforeTest({});
+    });
+
+    beforeEach(function () {
+      const browserOptions = Common.CHROME;
+      browserOptions.port = '9515';
+      browserOptions.path = '/';
+      return test.beforeEachTest({
+        appName: appName,
+        testName: this.currentTest.title,
+        browserOptions: browserOptions,
+        platform: platform
+      });
+    });
+
+    afterEach(function () {
+      return test.afterEachTest();
+    });
+
+    after(function () {
+      chromedriver.stop();
+    });
+
+    TestFluentApi.shouldBehaveLike('TestFluentApi', test);
   });
-
-  beforeEach(function () {
-    const browserOptions = Common.CHROME;
-    browserOptions.port = '9515';
-    browserOptions.path = '/';
-    return test.beforeEachTest({appName: appName, testName: this.currentTest.title, browserOptions: browserOptions, platform: 'Linux'});
-  });
-
-  afterEach(function () {
-    return test.afterEachTest();
-  });
-
-  after(function () {
-    chromedriver.stop();
-  });
-
-  TestFluentApi.shouldBehaveLike('TestFluentApi', test);
 });
