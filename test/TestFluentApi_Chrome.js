@@ -11,7 +11,7 @@ const testedPageUrl = 'http://applitools.github.io/demo/TestPages/FramesTestPage
 const test = new Common({testedPageUrl});
 
 
-const platforms = ['Linux', 'Windows'];
+const platforms = ['Linux'/*, 'Windows'*/];
 platforms.forEach(function (platform) {
   describe(appName, function () {
 
