@@ -24,6 +24,7 @@ const {
 
 const ImageProviderFactory = require('./capture/ImageProviderFactory');
 const CssTranslatePositionProvider = require('./positioning/CssTranslatePositionProvider');
+const CssTranslateElementPositionProvider = require('./positioning/CssTranslateElementPositionProvider');
 const ScrollPositionProvider = require('./positioning/ScrollPositionProvider');
 const RegionPositionCompensationFactory = require('./positioning/RegionPositionCompensationFactory');
 const EyesWebDriver = require('./wrappers/EyesWebDriver');
@@ -388,7 +389,6 @@ class Eyes extends EyesBase {
 
       return this._ensureElementVisible(eyesElement);
     }).then(() => {
-      // return Promise.resolve().then(() => {
       return scrollPositionProvider.getCurrentPosition();
     }).then(originalScrollPosition_ => {
       originalScrollPosition = originalScrollPosition_;
@@ -412,7 +412,6 @@ class Eyes extends EyesBase {
           });
         }
       }).then(() => {
-        // return eyesElement.getSize().then(size_ => {
         return eyesElement.getClientWidth().then(elementWidth => {
           return eyesElement.getClientHeight().then(elementHeight => {
             elementSize = new RectangleSize(elementWidth, elementHeight);
@@ -437,6 +436,12 @@ class Eyes extends EyesBase {
           that._regionToCheck.intersect(that._effectiveViewport);
         }
 
+        const isElement = true;
+        const insideAFrame = that.getDriver().getFrameChain().size() > 0;
+        if (isElement && insideAFrame && that._stitchMode === StitchMode.CSS) {
+          that.setPositionProvider(new CssTranslateElementPositionProvider(that._logger, that._driver, eyesElement));
+        }
+
         return super.checkWindowBase(new NullRegionProvider(that.getPromiseFactory()), name, false, checkSettings);
       });
     }).catch(error_ => {
@@ -448,13 +453,15 @@ class Eyes extends EyesBase {
       }
     }).then(() => {
       that._checkFrameOrElement = false;
-      that._positionProvider = originalPositionProvider;
+      that.setPositionProvider(originalPositionProvider);
       that._regionToCheck = null;
       that._elementPositionProvider = null;
 
       return originalPositionProvider.restoreState(originalPositionMemento);
     }).then(() => {
-      return scrollPositionProvider.setPosition(originalScrollPosition);
+      if (originalScrollPosition) {
+        return scrollPositionProvider.setPosition(originalScrollPosition);
+      }
     }).then(() => {
       if (error) {
         throw error;
@@ -950,7 +957,7 @@ class Eyes extends EyesBase {
   _tryHideScrollbarsLoop(fc) {
     if (fc.size() > 0) {
       const that = this;
-      return that._driver.getRemoteWebDriver().switchTo().parentFrame().then(() => {
+      return that.getDriver().switchTo().parentFrame().then(() => {
         const frame = fc.pop();
         return EyesWDIOUtils.hideScrollbars(that._jsExecutor, 200);
       }).then(() => {
@@ -984,7 +991,7 @@ class Eyes extends EyesBase {
   _tryRestoreScrollbarsLoop(fc) {
     if (fc.size() > 0) {
       const that = this;
-      return that._driver.getRemoteWebDriver().switchTo().parentFrame().then(() => {
+      return that.getRemoteWebDriver().switchTo().parentFrame().then(() => {
         const frame = fc.pop();
         return frame.getReference().setOverflow(frame.getOriginalOverflow());
       }).then(() => {

@@ -181,7 +181,7 @@ class EyesWebDriver {
   findElement(locator) {
     return this.remoteWebDriver.element(locator.value).then(res_ => {
       let {value: element} = res_;
-      return new EyesWebElement(this._logger, this, new WebElement(this._tsInstance, element));
+      return new EyesWebElement(this._logger, this, new WebElement(this._tsInstance, element, locator));
     });
   }
 
@@ -196,7 +196,7 @@ class EyesWebDriver {
       const {value: elements} = res_;
 
       return elements.map((element) => {
-        return new EyesWebElement(this._logger, this, new WebElement(this._tsInstance, element));
+        return new EyesWebElement(this._logger, this, new WebElement(this._tsInstance, element, locator));
       });
     });
   }

@@ -42,7 +42,8 @@ class Common {
   static get SAFARI() {
     return {
       desiredCapabilities: {
-        browserName: 'safari'
+        browserName: 'safari',
+        version: '11.1'
       }
     }
   };

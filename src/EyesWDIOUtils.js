@@ -35,6 +35,7 @@ let imageOrientationHandler = new class ImageOrientationHandlerImpl extends Imag
   }
 };
 
+// noinspection JSUnusedLocalSymbols
 let javascriptHandler = new class JavascriptHandlerImpl extends JavascriptHandler {
   /** @override */
   handle(script, ...args) {
@@ -137,6 +138,7 @@ class EyesWDIOUtils {
       "var totalHeight = Math.max(maxDocElementHeight, maxBodyHeight); ";
   }
 
+  // noinspection JSUnusedGlobalSymbols
   static get JS_RETURN_CONTENT_ENTIRE_SIZE() {
     return EyesWDIOUtils.JS_COMPUTE_CONTENT_ENTIRE_SIZE + "return [totalWidth, totalHeight];";
   }
@@ -186,6 +188,53 @@ class EyesWDIOUtils {
     });
   }
 
+  static JS_GET_TRANSFORM_VALUE(element, key) {
+    return `${element}.style['${key}']`;
+  }
+
+  static JS_SET_TRANSFORM_VALUE(element, key, value) {
+    return `${element}.style['${key}'] = '${value}'`;
+  }
+
+
+  static getCurrentElementTransforms(executor, element) {
+    let script = "return { ";
+    for (let i = 0, l = EyesWDIOUtils.JS_TRANSFORM_KEYS.length; i < l; i++) {
+      const tk = EyesWDIOUtils.JS_TRANSFORM_KEYS[i];
+      script += `'${tk}': ${EyesWDIOUtils.JS_GET_TRANSFORM_VALUE('arguments[0]', tk)},`;
+    }
+    script += " }";
+    return executor.executeScript(script, element).then(res_ => {
+      const {value: result} = res_;
+      return result;
+    });
+  }
+
+
+  /**
+   * @param {WDIOJSExecutor} executor
+   * @param {Promise.<WebElement>} webElementPromise
+   * @param transform
+   * @return {*|Promise}
+   */
+  static setElementTransforms(executor, webElementPromise, transform) {
+    let script = '';
+    for (let i = 0, l = EyesWDIOUtils.JS_TRANSFORM_KEYS.length; i < l; i++) {
+      const tk = EyesWDIOUtils.JS_TRANSFORM_KEYS[i];
+      script += `${EyesWDIOUtils.JS_SET_TRANSFORM_VALUE('arguments[0]', tk, transform)};`;
+      // script += `${EyesWDIOUtils.JS_SET_TRANSFORM_VALUE("document.getElementsByTagName('img')[0]", tk, transform)};`;
+    }
+
+    return webElementPromise.then(webElement => {
+      return executor.executeScript(script, webElement.element).then(res_ => {
+        const {value: result} = res_;
+        return result;
+      }).catch(e => {
+        throw e;
+      });
+    });
+  }
+
   /**
    * Sets transforms for document.documentElement according to the given map of style keys and values.
    *
@@ -232,6 +281,17 @@ class EyesWDIOUtils {
    */
   static translateTo(executor, position) {
     return EyesWDIOUtils.setTransform(executor, `translate(-${position.getX()}px, -${position.getY()}px)`);
+  }
+
+  /**
+   *
+   * @param {WDIOJSExecutor} executor
+   * @param {Promise.<WebElement>} webElementPromise
+   * @param {Location} position
+   * @return {*}
+   */
+  static elementTranslateTo(executor, webElementPromise, position) {
+    return EyesWDIOUtils.setElementTransforms(executor, webElementPromise, `translate(${position.getX()}px, ${position.getY()}px)`);
   }
 
 
@@ -310,6 +370,7 @@ class EyesWDIOUtils {
   }
 
 
+  // noinspection JSUnusedGlobalSymbols
   /**
    * @param {EyesJsExecutor} executor The executor to use.
    * @return {Promise.<Boolean>} A promise which resolves to the {@code true} if body overflow is hidden, {@code false} otherwise.

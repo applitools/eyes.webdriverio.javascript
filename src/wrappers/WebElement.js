@@ -1,8 +1,8 @@
 'use strict';
 
 
+const {ArgumentGuard} = require('@applitools/eyes.sdk.core');
 const command = require('../services/selenium/Command');
-const EyesWebElement = require('./EyesWebElement');
 
 /**
  * Wrapper for Webdriverio element
@@ -13,28 +13,32 @@ class WebElement {
   /**
    * @param {WebDriver} driver
    * @param {Object} element WebElement JSON object
+   * @param {By|Object} locator
    */
-  constructor(driver, element) {
+  constructor(driver, element, locator) {
+    ArgumentGuard.notNull(locator, "locator");
+
     this._driver = driver;
     this._element = element;
+    this._locator = locator;
   }
 
 
   /**
    * @param {WebDriver} driver
    * @param {By} locator
-   * @return {WebElement}
+   * @return {Promise.<WebElement>}
    */
   static findElement(driver, locator) {
     return driver.remoteWebDriver.element(locator.value).then(r => {
       const {value: element} = r;
-      return new WebElement(driver, element);
+      return new WebElement(driver, element, locator);
     });
   }
 
 
   /**
-   *
+   * @todo
    */
   findElements(locator) {
 
@@ -42,7 +46,6 @@ class WebElement {
 
 
   /**
-   * @deprecated
    * @returns {Promise.<{x, y}>}
    */
   getLocation() {
@@ -54,7 +57,6 @@ class WebElement {
 
 
   /**
-   * @deprecated
    * @returns {Promise.<width, height>}
    */
   getSize() {
@@ -69,7 +71,8 @@ class WebElement {
    * @returns {Promise.<x, y, width, height>}
    */
   getRect() {
-    return this._driver.remoteWebDriver.elementIdRect(this._element.ELEMENT).then(r => { // todo need to replace elementIdSize to elementIdRect
+    // todo need to replace elementIdSize and elementIdLocation to elementIdRect
+    return this._driver.remoteWebDriver.elementIdRect(this._element.ELEMENT).then(r => {
       const {value: rect} = r;
       return rect;
     });
@@ -147,7 +150,21 @@ class WebElement {
       offsetLeft = offsetLeft_.value;
       return that._driver.remoteWebDriver.elementIdAttribute(this._element.ELEMENT, 'offsetTop');
     }).then(offsetTop_ => {
-      return {offsetLeft: parseInt(offsetLeft), offsetTop: parseInt(offsetTop_.value)}
+      return {offsetLeft: parseInt(offsetLeft), offsetTop: parseInt(offsetTop_.value)};
+    });
+  }
+
+  /**
+   * @returns {Promise.<{scrollLeft, scrollTop}>}
+   */
+  getElementScroll() {
+    const that = this;
+    let scrollLeft;
+    return that._driver.remoteWebDriver.elementIdAttribute(this._element.ELEMENT, 'scrollLeft').then(scrollLeft_ => {
+      scrollLeft = scrollLeft_.value;
+      return that._driver.remoteWebDriver.elementIdAttribute(this._element.ELEMENT, 'scrollTop');
+    }).then(scrollTop_ => {
+      return {scrollLeft: parseInt(scrollLeft), scrollTop: parseInt(scrollTop_.value)};
     });
   }
 
@@ -158,8 +175,15 @@ class WebElement {
     return this._driver;
   }
 
+  /**
+   * @return {Object|*}
+   */
   get element() {
     return this._element;
+  }
+
+  get locator() {
+    return this._locator;
   }
 
 }

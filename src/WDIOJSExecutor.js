@@ -27,7 +27,11 @@ class WDIOJSExecutor extends EyesJsExecutor {
    * @inheritDoc
    */
   executeScript(script, ...args) {
-    return this._driver.remoteWebDriver.execute(script, args);
+    const that = this;
+    return that._driver.remoteWebDriver.execute(script, ...args).catch(e => {
+      that._driver.eyes._logger.verbose(`Error executeScript: ${script}\nargs: ${JSON.stringify(args)}`);
+      throw e;
+    });
   }
 
   /**
