@@ -28,10 +28,7 @@ let imageOrientationHandler = new class ImageOrientationHandlerImpl extends Imag
 
   /** @override */
   tryAutomaticRotation(logger, driver, image) {
-    return driver.execute(() => 0).then(res_ => {
-      const {value: res} = res_;
-      return res;
-    });
+    return driver.execute(() => 0);
   }
 };
 
@@ -137,10 +134,10 @@ class EyesWDIOUtils {
    */
   static get JS_GET_CONTENT_ENTIRE_SIZE() {
     return `var scrollWidth = document.documentElement.scrollWidth;
-      var bodyScrollWidth = document.body.scrollWidth; 
-      var totalWidth = Math.max(scrollWidth, bodyScrollWidth); 
+      var bodyScrollWidth = document.body.scrollWidth;
+      var totalWidth = Math.max(scrollWidth, bodyScrollWidth);
       var clientHeight = document.documentElement.clientHeight;
-      var bodyClientHeight = document.body.clientHeight; 
+      var bodyClientHeight = document.body.clientHeight;
       var scrollHeight = document.documentElement.scrollHeight;
       var bodyScrollHeight = document.body.scrollHeight;
       var maxDocElementHeight = Math.max(clientHeight, scrollHeight);
@@ -204,8 +201,7 @@ class EyesWDIOUtils {
    * @return {Promise<number>} A promise which resolves to the device pixel ratio (float type).
    */
   static getDevicePixelRatio(executor) {
-    return executor.executeScript('return window.devicePixelRatio').then(res_ => {
-      const {value: result} = res_;
+    return executor.executeScript('return window.devicePixelRatio').then(result => {
       return parseFloat(result);
     });
   }
@@ -222,10 +218,7 @@ class EyesWDIOUtils {
       script += `'${EyesWDIOUtils.JS_TRANSFORM_KEYS[i]}': document.documentElement.style['${EyesWDIOUtils.JS_TRANSFORM_KEYS[i]}'],`;
     }
     script += " }";
-    return executor.executeScript(script).then(res_ => {
-      const {value: result} = res_;
-      return result;
-    });
+    return executor.executeScript(script);
   }
 
   static JS_GET_TRANSFORM_VALUE(element, key) {
@@ -332,10 +325,11 @@ class EyesWDIOUtils {
    * @param {EyesJsExecutor} executor The executor to use.
    * @return {Promise.<Location>} The current scroll position of the current frame.
    */
-  static async getCurrentScrollPosition(executor) {
-    const value = await executor.executeScript(EyesWDIOUtils.JS_GET_CURRENT_SCROLL_POSITION);
-    // If we can't find the current scroll position, we use 0 as default.
-    return new Location(Math.ceil(value[0]) || 0, Math.ceil(value[1]) || 0);
+  static getCurrentScrollPosition(executor) {
+    return executor.executeScript(EyesWDIOUtils.JS_GET_CURRENT_SCROLL_POSITION).then(value => {
+      // If we can't find the current scroll position, we use 0 as default.
+      return new Location(Math.ceil(value[0]) || 0, Math.ceil(value[1]) || 0);
+    });
   }
 
 
@@ -349,8 +343,7 @@ class EyesWDIOUtils {
     // IMPORTANT: Notice there's a major difference between scrollWidth and scrollHeight.
     // While scrollWidth is the maximum between an element's width and its content width,
     // scrollHeight might be smaller (!) than the clientHeight, which is why we take the maximum between them.
-    try {
-      const {value} = await executor.executeScript(EyesWDIOUtils.JS_GET_CONTENT_ENTIRE_SIZE);
+    return executor.executeScript(EyesWDIOUtils.JS_GET_CONTENT_ENTIRE_SIZE).then(value => {
       return new RectangleSize(parseInt(value[0], 10) || 0, parseInt(value[1], 10) || 0);
     } catch (e) {
       throw new EyesDriverOperationError("Failed to extract entire size!", e);
@@ -379,9 +372,7 @@ class EyesWDIOUtils {
         "return origOverflow";
     }
 
-    try {
-      return executor.executeScript(script);
-    } catch (e) {
+    return executor.executeScript(script).catch(e => {
       throw new EyesDriverOperationError('Failed to set overflow', e);
     }
   }
@@ -393,9 +384,7 @@ class EyesWDIOUtils {
    * @return {Promise.<Boolean>} A promise which resolves to the {@code true} if body overflow is hidden, {@code false} otherwise.
    */
   static isBodyOverflowHidden(executor) {
-    try {
-      return executor.executeScript(EyesWDIOUtils.JS_GET_IS_BODY_OVERFLOW_HIDDEN);
-    } catch (e) {
+    return executor.executeScript(EyesWDIOUtils.JS_GET_IS_BODY_OVERFLOW_HIDDEN).catch(e => {
       throw new EyesDriverOperationError('Failed to get state of body overflow', e);
     }
   }
@@ -423,9 +412,7 @@ class EyesWDIOUtils {
         "return origOverflow";
     }
 
-    try {
-      return executor.executeScript(script);
-    } catch (e) {
+    return executor.executeScript(script).catch(e => {
       throw new EyesDriverOperationError('Failed to set body overflow', e);
     }
   }
@@ -456,7 +443,7 @@ class EyesWDIOUtils {
    * @return {RectangleSize} The viewport size.
    */
   static async getViewportSize(executor) {
-    const {value} = await executor.executeScript(EyesWDIOUtils.JS_GET_VIEWPORT_SIZE);
+    const value = await executor.executeScript(EyesWDIOUtils.JS_GET_VIEWPORT_SIZE);
     // await browser.getViewportSize()
     return new RectangleSize(parseInt(value[0], 10) || 0, parseInt(value[1], 10) || 0);
   }
@@ -474,8 +461,11 @@ class EyesWDIOUtils {
 
       // If we failed to extract the viewport size using JS, will use the window size instead.
       logger.verbose("Using window size as viewport size.");
-      return executor.remoteWebDriver.windowHandleSize().then(/** {width:number, height:number} */result => {
-        const {value: size} = result;
+
+      const getWindowSizePromise = browser.remoteWebDriver.isW3C
+          ? browser.remoteWebDriver.getWindowRect()
+          : browser.remoteWebDriver.getWindowSize()
+      return getWindowSizePromise.then(/** {width:number, height:number} */size => {
         let width = size.width;
         let height = size.height;
         return EyesWDIOUtils.isLandscapeOrientation(executor).then(result => {
@@ -533,15 +523,18 @@ class EyesWDIOUtils {
   static _setBrowserSizeLoop(logger, browser, requiredSize, sleep = 1000, retries = 3) {
     logger.verbose("Trying to set browser size to:", requiredSize);
 
-    return browser.remoteWebDriver.windowHandleSize({
-      width: requiredSize.getWidth(),
-      height: requiredSize.getHeight()
-    }).then(() => {
+    const setBrowserSizePromise = browser.remoteWebDriver.isW3C
+      ? browser.remoteWebDriver.setWindowRect(0, 0, requiredSize.getWidth(), requiredSize.getHeight())
+      : browser.remoteWebDriver.setWindowSize(requiredSize.getWidth(), requiredSize.getHeight())
+
+    return setBrowserSizePromise.then(() => {
       return GeneralUtils.sleep(sleep, browser.eyes.getPromiseFactory());
     }).then(() => {
-      return browser.remoteWebDriver.windowHandleSize();
+      return browser.remoteWebDriver.isW3C
+        ? browser.remoteWebDriver.getWindowRect()
+        : browser.remoteWebDriver.getWindowSize()
     }).then(size => {
-      const currentSize = new RectangleSize(size.value.width, size.value.height);
+      const currentSize = new RectangleSize(size.width, size.height);
       logger.log(`Current browser size: ${currentSize}`);
       if (currentSize.equals(requiredSize)) {
         return true;
@@ -563,11 +556,15 @@ class EyesWDIOUtils {
    * @return {Promise<boolean>}
    */
   static setBrowserSizeByViewportSize(logger, browser, actualViewportSize, requiredViewportSize) {
-    return browser.remoteWebDriver.windowHandleSize().then(/** {width:number, height:number} */browserSize => {
+    const getWindowSizePromise = browser.remoteWebDriver.isW3C
+        ? browser.remoteWebDriver.getWindowRect()
+        : browser.remoteWebDriver.getWindowSize()
+
+    return getWindowSizePromise.then(/** {width:number, height:number} */browserSize => {
       logger.verbose("Current browser size:", browserSize);
       const requiredBrowserSize = {
-        width: browserSize.value.width + (requiredViewportSize.getWidth() - actualViewportSize.getWidth()),
-        height: browserSize.value.height + (requiredViewportSize.getHeight() - actualViewportSize.getHeight())
+        width: browserSize.width + (requiredViewportSize.getWidth() - actualViewportSize.getWidth()),
+        height: browserSize.height + (requiredViewportSize.getHeight() - actualViewportSize.getHeight())
       };
       return EyesWDIOUtils.setBrowserSize(logger, browser, new RectangleSize(requiredBrowserSize));
     });
@@ -600,7 +597,10 @@ class EyesWDIOUtils {
 
       // We move the window to (0,0) to have the best chance to be able to
       // set the viewport size as requested.
-      return browser.remoteWebDriver.windowHandlePosition({x: 0, y: 0}).catch(ignored => {
+      const setWindowPositionCommandPromise = browser.remoteWebDriver.isW3C
+        ? browser.remoteWebDriver.setWindowRect(0, 0, actualViewportSize.width, actualViewportSize.height)
+        : browser.remoteWebDriver.setWindowPosition(0, 0)
+      return setWindowPositionCommandPromise.catch(ignored => {
         logger.verbose("Warning: Failed to move the browser window to (0,0)");
       }).then(() => {
         return EyesWDIOUtils.setBrowserSizeByViewportSize(logger, browser, actualViewportSize, requiredSize);
@@ -631,7 +631,10 @@ class EyesWDIOUtils {
         const heightDiff = actualViewportSize.getHeight() - requiredSize.getHeight();
         const heightStep = heightDiff > 0 ? -1 : 1;
 
-        return browser.remoteWebDriver.windowHandleSize().then(browserSize => {
+        const getWindowSizePromise = browser.remoteWebDriver.isW3C
+            ? browser.remoteWebDriver.getWindowRect()
+            : browser.remoteWebDriver.getWindowSize()
+        return getWindowSizePromise.then(browserSize => {
           const currWidthChange = 0;
           const currHeightChange = 0;
           // We try the zoom workaround only if size difference is reasonable.

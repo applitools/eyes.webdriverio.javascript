@@ -1355,7 +1355,7 @@ class Eyes extends EyesBase {
       return undefined;
     }
 
-    return this.getPromiseFactory().resolve(this.getRemoteWebDriver().requestHandler.sessionID);
+    return this.getPromiseFactory().resolve(this.getRemoteWebDriver().sessionId);
   };
 
 
