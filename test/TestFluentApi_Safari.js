@@ -11,7 +11,7 @@ const test = new Common({testedPageUrl});
 
 let platforms = ['macOS 10.13'];
 platforms.forEach(function (platform) {
-  describe.skip(appName, function () {
+  describe(appName, function () {
 
     before(function () {
       test.beforeTest({});
