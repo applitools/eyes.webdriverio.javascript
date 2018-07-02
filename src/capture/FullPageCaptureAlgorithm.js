@@ -3,7 +3,7 @@
 const {ArgumentGuard, Location, Region, RectangleSize, CoordinatesType, GeneralUtils, MutableImage, NullCutProvider} = require('@applitools/eyes.sdk.core');
 
 const NullRegionPositionCompensation = require('../positioning/NullRegionPositionCompensation');
-const ScrollPositionProvider = require('../positioning/ScrollPositionProvider');
+const CssTranslateElementPositionProvider = require('../positioning/CssTranslateElementPositionProvider');
 
 const MIN_SCREENSHOT_PART_DIMENSION = 10;
 
@@ -198,6 +198,11 @@ class FullPageCaptureAlgorithm {
               // Screen size may cause the scroll to only reach part of the way.
               return positionProvider.getCurrentPosition().then(currentPosition_ => {
                 currentPosition = currentPosition_;
+
+                if (positionProvider instanceof CssTranslateElementPositionProvider) {
+                  currentPosition = partRegion.getLocation();
+                }
+
                 that._logger.verbose("Set position to " + currentPosition);
               });
             }).then(() => {

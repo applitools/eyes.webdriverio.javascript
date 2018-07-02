@@ -93,6 +93,14 @@ class ElementPositionProvider extends PositionProvider {
       that._logger.verbose("Position restored.");
     });
   }
+
+  /**
+   *
+   * @returns {EyesWebElement|*}
+   */
+  get element() {
+    return this._element;
+  }
 }
 
 module.exports = ElementPositionProvider;

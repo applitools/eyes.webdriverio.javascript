@@ -67,7 +67,7 @@ class EyesWebElement extends WebElement {
     ArgumentGuard.notNull(eyesDriver, "eyesDriver");
     ArgumentGuard.notNull(webElement, "webElement");
 
-    super(eyesDriver.webDriver, webElement.element);
+    super(eyesDriver.webDriver, webElement.element, webElement.locator);
 
     /** @type {Logger}*/
     this._logger = logger;
@@ -253,7 +253,8 @@ class EyesWebElement extends WebElement {
   getOverflow() {
     return this.executeScript(JS_GET_OVERFLOW).then(r => {
       const {value} = r;
-      return Math.ceil(parseFloat(value));
+      const overflow = Math.ceil(parseFloat(value));
+      return overflow ? overflow : null;
     });
   }
 
@@ -270,7 +271,11 @@ class EyesWebElement extends WebElement {
    * @returns {Promise} The result returned from the script
    */
   executeScript(script) {
-    return this._eyesWebDriver.executeScript(script, this.getWebElement()._element);
+    const webElementPromise = WebElement.findElement(this._eyesWebDriver.webDriver, this.getWebElement()._locator);
+
+    return webElementPromise.then(webElement => {
+      return this._eyesWebDriver.executeScript(script, webElement.element);
+    });
   }
 
   /**
@@ -445,11 +450,17 @@ class EyesWebElement extends WebElement {
   }
 
   /**
-   *
    * @returns {Promise.<{offsetLeft, offsetTop}>}
    */
   getElementOffset() {
     return this.getWebElement().getElementOffset();
+  }
+
+  /**
+   * @returns {Promise.<{scrollLeft, scrollTop}>}
+   */
+  getElementScroll() {
+    return this.getWebElement().getElementScroll();
   }
 
   // noinspection JSUnusedGlobalSymbols

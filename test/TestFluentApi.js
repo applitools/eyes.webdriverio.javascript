@@ -56,10 +56,10 @@ shared.examplesFor('TestFluentApi', function (test) {
     });
   });
 
-  it.skip('TestCheckRegionInFrameInFrame_Fluent', function () {
-    return test.eyes.check("Fluent - Region in Frame in Frame", Target.frame("frame1")
-      .frame("frame1-1")
-      .region(By.tagName("img"))
+  it('TestCheckRegionInFrameInFrame_Fluent', function () {
+    return test.eyes.check('Fluent - Region in Frame in Frame', Target.frame('frame1')
+      .frame('frame1-1')
+      .region(By.tagName('img'))
       .fully()).then(result => {
       equal(result.getAsExpected(), true);
     });

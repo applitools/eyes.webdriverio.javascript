@@ -23,7 +23,7 @@ class WebDriver {
   findElement(locator) {
     return this._remoteWebDriver.element(locator.value).then(r => {
       const {value: element} = r;
-      return new WebElement(this, element);
+      return new WebElement(this, element, locator);
     });
   }
 

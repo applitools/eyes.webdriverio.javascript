@@ -42,7 +42,8 @@ class Common {
   static get SAFARI() {
     return {
       desiredCapabilities: {
-        browserName: 'safari'
+        browserName: 'safari',
+        version: '11.1'
       }
     }
   };
@@ -151,7 +152,6 @@ class Common {
     let error;
     const that = this;
     return this._eyes.close(false).then(results => {
-
       const query = `?format=json&AccessToken=${results.getSecretToken()}&apiKey=${that.eyes.getApiKey()}`;
       const apiSessionUrl = results.getApiUrls().getSession() + query;
 

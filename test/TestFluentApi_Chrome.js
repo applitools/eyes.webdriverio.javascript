@@ -1,6 +1,5 @@
 'use strict';
 
-const chromedriver = require('chromedriver');
 const {TestFluentApi} = require('./TestFluentApi');
 const Common = require('./Common');
 
@@ -11,27 +10,31 @@ const testedPageUrl = 'http://applitools.github.io/demo/TestPages/FramesTestPage
 const test = new Common({testedPageUrl});
 
 
-describe(appName, function () {
+const platforms = ['Linux'/*, 'Windows'*/];
+platforms.forEach(function (platform) {
+  describe(appName, function () {
 
-  before(function () {
-    chromedriver.start();
-    test.beforeTest({});
+    before(function () {
+      test.beforeTest({});
+    });
+
+    beforeEach(function () {
+      return test.beforeEachTest({
+        appName: appName,
+        testName: this.currentTest.title,
+        browserOptions: Common.CHROME,
+        platform: platform
+      });
+    });
+
+    afterEach(function () {
+      return test.afterEachTest();
+    });
+
+    after(function () {
+      test.afterTest();
+    });
+
+    TestFluentApi.shouldBehaveLike('TestFluentApi', test);
   });
-
-  beforeEach(function () {
-    const browserOptions = Common.CHROME;
-    browserOptions.port = '9515';
-    browserOptions.path = '/';
-    return test.beforeEachTest({appName: appName, testName: this.currentTest.title, browserOptions: browserOptions});
-  });
-
-  afterEach(function () {
-    return test.afterEachTest();
-  });
-
-  after(function () {
-    chromedriver.stop();
-  });
-
-  TestFluentApi.shouldBehaveLike('TestFluentApi', test);
 });
