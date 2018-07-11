@@ -46,6 +46,46 @@ let javascriptHandler = new class JavascriptHandlerImpl extends JavascriptHandle
 
 class EyesWDIOUtils {
 
+  /**
+   * @param {ImageOrientationHandler} value
+   */
+  static setImageOrientationHandlerHandler(value) {
+    imageOrientationHandler = value;
+  }
+
+  /**
+   * @param {WebDriver} driver The driver for which to check the orientation.
+   * @return {Promise<boolean>} {@code true} if this is a mobile device and is in landscape orientation. {@code
+   *   false} otherwise.
+   */
+  static isLandscapeOrientation(driver) {
+    return imageOrientationHandler.isLandscapeOrientation(driver);
+  }
+
+  /**
+   * @param {Logger} logger
+   * @param {WebDriver} driver
+   * @param {MutableImage} image
+   * @return {Promise<number>}
+   */
+  static tryAutomaticRotation(logger, driver, image) {
+    return imageOrientationHandler.tryAutomaticRotation(logger, driver, image);
+  }
+
+  /**
+   * @param {JavascriptHandler} handler
+   */
+  static setJavascriptHandler(handler) {
+    javascriptHandler = handler;
+  }
+
+  /**
+   * @param {string} script
+   * @param {object...} args
+   */
+  static handleSpecialCommands(script, ...args) {
+    return javascriptHandler.handle(script, ...args);
+  }
 
   /**
    * @private
@@ -292,17 +332,6 @@ class EyesWDIOUtils {
    */
   static elementTranslateTo(executor, webElementPromise, position) {
     return EyesWDIOUtils.setElementTransforms(executor, webElementPromise, `translate(${position.getX()}px, ${position.getY()}px)`);
-  }
-
-
-  /**
-   * @param {Logger} logger
-   * @param {WebDriver} driver
-   * @param {MutableImage} image
-   * @returns {Promise.<int>}
-   */
-  static tryAutomaticRotation(logger, driver, image) {
-    return imageOrientationHandler.tryAutomaticRotation(logger, driver, image);
   }
 
 
