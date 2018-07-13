@@ -75,6 +75,9 @@ class Eyes extends EyesBase {
     /** @type {EyesWebDriver} */
     this._driver = undefined;
     /** @type {boolean} */
+    this._dontGetTitle = false;
+
+    /** @type {boolean} */
     this._forceFullPageScreenshot = false;
     this._imageRotationDegrees = 0;
     this._automaticRotation = true;
@@ -1319,7 +1322,16 @@ class Eyes extends EyesBase {
 
 
   getTitle() {
-    return this._driver.getTitle();
+    const that = this;
+    if (!this._dontGetTitle) {
+      return that._driver.getTitle().catch(err => {
+        that._logger.verbose(`failed (${err})`);
+        that._dontGetTitle = true;
+        return '';
+      });
+    }
+
+    return this.getPromiseFactory().resolve('');
   };
 
   getRemoteWebDriver() {
