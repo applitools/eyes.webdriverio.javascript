@@ -32,11 +32,14 @@ class ScrollPositionProvider extends PositionProvider {
     this._logger.verbose("ScrollPositionProvider - getCurrentPosition()");
 
     const that = this;
-    return EyesWDIOUtils.getCurrentScrollPosition(this._executor).catch(err => {
-      throw new EyesDriverOperationError("Failed to extract current scroll position!", err);
-    }).then(result => {
+    return EyesWDIOUtils.getCurrentScrollPosition(this._executor).then(result => {
       that._logger.verbose(`Current position: ${result}`);
       return result;
+    }).catch(err => {
+      // Sometimes it is expected e.g. on Appium, otherwise, take care
+      that._logger.verbose(`Failed to extract current scroll position!`);
+      return new Location(0, 0);
+      // throw new EyesDriverOperationError("Failed to extract current scroll position!", err);
     });
   }
 
@@ -49,6 +52,9 @@ class ScrollPositionProvider extends PositionProvider {
     that._logger.verbose(`ScrollPositionProvider - Scrolling to ${location}`);
     return EyesWDIOUtils.setCurrentScrollPosition(this._executor, location).then(() => {
       that._logger.verbose("ScrollPositionProvider - Done scrolling!");
+    }).catch(err => {
+      // Sometimes it is expected e.g. on Appium, otherwise, take care
+      that._logger.verbose(`Failed to set current scroll position!.`);
     });
   }
 

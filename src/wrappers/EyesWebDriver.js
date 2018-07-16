@@ -125,7 +125,7 @@ class EyesWebDriver {
 
     promise = promise.then(() => {
       that._logger.verbose("Extracting viewport size...");
-      return EyesWDIOUtils.getViewportSizeOrDisplaySize(that._logger, that.eyes.jsExecutor);
+      return EyesWDIOUtils.getViewportSizeOrDisplaySize(that._logger, that);
     }).then(defaultContentViewportSize => {
       that._defaultContentViewportSize = defaultContentViewportSize;
       that._logger.verbose("Done! Viewport size: ", that._defaultContentViewportSize);
