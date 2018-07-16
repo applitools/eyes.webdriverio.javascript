@@ -14,4 +14,4 @@ shared.examplesFor('TestMobile', function (test) {
 
 });
 
-module.exports.TestSpecialCases = shared;
+module.exports.TestMobile = shared;

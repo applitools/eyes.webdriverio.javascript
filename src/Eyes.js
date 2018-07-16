@@ -1252,9 +1252,50 @@ class Eyes extends EyesBase {
   }
 
 
+  getAppEnvironment() {
+    const that = this;
+    let appEnv;
+
+    return super.getAppEnvironment().then(appEnv_ => {
+      appEnv = appEnv_;
+      if (!appEnv._os) {
+        if (that.getDriver().remoteWebDriver.isMobile) {
+          let platformName = null;
+          if (that.getDriver().remoteWebDriver.isAndroid) {
+            that._logger.log('Android detected.');
+            platformName = 'Android';
+          } else if (that.getDriver().remoteWebDriver.isIOS) {
+            that._logger.log('iOS detected.');
+            platformName = 'iOS';
+          } else {
+            that._logger.log('Unknown device type.');
+          }
+
+          if (platformName) {
+            let os = platformName;
+            const platformVersion = that.getDriver().remoteWebDriver.desiredCapabilities.platformVersion;
+            if (platformVersion) {
+              os += ` ${platformVersion}`;
+            }
+            that._logger.verbose(`Setting OS: ${os}`);
+            appEnv.setOs(os);
+          }
+        } else {
+          that._logger.log('No mobile OS detected.');
+        }
+      }
+    }).then(() => {
+      return appEnv;
+    });
+  }
+
   // noinspection JSUnusedGlobalSymbols
   getInferredEnvironment() {
-    return this._driver.getUserAgent().then(userAgent => "useragent:" + userAgent).catch(() => null);
+    return this._driver.getUserAgent().then(userAgent => {
+      return userAgent ? "useragent:" + userAgent : userAgent;
+    }).catch(() => {
+      return null;
+    });
   };
 
 
