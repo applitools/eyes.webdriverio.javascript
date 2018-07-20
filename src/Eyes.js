@@ -61,6 +61,9 @@ class Eyes extends EyesBase {
     return 1;
   }
 
+  static get DEFAULT_IOS_NATIVE_APP_DEVICE_PIXEL_RATIO() {
+    return 2;
+  }
 
   /**
    * Creates a new (possibly disabled) Eyes instance that interacts with the Eyes Server at the specified url.
@@ -491,7 +494,11 @@ class Eyes extends EyesBase {
         that._devicePixelRatio = ratio;
       }).catch(err => {
         that._logger.verbose("Failed to extract device pixel ratio! Using default.", err);
-        that._devicePixelRatio = Eyes.DEFAULT_DEVICE_PIXEL_RATIO;
+        if (that.getDriver().remoteWebDriver.isMobile && that.getDriver().remoteWebDriver.isIOS) {
+          that._devicePixelRatio = Eyes.DEFAULT_IOS_NATIVE_APP_DEVICE_PIXEL_RATIO;
+        } else {
+          that._devicePixelRatio = Eyes.DEFAULT_DEVICE_PIXEL_RATIO;
+        }
       }).then(() => {
         that._logger.verbose(`Device pixel ratio: ${that._devicePixelRatio}`);
         that._logger.verbose("Setting scale provider...");
@@ -1138,41 +1145,6 @@ class Eyes extends EyesBase {
       that._logger.verbose("Done!");
       return result;
     });
-  }
-
-
-  /**
-   *
-   * @returns {Promise.<*>}
-   */
-  _updateScalingParams() {
-    // Update the scaling params only if we haven't done so yet, and the user hasn't set anything else manually.
-    if (this._devicePixelRatio === Eyes.UNKNOWN_DEVICE_PIXEL_RATIO && this._scaleProviderHandler.get() instanceof NullScaleProvider) {
-      this._logger.verbose("Trying to extract device pixel ratio...");
-
-      const that = this;
-      return EyesWDIOUtils.getDevicePixelRatio(that._jsExecutor).then(ratio => {
-        that._devicePixelRatio = ratio;
-      }).catch(err => {
-        that._logger.verbose("Failed to extract device pixel ratio! Using default.", err);
-        that._devicePixelRatio = Eyes.DEFAULT_DEVICE_PIXEL_RATIO;
-      }).then(() => {
-        that._logger.verbose(`Device pixel ratio: ${that._devicePixelRatio}`);
-        that._logger.verbose("Setting scale provider...");
-        return that._getScaleProviderFactory();
-      }).catch(err => {
-        that._logger.verbose("Failed to set ContextBasedScaleProvider.", err);
-        that._logger.verbose("Using FixedScaleProvider instead...");
-        return new FixedScaleProviderFactory(1 / that._devicePixelRatio, that._scaleProviderHandler);
-      }).then(factory => {
-        that._logger.verbose("Done!");
-        return factory;
-      });
-    }
-
-    // If we already have a scale provider set, we'll just use it, and pass a mock as provider handler.
-    const nullProvider = new SimplePropertyHandler();
-    return this.getPromiseFactory().resolve(new ScaleProviderIdentityFactory(this._scaleProviderHandler.get(), nullProvider));
   }
 
 
