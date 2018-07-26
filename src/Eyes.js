@@ -61,10 +61,6 @@ class Eyes extends EyesBase {
     return 1;
   }
 
-  static get DEFAULT_IOS_NATIVE_APP_DEVICE_PIXEL_RATIO() {
-    return 2;
-  }
-
   /**
    * Creates a new (possibly disabled) Eyes instance that interacts with the Eyes Server at the specified url.
    *
@@ -494,11 +490,7 @@ class Eyes extends EyesBase {
         that._devicePixelRatio = ratio;
       }).catch(err => {
         that._logger.verbose("Failed to extract device pixel ratio! Using default.", err);
-        if (that.getDriver().remoteWebDriver.isMobile && that.getDriver().remoteWebDriver.isIOS) {
-          that._devicePixelRatio = Eyes.DEFAULT_IOS_NATIVE_APP_DEVICE_PIXEL_RATIO;
-        } else {
-          that._devicePixelRatio = Eyes.DEFAULT_DEVICE_PIXEL_RATIO;
-        }
+        that._devicePixelRatio = Eyes.DEFAULT_DEVICE_PIXEL_RATIO;
       }).then(() => {
         that._logger.verbose(`Device pixel ratio: ${that._devicePixelRatio}`);
         that._logger.verbose("Setting scale provider...");
