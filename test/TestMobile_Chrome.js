@@ -1,6 +1,6 @@
 'use strict';
 
-const {TestSpecialCases} = require('./TestMobile');
+const {TestMobile} = require('./TestMobile');
 const Common = require('./Common');
 
 const appName = 'Eyes Selenium SDK - Mobile';
@@ -37,5 +37,5 @@ describe(appName, function () {
     test.afterTest();
   });
 
-  TestSpecialCases.shouldBehaveLike('TestMobile', test);
+  TestMobile.shouldBehaveLike('TestMobile', test);
 });

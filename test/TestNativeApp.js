@@ -4,7 +4,7 @@ const {equal} = require('assert');
 const shared = require('shared-examples-for');
 
 
-shared.examplesFor('TestMobile', function (test) {
+shared.examplesFor('TestNativeApp', function (test) {
 
   it('TestCheckWindow', function () {
     return test.eyes.checkWindow('Window').then(result => {
@@ -14,4 +14,4 @@ shared.examplesFor('TestMobile', function (test) {
 
 });
 
-module.exports.TestMobile = shared;
+module.exports.TestNativeApp = shared;

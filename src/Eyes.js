@@ -61,7 +61,6 @@ class Eyes extends EyesBase {
     return 1;
   }
 
-
   /**
    * Creates a new (possibly disabled) Eyes instance that interacts with the Eyes Server at the specified url.
    *
@@ -1142,41 +1141,6 @@ class Eyes extends EyesBase {
 
 
   /**
-   *
-   * @returns {Promise.<*>}
-   */
-  _updateScalingParams() {
-    // Update the scaling params only if we haven't done so yet, and the user hasn't set anything else manually.
-    if (this._devicePixelRatio === Eyes.UNKNOWN_DEVICE_PIXEL_RATIO && this._scaleProviderHandler.get() instanceof NullScaleProvider) {
-      this._logger.verbose("Trying to extract device pixel ratio...");
-
-      const that = this;
-      return EyesWDIOUtils.getDevicePixelRatio(that._jsExecutor).then(ratio => {
-        that._devicePixelRatio = ratio;
-      }).catch(err => {
-        that._logger.verbose("Failed to extract device pixel ratio! Using default.", err);
-        that._devicePixelRatio = Eyes.DEFAULT_DEVICE_PIXEL_RATIO;
-      }).then(() => {
-        that._logger.verbose(`Device pixel ratio: ${that._devicePixelRatio}`);
-        that._logger.verbose("Setting scale provider...");
-        return that._getScaleProviderFactory();
-      }).catch(err => {
-        that._logger.verbose("Failed to set ContextBasedScaleProvider.", err);
-        that._logger.verbose("Using FixedScaleProvider instead...");
-        return new FixedScaleProviderFactory(1 / that._devicePixelRatio, that._scaleProviderHandler);
-      }).then(factory => {
-        that._logger.verbose("Done!");
-        return factory;
-      });
-    }
-
-    // If we already have a scale provider set, we'll just use it, and pass a mock as provider handler.
-    const nullProvider = new SimplePropertyHandler();
-    return this.getPromiseFactory().resolve(new ScaleProviderIdentityFactory(this._scaleProviderHandler.get(), nullProvider));
-  }
-
-
-  /**
    * @private
    * @param {WebElement} element
    * @return {Promise}
@@ -1252,9 +1216,50 @@ class Eyes extends EyesBase {
   }
 
 
+  getAppEnvironment() {
+    const that = this;
+    let appEnv;
+
+    return super.getAppEnvironment().then(appEnv_ => {
+      appEnv = appEnv_;
+      if (!appEnv._os) {
+        if (that.getDriver().remoteWebDriver.isMobile) {
+          let platformName = null;
+          if (that.getDriver().remoteWebDriver.isAndroid) {
+            that._logger.log('Android detected.');
+            platformName = 'Android';
+          } else if (that.getDriver().remoteWebDriver.isIOS) {
+            that._logger.log('iOS detected.');
+            platformName = 'iOS';
+          } else {
+            that._logger.log('Unknown device type.');
+          }
+
+          if (platformName) {
+            let os = platformName;
+            const platformVersion = that.getDriver().remoteWebDriver.desiredCapabilities.platformVersion;
+            if (platformVersion) {
+              os += ` ${platformVersion}`;
+            }
+            that._logger.verbose(`Setting OS: ${os}`);
+            appEnv.setOs(os);
+          }
+        } else {
+          that._logger.log('No mobile OS detected.');
+        }
+      }
+    }).then(() => {
+      return appEnv;
+    });
+  }
+
   // noinspection JSUnusedGlobalSymbols
   getInferredEnvironment() {
-    return this._driver.getUserAgent().then(userAgent => "useragent:" + userAgent).catch(() => null);
+    return this._driver.getUserAgent().then(userAgent => {
+      return userAgent ? "useragent:" + userAgent : userAgent;
+    }).catch(() => {
+      return null;
+    });
   };
 
 

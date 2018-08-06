@@ -102,7 +102,8 @@ class Common {
                    rectangleSize = {
                      width: 800,
                      height: 600
-                   }, testedPageUrl = this._testedPageUrl,
+                   },
+                   testedPageUrl = this._testedPageUrl,
                    platform = Common.getPlatform(browserOptions)
                  }) {
 
