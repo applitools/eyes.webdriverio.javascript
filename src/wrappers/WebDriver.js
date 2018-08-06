@@ -67,7 +67,7 @@ class WebDriver {
    * @return {Promise}
    */
   execute(f) {
-    return this._remoteWebDriver.execute(f);
+    return Promise.resolve(this._remoteWebDriver.execute(f));
   }
 
   get remoteWebDriver() {

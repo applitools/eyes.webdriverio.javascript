@@ -144,7 +144,7 @@ class EyesWebDriver {
   //noinspection JSUnusedGlobalSymbols
   getUserAgent() {
     const that = this;
-    return this.remoteWebDriver.execute('return navigator.userAgent').then(res_ => {
+    return Promise.resolve(this.remoteWebDriver.execute('return navigator.userAgent')).then(res_ => {
       let {value: userAgent} = res_;
       that._logger.verbose("user agent: " + userAgent);
       return userAgent;
@@ -257,7 +257,7 @@ class EyesWebDriver {
    */
   executeScript(script, ...var_args) {
     const that = this;
-    return this.remoteWebDriver.execute(script, ...var_args).catch(e => {
+    return Promise.resolve(this.remoteWebDriver.execute(script, ...var_args)).catch(e => {
       that._logger.verbose("WARNING: getComputedStyle error: " + e);
       throw e;
     }).then(result => {
