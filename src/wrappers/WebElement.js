@@ -27,12 +27,20 @@ class WebElement {
   /**
    * @param {WebDriver} driver
    * @param {By} locator
+   * @param {int} [retry]
    * @return {Promise.<WebElement>}
    */
-  static findElement(driver, locator) {
+  static findElement(driver, locator, retry = 0) {
     return driver.remoteWebDriver.element(locator.value).then(r => {
       const {value: element} = r;
       return new WebElement(driver, element, locator);
+    }).catch(e => {
+      const number = 3;
+      if (retry > number) {
+        throw e;
+      } else {
+        return WebElement.findElement(driver, locator, retry++);
+      }
     });
   }
 
