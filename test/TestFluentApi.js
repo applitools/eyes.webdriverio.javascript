@@ -115,7 +115,7 @@ shared.examplesFor('TestFluentApi', function (test) {
 
       return test.eyes.check("Fluent - Full Frame in Frame 2", Target.frame("frame1").frame("frame1-1").fully());
     }).then(result_ => {
-      equal(result.getAsExpected() || result_.getAsExpected(), true);
+      equal(result.getAsExpected() && result_.getAsExpected(), true);
     });
   });
 
