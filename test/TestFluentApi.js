@@ -156,6 +156,7 @@ shared.examplesFor('TestFluentApi', function (test) {
       return test.eyes.check("Fluent - Region by element - fully", Target.region(element).ignore(ignoreElement))
     }).then(result => {
       equal(result.getAsExpected(), true);
+      test.setExpectedIgnoreRegions(new Region(0, -202, 304, 184));
     });
   });
 

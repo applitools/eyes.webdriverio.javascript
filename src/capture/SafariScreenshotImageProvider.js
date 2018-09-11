@@ -1,6 +1,6 @@
 'use strict';
 
-const {ImageProvider, MutableImage, Region, OSNames, RectangleSize} = require('@applitools/eyes.sdk.core');
+const {ImageProvider, NullCutProvider, MutableImage, Region, OSNames, RectangleSize} = require('@applitools/eyes.sdk.core');
 
 const ScrollPositionProvider = require('../positioning/ScrollPositionProvider');
 const WDIOJSExecutor = require('../WDIOJSExecutor');
@@ -40,7 +40,8 @@ class SafariScreenshotImageProvider extends ImageProvider {
     }).then(() => {
       return that._eyes.getDebugScreenshotsProvider().save(image, "SAFARI");
     }).then(() => {
-      if (that._eyes.getIsCutProviderExplicitlySet()) {
+      // if (that._eyes.getIsCutProviderExplicitlySet()) {
+      if (that._eyes._cutProviderHandler && !(that._eyes._cutProviderHandler.get() instanceof NullCutProvider)) {
         return image;
       }
       scaleRatio = that._eyes.getDevicePixelRatio();
