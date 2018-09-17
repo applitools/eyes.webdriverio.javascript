@@ -144,7 +144,10 @@ class Common {
       }
 
       return this._eyes.open(this._browser, appName, testName, viewportSize);
-    }).url(testedPageUrl).then(() => {
+    }).then(eyesWebDriver => {
+      that._browser = eyesWebDriver;
+      return that._browser.url(testedPageUrl)
+    }).then(() => {
       that._expectedFloatingsRegions = null;
     });
   }
