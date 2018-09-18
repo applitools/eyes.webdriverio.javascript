@@ -69,19 +69,21 @@ class EyesWebDriver {
   }
 
 
+  /** @override */
   sleep(ms) {
-    return this._tsInstance.sleep(ms);
+    return this.webDriver.sleep(ms);
   }
 
 
   /** @override */
   getCapabilities() {
-    return this._tsInstance.remoteWebDriver.getCapabilities();
+    return this.webDriver.getCapabilities();
   }
 
 
-  quit() {
-    return this._tsInstance.quit();
+  /** @override */
+  end() {
+    return this.webDriver.end();
   }
 
 
@@ -170,7 +172,7 @@ class EyesWebDriver {
    */
   switchTo() {
     this._logger.verbose("switchTo()");
-    return new EyesTargetLocator(this._logger, this, this._tsInstance.switchTo());
+    return new EyesTargetLocator(this._logger, this, this.webDriver.switchTo());
   }
 
 
@@ -252,13 +254,14 @@ class EyesWebDriver {
   /**
    *
    * @param {String} script
-   * @param var_args
+   * @param varArgs
    * @returns {*}
+   * @override
    */
-  executeScript(script, ...var_args) {
+  executeScript(script, ...varArgs) {
     const that = this;
-    return Promise.resolve(this.remoteWebDriver.execute(script, ...var_args)).catch(e => {
-      that._logger.verbose("WARNING: getComputedStyle error: " + e);
+    return Promise.resolve(this.remoteWebDriver.execute(script, ...varArgs)).catch(e => {
+      that._logger.verbose("WARNING: execute script error: " + e);
       throw e;
     }).then(result => {
       that._logger.verbose('Done!');
@@ -266,12 +269,46 @@ class EyesWebDriver {
     });
   }
 
+  /** @override */
+  executeAsyncScript(script, ...varArgs) {
+    const that = this;
+    return Promise.resolve(this.webDriver.executeAsync(script, ...varArgs)).catch(e => {
+      that._logger.verbose("WARNING: execute async script error: " + e);
+      throw e;
+    }).then(result => {
+      that._logger.verbose('Done!');
+      return result;
+    });
+  }
+
+  /**
+   * @param {String} url
+   * @return {*|Promise}
+   * @override
+   */
+  url(url) {
+    this._frameChain.clear();
+    return this.webDriver.url(url);
+  }
+
+  /** @override */
+  getUrl() {
+    return this.webDriver.getUrl();
+  }
+
+  getCurrentUrl() {
+    return this.webDriver.getUrl();
+  }
+
+  /** @override */
+  close() {
+    return this.webDriver.close();
+  }
 
   /** @override */
   getTitle() {
-    return this.remoteWebDriver.getTitle();
+    return this.webDriver.getTitle();
   }
-
 
   /**
    * Rotates the image as necessary. The rotation is either manually forced by passing a non-null ImageRotation, or automatically inferred.
@@ -299,6 +336,142 @@ class EyesWebDriver {
         return EyesWDIOUtils.tryAutomaticRotation(logger, driver, image);
       }
     }).then(degrees => image.rotate(degrees));
+  }
+
+  /** @override */
+  getSource() {
+    return this.webDriver.getSource();
+  }
+
+  /** @override */
+  windowHandle() {
+    return this.webDriver.windowHandle();
+  }
+
+  /** @override */
+  navigate() {
+    //todo
+    // return this.webDriver.navigate();
+    throw new TypeError('navigate method is not implemented!');
+  }
+
+  /** @override */
+  manage() {
+    //todo
+    // return this.webDriver.manage();
+    throw new TypeError('manage method is not implemented!');
+  }
+
+  /**
+   * @param {string} className
+   * @return {Promise.<EyesWebElement>} A promise that will resolve to a EyesWebElement.
+   */
+  findElementByClassName(className) {
+    //todo
+    // return this.findElement(by.By.className(className));
+    throw new TypeError('findElementByClassName method is not implemented!');
+  }
+
+  /**
+   * @param {string} className
+   * @return {!Promise<!Array<!EyesWebElement>>} A promise that will resolve to an array of EyesWebElements.
+   */
+  findElementsByClassName(className) {
+    //todo
+    // return this.findElements(by.By.className(className));
+    throw new TypeError('findElementsByClassName method is not implemented!');
+  }
+
+  /**
+   * @param {string} cssSelector
+   * @return {Promise.<EyesWebElement>} A promise that will resolve to a EyesWebElement.
+   */
+  findElementByCssSelector(cssSelector) {
+    return this.findElement(By.cssSelector(cssSelector));
+  }
+
+  /**
+   * @param {string} cssSelector
+   * @return {!Promise<!Array<!EyesWebElement>>} A promise that will resolve to an array of EyesWebElements.
+   */
+  findElementsByCssSelector(cssSelector) {
+    return this.findElements(By.cssSelector(cssSelector));
+  }
+
+  /**
+   * @param {string} linkText
+   * @return {Promise.<EyesWebElement>} A promise that will resolve to a EyesWebElement.
+   */
+  findElementByLinkText(linkText) {
+    //todo
+    // return this.findElement(by.By.linkText(linkText));
+    throw new TypeError('findElementByLinkText method is not implemented!');
+  }
+
+  /**
+   * @param {string} linkText
+   * @return {!Promise.<!Array<!EyesWebElement>>} A promise that will resolve to an array of EyesWebElements.
+   */
+  findElementsByLinkText(linkText) {
+    //todo
+    // return this.findElements(by.By.linkText(linkText));
+    throw new TypeError('findElementsByLinkText method is not implemented!');
+  }
+
+  /**
+   * @param {string} partialLinkText
+   * @return {Promise.<EyesWebElement>} A promise that will resolve to a EyesWebElement.
+   */
+  findElementByPartialLinkText(partialLinkText) {
+    //todo
+    // return this.findElement(by.By.partialLinkText(partialLinkText));
+    throw new TypeError('findElementByPartialLinkText method is not implemented!');
+  }
+
+  /**
+   * @param {string} partialLinkText
+   * @return {!Promise.<!Array<!EyesWebElement>>} A promise that will resolve to an array of EyesWebElements.
+   */
+  findElementsByPartialLinkText(partialLinkText) {
+    //todo
+    // return this.findElements(by.By.partialLinkText(partialLinkText));
+    throw new TypeError('findElementsByPartialLinkText method is not implemented!');
+  }
+
+  // noinspection JSUnusedGlobalSymbols
+  /**
+   * @param {string} tagName
+   * @return {Promise.<EyesWebElement>} A promise that will resolve to a EyesWebElement.
+   */
+  findElementByTagName(tagName) {
+    return this.findElement(By.tagName(tagName));
+  }
+
+  // noinspection JSUnusedGlobalSymbols
+  /**
+   * @param {string} tagName
+   * @return {!Promise.<!Array<!EyesWebElement>>} A promise that will resolve to an array of EyesWebElements.
+   */
+  findElementsByTagName(tagName) {
+    return this.findElements(By.tagName(tagName));
+  }
+
+  // noinspection JSUnusedGlobalSymbols
+  /**
+   * @param {string} xpath
+   * @return {Promise.<EyesWebElement>} A promise that will resolve to a EyesWebElement.
+   */
+  findElementByXPath(xpath) {
+    return this.findElement(By.xPath(xpath));
+  }
+
+  // noinspection JSUnusedGlobalSymbols
+  /**
+   * @param {string} xpath
+   * @return {!Promise<!Array<!EyesWebElement>>} A promise that will resolve to an array of EyesWebElements.
+   */
+  findElementsByXPath(xpath) {
+    return this.findElements(By.xPath(xpath));
   }
 
 }
