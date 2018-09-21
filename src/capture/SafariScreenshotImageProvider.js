@@ -40,7 +40,7 @@ class SafariScreenshotImageProvider extends ImageProvider {
     }).then(() => {
       return that._eyes.getDebugScreenshotsProvider().save(image, "SAFARI");
     }).then(() => {
-      // if (that._eyes.getIsCutProviderExplicitlySet()) {
+      // if (that._eyes.getIsCutProviderExplicitlySet()) { // todo use it when sdk.core is updated
       if (that._eyes._cutProviderHandler && !(that._eyes._cutProviderHandler.get() instanceof NullCutProvider)) {
         return image;
       }
