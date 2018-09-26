@@ -91,7 +91,7 @@ class WebdriverioCheckSettings extends CheckSettings {
     } else if (regionOrContainer instanceof WebElement) {
       this._ignoreRegions.push(new IgnoreRegionByElement(regionOrContainer));
     } else {
-      super.ignore(regionOrContainer);
+      super.ignoreRegions(regionOrContainer);
     }
 
     return this;

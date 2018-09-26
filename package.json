@@ -12,11 +12,11 @@
   "repository": "https://github.com/applitools/eyes.webdriverio.javascript",
   "dependencies": {
     "@applitools/eyes.sdk.core": "~1.10.0",
-    "chromedriver": "^2.37.0",
-    "geckodriver": "^1.11.0",
     "webdriverio": "4.12.0"
   },
   "devDependencies": {
+    "chromedriver": "^2.37.0",
+    "geckodriver": "^1.11.0",
     "mocha": "4.0.1",
     "mocha-parallel-tests": "2.0.0-alpha.2",
     "shared-examples-for": "^0.1.3"
