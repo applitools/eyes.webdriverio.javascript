@@ -23,6 +23,7 @@ const {
 } = require('@applitools/eyes.sdk.core');
 
 const ImageProviderFactory = require('./capture/ImageProviderFactory');
+const DomCapture = require('./capture/DomCapture');
 const CssTranslatePositionProvider = require('./positioning/CssTranslatePositionProvider');
 const CssTranslateElementPositionProvider = require('./positioning/CssTranslateElementPositionProvider');
 const ScrollPositionProvider = require('./positioning/ScrollPositionProvider');
@@ -116,6 +117,8 @@ class Eyes extends EyesBase {
     this._stitchingOverlap = DEFAULT_STITCHING_OVERLAP;
     /** @type {Region} */
     this._effectiveViewport = Region.EMPTY;
+    /** @type {string}*/
+    this._domUrl;
   }
 
 
@@ -179,7 +182,7 @@ class Eyes extends EyesBase {
    */
   _getScaleProviderFactory() {
     const that = this;
-    return this._positionProvider.getEntireSize().then(entireSize => {
+    return this.getPositionProvider().getEntireSize().then(entireSize => {
       return new ContextBasedScaleProviderFactory(that._logger, entireSize, that._viewportSizeHandler.get(), that._devicePixelRatio, false, that._scaleProviderHandler);
     });
   }
@@ -264,7 +267,7 @@ class Eyes extends EyesBase {
 
     let result;
     const that = this;
-    return that._positionProvider.setPosition(Location.ZERO).then(() => {
+    return that.getPositionProvider().setPosition(Location.ZERO).then(() => {
       that._logger.verbose(`check("${name}", checkSettings) - begin`);
       that._stitchContent = checkSettings.getStitchContent();
       const targetRegion = checkSettings.getTargetRegion();
@@ -313,17 +316,17 @@ class Eyes extends EyesBase {
               let originalPosition;
 
               return this._driver.switchTo().defaultContent().then(() => {
-                return that._positionProvider.getState();
+                return that.getPositionProvider().getState();
               }).then(originalPosition_ => {
                 originalPosition = originalPosition_;
-                return that._positionProvider.setPosition(Location.ZERO);
+                return that.getPositionProvider().setPosition(Location.ZERO);
               }).then(() => {
                 return that._tryHideScrollbars();
               }).then(() => {
                 return super.checkWindowBase(new NullRegionProvider(that.getPromiseFactory()), name, false, checkSettings);
               }).then(res_ => {
                 res = res_;
-                return that._positionProvider.restoreState(originalPosition);
+                return that.getPositionProvider().restoreState(originalPosition);
               }).then(() => {
                 return res;
               });
@@ -383,10 +386,10 @@ class Eyes extends EyesBase {
     let result;
     const that = this;
     let originalScrollPosition, originalOverflow, error;
-    const originalPositionProvider = this._positionProvider;
+    const originalPositionProvider = this.getPositionProvider();
     const scrollPositionProvider = new ScrollPositionProvider(this._logger, this._jsExecutor);
 
-    return this._positionProvider.getState().then(originalPositionMemento_ => {
+    return this.getPositionProvider().getState().then(originalPositionMemento_ => {
       originalPositionMemento = originalPositionMemento_;
 
       return this._ensureElementVisible(eyesElement);
@@ -929,6 +932,26 @@ class Eyes extends EyesBase {
     return this._tryHideScrollbars();
   }
 
+  /** @override */
+  tryCaptureDom() {
+    this._logger.verbose('Getting window DOM...');
+    return DomCapture.getWindowDom(this.getDriver());
+  }
+
+  /**
+   * @override
+   */
+  getDomUrl() {
+    return this.getPromiseFactory().resolve(this._domUrl);
+  }
+
+  /**
+   * @override
+   */
+  setDomUrl(domUrl) {
+    return this._domUrl = domUrl;
+  }
+
   /**
    * @private
    * @return {Promise}
@@ -1028,7 +1051,7 @@ class Eyes extends EyesBase {
         that._logger.verbose("Check frame/element requested");
         return switchTo.framesDoScroll(originalFrameChain).then(() => {
           return algo.getStitchedRegion(
-            that._imageProvider, that._regionToCheck, that._positionProvider,
+            that._imageProvider, that._regionToCheck, that.getPositionProvider(),
             that.getElementPositionProvider(), scaleProviderFactory, that._cutProviderHandler.get(),
             that.getWaitBeforeScreenshots(), that._debugScreenshotsProvider, screenshotFactory,
             that.getStitchOverlap(), that._regionPositionCompensation);
@@ -1049,7 +1072,7 @@ class Eyes extends EyesBase {
         return switchTo.defaultContent().then(() => {
           return algo.getStitchedRegion(
             that._imageProvider, Region.EMPTY, new ScrollPositionProvider(that._logger, this._jsExecutor),
-            that._positionProvider, scaleProviderFactory, that._cutProviderHandler.get(), that.getWaitBeforeScreenshots(),
+            that.getPositionProvider(), scaleProviderFactory, that._cutProviderHandler.get(), that.getWaitBeforeScreenshots(),
             that._debugScreenshotsProvider, screenshotFactory, that.getStitchOverlap(), that._regionPositionCompensation
           ).then(fullPageImage => {
             return switchTo.frames(originalFrameChain).then(() => {
@@ -1175,7 +1198,7 @@ class Eyes extends EyesBase {
             return switchTo.frames(originalFC);
           }
         }).then(() => {
-          return that._positionProvider.setPosition(elementLocation);
+          return that.getPositionProvider().setPosition(elementLocation);
         });
       }
     });
@@ -1190,7 +1213,7 @@ class Eyes extends EyesBase {
     const originalFC = new FrameChain(this._logger, this._driver.getFrameChain());
     const fc = new FrameChain(this._logger, this._driver.getFrameChain());
     // noinspection JSValidateTypes
-    return ensureFrameVisibleLoop(this, this._positionProvider, fc, this._driver.switchTo(), this.getPromiseFactory()).then(() => {
+    return ensureFrameVisibleLoop(this, this.getPositionProvider(), fc, this._driver.switchTo(), this.getPromiseFactory()).then(() => {
       return that._driver.switchTo().frames(originalFC);
     }).then(() => originalFC);
   }
@@ -1391,7 +1414,7 @@ class Eyes extends EyesBase {
    * @return {PositionProvider} The currently set position provider.
    */
   getElementPositionProvider() {
-    return this._elementPositionProvider ? this._elementPositionProvider : this._positionProvider;
+    return this._elementPositionProvider ? this._elementPositionProvider : this.getPositionProvider();
   }
 
   /**

@@ -70,6 +70,7 @@ class Common {
     this._eyes.setForceFullPageScreenshot(fps);
     this._eyes.setStitchMode(stitchMode);
     this._eyes.setHideScrollbars(true);
+    this._eyes.setSendDom(true);
 
 
     if (batchName) {
