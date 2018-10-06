@@ -1163,6 +1163,15 @@ class Eyes extends EyesBase {
   }
 
 
+  getImageLocation() {
+    let location = Location.ZERO;
+    if (this.regionToCheck) {
+      location = this.regionToCheck.getLocation();
+    }
+    return location;
+  }
+
+
   /**
    * @private
    * @param {WebElement} element
