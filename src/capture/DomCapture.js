@@ -165,6 +165,7 @@ class DomCapture {
           const childSubNodesObj = domSubTree.childNodes;
           if (!childSubNodesObj || childSubNodesObj.length === 0) continue;
           await DomCapture._traverseDomTree(logger, driver, argsObj, domSubTree, -1, baseUri);
+          return;
         }
       }
     }
@@ -252,7 +253,7 @@ class DomCapture {
       logger.verbose("Given URL to download: {0}", value);
       let href = url.parse(value);
       if (!isAbsoluteUrl(href)) {
-        href = url.resolve(baseUri, href);
+        href = url.resolve(baseUri, href.toString());
       }
       // Stopwatch stopwatch = Stopwatch.StartNew();
 
