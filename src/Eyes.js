@@ -150,6 +150,10 @@ class Eyes extends EyesBase {
       viewportSize = null;
     }
 
+    if (this._stitchMode === StitchMode.CSS) {
+      this.setSendDom(true);
+    }
+
     this._driver = new EyesWebDriver(new WebDriver(driver), this, this._logger);
 
     const that = this;
@@ -935,7 +939,7 @@ class Eyes extends EyesBase {
   /** @override */
   tryCaptureDom() {
     this._logger.verbose('Getting window DOM...');
-    return DomCapture.getWindowDom(this.getDriver());
+    return DomCapture.getFullWindowDom(this._logger, this.getDriver());
   }
 
   /**

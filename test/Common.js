@@ -122,6 +122,7 @@ class Common {
       browserOptions.desiredCapabilities.username = process.env.SAUCE_USERNAME;
       browserOptions.desiredCapabilities.accesskey = process.env.SAUCE_ACCESS_KEY;
       browserOptions.desiredCapabilities.platform = platform;
+      browserOptions.desiredCapabilities.seleniumVersion = '3.14.0';
     } else if (!this._seleniumStandAloneMode) {
       if (browserOptions.desiredCapabilities.browserName === 'chrome') {
         browserOptions.port = '9515';
