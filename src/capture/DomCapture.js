@@ -6,6 +6,8 @@ const url = require('url');
 const {Location} = require('@applitools/eyes.sdk.core');
 const isAbsoluteUrl = require('is-absolute-url');
 const request = require('request-promise-native');
+const cssParser = require('css');
+const cssUrlParser = require('css-url-parser');
 
 class DomCapture {
 
@@ -40,7 +42,7 @@ class DomCapture {
       await positionProvider.restoreState(originalPosition);
     }
 
-    return dom;
+    return JSON.stringify(dom);
   }
 
   /**
@@ -140,8 +142,8 @@ class DomCapture {
     const isHTML = tagName.toUpperCase() === 'HTML';
 
     if (isHTML) {
-      // const css = await DomCapture.getFrameBundledCss(logger, driver, baseUri);
-      // domTree["css"] = css;
+      const css = await DomCapture.getFrameBundledCss(logger, driver, baseUri);
+      domTree["css"] = css;
     }
 
     await DomCapture._loop(logger, driver, argsObj, domTree, baseUri);
@@ -178,7 +180,7 @@ class DomCapture {
       logger.verbose("WARNING! Base URL is not an absolute URL!");
     }
 
-    const sb = new Buffer('');
+    let sb = '';
     // Stopwatch stopwatch = Stopwatch.StartNew();
     const {value: result} = await driver.remoteWebDriver.execute(DomCapture.CAPTURE_CSSOM_SCRIPT);
     // logger.Verbose("executing javascript to capture css took {0} ms", stopwatch.Elapsed.TotalMilliseconds);
@@ -194,12 +196,13 @@ class DomCapture {
       } else {
         css = await DomCapture._downloadCss(logger, baseUri, value);
       }
+      css = await DomCapture._parseAndSerializeCss(logger, baseUri, css);
       // stopwatch.Reset();
       // stopwatch.Start();
-      sb.write(css);
+      sb += css;
       // logger.Verbose("appending CSS to StringBuilder took {0} ms", stopwatch.Elapsed.TotalMilliseconds);
     }
-    return sb.toString();
+    return sb;
   }
 
   /**
@@ -212,34 +215,42 @@ class DomCapture {
    */
   static async _parseAndSerializeCss(logger, baseUri, css) {
     // Stopwatch stopwatch = Stopwatch.StartNew();
-    const parser = new Parser();
-    const stylesheet = parser.Parse(css);
+    const stylesheet = cssParser.parse(css);
     // logger.Verbose("parsing CSS string took {0} ms", stopwatch.Elapsed.TotalMilliseconds);
 
-    css = DomCapture._serializeCss(logger, baseUri, stylesheet);
+    css = DomCapture._serializeCss(logger, baseUri, stylesheet.stylesheet);
     return css;
   }
 
   static async _serializeCss(logger, baseUri, stylesheet) {
     // Stopwatch stopwatch = Stopwatch.StartNew();
-    let sb = new Buffer('');
+    let sb = '';
 
-    for (const ruleSet of stylesheet.Rules) {
+    let css;
+    for (const ruleSet of stylesheet.rules) {
       let addAsIs = true;
-      if (ruleSet.RuleType == CssParser.Model.RuleType.Import) {
+      if (ruleSet.type === 'import') {
         logger.verbose("encountered @import rule");
-        const href = ruleSet.Href;
-        let css = DomCapture._downloadCss(logger, baseUri, href);
+        const href = cssUrlParser(ruleSet.import);
+        css = await DomCapture._downloadCss(logger, baseUri, href[0]);
         css = css.trim();
         logger.verbose("imported CSS (whitespaces trimmed) length: {0}", css.Length);
-        addAsIs = css.Length === 0;
+        addAsIs = css.length === 0;
         if (!addAsIs) {
           css = await DomCapture._parseAndSerializeCss(logger, baseUri, css);
-          sb.write(css);
+          sb += css;
         }
       }
       if (addAsIs) {
-        sb.write(ruleSet.toString());
+        const node = {
+          stylesheet: {
+            rules: [ruleSet]
+          }
+        };
+        sb += cssParser.stringify(node, {compress: true});
+
+        // sb += ruleSet.toString();
+        // sb += css;
       }
     }
 
@@ -251,7 +262,8 @@ class DomCapture {
   static async _downloadCss(logger, baseUri, value) {
     try {
       logger.verbose("Given URL to download: {0}", value);
-      let href = url.parse(value);
+      // let href = cssParser.parse(value);
+      let href = value;
       if (!isAbsoluteUrl(href)) {
         href = url.resolve(baseUri, href.toString());
       }
@@ -259,7 +271,7 @@ class DomCapture {
 
       const css = await request(href);
       // logger.verbose("downloading CSS in length of {0} chars took {1} ms", css.Length, stopwatch.Elapsed.TotalMilliseconds);
-      return css;
+      return Promise.resolve(css);
     } catch (ex) {
       logger.verbose(ex.toString());
       return '';

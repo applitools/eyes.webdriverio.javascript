@@ -937,9 +937,13 @@ class Eyes extends EyesBase {
   }
 
   /** @override */
-  tryCaptureDom() {
-    this._logger.verbose('Getting window DOM...');
-    return DomCapture.getFullWindowDom(this._logger, this.getDriver());
+  async tryCaptureDom() {
+    try {
+      this._logger.verbose('Getting window DOM...');
+      return await DomCapture.getFullWindowDom(this._logger, this.getDriver());
+    } catch (ignored) {
+      return '';
+    }
   }
 
   /**
