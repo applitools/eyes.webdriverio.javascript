@@ -120,8 +120,7 @@ class DomCapture {
       domTree['childNodes'] = dom;
       let srcUrl = null;
       if (domTree.attributes) {
-        const attrsNodeObj = domTree.attributes;
-        const attrsNode = attrsNodeObj;
+        const attrsNode = domTree.attributes;
         if (attrsNode.src) {
           const srcUrlObj = attrsNode.src;
           srcUrl = srcUrlObj.toString();
@@ -138,12 +137,10 @@ class DomCapture {
       // logger.verbose("switching to parent frame took {0} ms", stopwatch.Elapsed.TotalMilliseconds);
     }
 
-    const tagName = tagNameObj;
-    const isHTML = tagName.toUpperCase() === 'HTML';
+    const isHTML = tagNameObj.toUpperCase() === 'HTML';
 
     if (isHTML) {
-      const css = await DomCapture.getFrameBundledCss(logger, driver, baseUri);
-      domTree["css"] = css;
+      domTree["css"] = await DomCapture.getFrameBundledCss(logger, driver, baseUri);
     }
 
     await DomCapture._loop(logger, driver, argsObj, domTree, baseUri);
@@ -218,8 +215,7 @@ class DomCapture {
     const stylesheet = cssParser.parse(css);
     // logger.Verbose("parsing CSS string took {0} ms", stopwatch.Elapsed.TotalMilliseconds);
 
-    css = DomCapture._serializeCss(logger, baseUri, stylesheet.stylesheet);
-    return css;
+    return DomCapture._serializeCss(logger, baseUri, stylesheet.stylesheet);
   }
 
   static async _serializeCss(logger, baseUri, stylesheet) {
@@ -234,7 +230,7 @@ class DomCapture {
         const href = cssUrlParser(ruleSet.import);
         css = await DomCapture._downloadCss(logger, baseUri, href[0]);
         css = css.trim();
-        logger.verbose("imported CSS (whitespaces trimmed) length: {0}", css.Length);
+        logger.verbose("imported CSS (whitespaces trimmed) length: {0}", css.length);
         addAsIs = css.length === 0;
         if (!addAsIs) {
           css = await DomCapture._parseAndSerializeCss(logger, baseUri, css);
@@ -248,9 +244,6 @@ class DomCapture {
           }
         };
         sb += cssParser.stringify(node, {compress: true});
-
-        // sb += ruleSet.toString();
-        // sb += css;
       }
     }
 
