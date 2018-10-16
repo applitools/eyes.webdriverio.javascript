@@ -1,12 +1,15 @@
 'use strict';
 
-const {deepEqual} = require('assert');
+const {AssertionError, deepEqual} = require('assert');
 const webdriverio = require('webdriverio');
+const chromedriver = require('chromedriver');
+const geckodriver = require('geckodriver');
 const {Eyes, NetHelper, StitchMode} = require('../index');
-const {BatchInfo, ConsoleLogHandler, FloatingMatchSettings, RectangleSize} = require('@applitools/eyes.sdk.core');
-const {URL} = require('url');
+const {BatchInfo, ConsoleLogHandler, FloatingMatchSettings, metadata, RectangleSize, Region} = require('@applitools/eyes.sdk.core');
+const {ActualAppOutput, ImageMatchSettings, SessionResults} = metadata;
+const url = require('url');
 
-let batchInfo = new BatchInfo('Java3 Tests');
+let batchInfo = new BatchInfo('WebDriverIO Tests');
 
 class Common {
 
@@ -39,7 +42,8 @@ class Common {
   static get SAFARI() {
     return {
       desiredCapabilities: {
-        browserName: 'safari'
+        browserName: 'safari',
+        version: '11.1'
       }
     }
   };
@@ -48,11 +52,14 @@ class Common {
    *
    * @param {Object} options
    */
-  constructor({testedPageUrl}) {
+  constructor({testedPageUrl, browserName, mobileBrowser = false}) {
     this._eyes = null;
     this._browser = null;
+    this._browserName = browserName;
     this._testedPageUrl = testedPageUrl;
     this._forceFullPageScreenshot = false;
+    this._seleniumStandAloneMode = Common.getSeleniumStandAloneMode();
+    this._mobileBrowser = mobileBrowser;
   }
 
   beforeTest({batchName: batchName, fps = false, stitchMode = StitchMode.CSS}) {
@@ -75,75 +82,131 @@ class Common {
     this._eyes.setBatch(batchInfo);
 
     // this._eyes.setSaveDebugScreenshots(true);
+
+    if (!this._seleniumStandAloneMode && !(process.env.SELENIUM_SERVER_URL === 'http://ondemand.saucelabs.com/wd/hub'
+      && process.env.SAUCE_USERNAME && process.env.SAUCE_ACCESS_KEY)) {
+      if (this._browserName === 'chrome') {
+        chromedriver.start();
+        this._eyes._logger.verbose('Chromedriver is started');
+      } else if (this._browserName === 'firefox') {
+        geckodriver.start();
+        this._eyes._logger.verbose('Geckodriver is started');
+      }
+    }
   }
 
-  async beforeEachTest({
-                         appName,
-                         testName,
-                         browserOptions: browserOptions,
-                         rectangleSize = {
-                           width: 800,
-                           height: 600
-                         },
-                         testedPageUrl = this._testedPageUrl,
-                         test
-                       }) {
-    try {
-      if (process.env.SELENIUM_SERVER_URL) {
-        const seleniumServerUrl = new URL(process.env.SELENIUM_SERVER_URL);
-        // todo
-        // browserOptions.host = seleniumServerUrl.hostname;
-      }
+  beforeEachTest({
+                   appName,
+                   testName,
+                   browserOptions: browserOptions,
+                   rectangleSize = {
+                     width: 800,
+                     height: 600
+                   },
+                   testedPageUrl = this._testedPageUrl,
+                   platform = Common.getPlatform(browserOptions)
+                 }) {
 
-      const driver = webdriverio.remote(browserOptions);
-      this._browser = driver.init();
+    if (process.env.SELENIUM_SERVER_URL === 'http://ondemand.saucelabs.com/wd/hub'
+      && process.env.SAUCE_USERNAME && process.env.SAUCE_ACCESS_KEY) {
+      this._eyes._logger.verbose('Sauce is used');
+
+      const seleniumServerUrl = url.parse(process.env.SELENIUM_SERVER_URL);
+      browserOptions.host = seleniumServerUrl.hostname;
+
+      browserOptions.port = '80';
+      browserOptions.path = '/wd/hub';
+
+      browserOptions.desiredCapabilities.baseUrl = `http://${process.env.SAUCE_USERNAME}:${process.env.SAUCE_ACCESS_KEY}@ondemand.saucelabs.com:80/wd/hub`;
+      browserOptions.desiredCapabilities.username = process.env.SAUCE_USERNAME;
+      browserOptions.desiredCapabilities.accesskey = process.env.SAUCE_ACCESS_KEY;
+      browserOptions.desiredCapabilities.platform = platform;
+    } else if (!this._seleniumStandAloneMode) {
+      if (browserOptions.desiredCapabilities.browserName === 'chrome') {
+        browserOptions.port = '9515';
+        browserOptions.path = '/';
+      } else if (browserOptions.desiredCapabilities.browserName === 'firefox') {
+        browserOptions.path = '/';
+      }
+    }
+
+    const that = this;
+    this._browser = webdriverio.remote(browserOptions);
+    return this._browser.init().then(() => {
       const viewportSize = rectangleSize ? new RectangleSize(rectangleSize) : null;
-      if (this._eyes.getForceFullPageScreenshot()) {
+
+      if (that._eyes.getForceFullPageScreenshot()) {
         testName += '_FPS';
       }
-      await this._eyes.open(this._browser, appName, testName, viewportSize);
-      await this._browser.url(testedPageUrl);
-      this._expectedFloatingsRegions = null;
-    } catch (e) {
-      if (test) {
-        test.skip();
-      } else {
-        throw e;
+
+      if (that._mobileBrowser) {
+        testName += '_Mobile';
       }
-    }
+
+      return this._eyes.open(this._browser, appName, testName, viewportSize);
+    }).url(testedPageUrl).then(() => {
+      that._expectedFloatingsRegions = null;
+    });
   }
 
-  async afterEachTest() {
-    try {
-      /**@type {TestResults} */
-      const results = await this._eyes.close(false);
+  afterEachTest() {
+    let error;
+    const that = this;
+    return this._eyes.close(false).then(results => {
+      const query = `?format=json&AccessToken=${results.getSecretToken()}&apiKey=${that.eyes.getApiKey()}`;
+      const apiSessionUrl = results.getApiUrls().getSession() + query;
 
-      if (this._expectedFloatingsRegions) {
-        const apiSessionUrl = results.getApiUrls().session;
+      const apiSessionUri = url.parse(apiSessionUrl);
+      // apiSessionUri.searchParams.append('format', 'json');
+      // apiSessionUri.searchParams.append('AccessToken', results.getSecretToken());
+      // apiSessionUri.searchParams.append('apiKey', this.eyes.getApiKey());
 
-        const apiSessionUri = new URL(apiSessionUrl);
-        apiSessionUri.searchParams.append('format', 'json');
-        apiSessionUri.searchParams.append('AccessToken', results.getSecretToken());
-        apiSessionUri.searchParams.append('apiKey', this.eyes.getApiKey());
-
-        const res = await NetHelper.get(apiSessionUri);
-
+      return NetHelper.get(apiSessionUri).then(res => {
         const resultObject = JSON.parse(res);
-        const actualAppOutput = resultObject.actualAppOutput;
-        const f = actualAppOutput[0].imageMatchSettings.floating[0];
+        /** @type {SessionResults} */
+        const sessionResults = SessionResults.fromObject(resultObject);
+        /** @type {ActualAppOutput} */
+        const actualAppOutput = ActualAppOutput.fromObject(sessionResults.getActualAppOutput()[0]);
+        /** @type {ImageMatchSettings} */
+        const imageMatchSettings = ImageMatchSettings.fromObject(actualAppOutput.getImageMatchSettings());
 
-        const floating = new FloatingMatchSettings(f.left, f.top, f.width, f.height, f.maxUpOffset, f.maxDownOffset, f.maxLeftOffset, f.maxRightOffset);
+        if (that._expectedFloatingsRegions) {
+          const f = imageMatchSettings.getFloating()[0];
+          const floating = new FloatingMatchSettings(f.left, f.top, f.width, f.height, f.maxUpOffset, f.maxDownOffset, f.maxLeftOffset, f.maxRightOffset);
 
-        deepEqual(this._expectedFloatingsRegions, floating);
+          deepEqual(that._expectedFloatingsRegions, floating, 'Floating regions lists differ');
+        }
+
+        if (that._expectedIgnoreRegions) {
+          const ignoreRegions = Region.fromObject(imageMatchSettings.getIgnore()[0]);
+
+          deepEqual(that._expectedIgnoreRegions, ignoreRegions, 'Ignore regions lists differ');
+        }
+      });
+    }).catch(e => {
+      if (e instanceof AssertionError) {
+        error = e;
       }
-    } catch (ignored) {
-      await this._eyes.abortIfNotClosed();
-    } finally {
-      await this._browser.end();
-    }
+
+      return that._eyes.abortIfNotClosed();
+    }).then(() => {
+      return that._browser.end();
+    }).then(() => {
+      if (error) {
+        throw error;
+      }
+    });
   }
 
-  async afterTest() {
+  afterTest() {
+    if (!this._seleniumStandAloneMode && !(process.env.SELENIUM_SERVER_URL === 'http://ondemand.saucelabs.com/wd/hub'
+      && process.env.SAUCE_USERNAME && process.env.SAUCE_ACCESS_KEY)) {
+      if (this._browserName === 'chrome') {
+        chromedriver.stop();
+      } else if (this._browserName === 'firefox') {
+        geckodriver.stop();
+      }
+    }
   }
 
   get eyes() {
@@ -155,7 +218,13 @@ class Common {
   }
 
   /**
-   *
+   * @param {Region} expectedIgnoreRegions
+   */
+  setExpectedIgnoreRegions(expectedIgnoreRegions) {
+    this._expectedIgnoreRegions = expectedIgnoreRegions;
+  }
+
+  /**
    * @param {FloatingMatchSettings} expectedFloatingsRegions
    */
   setExpectedFloatingsRegions(expectedFloatingsRegions) {
@@ -163,6 +232,39 @@ class Common {
     this._expectedFloatingsRegions = expectedFloatingsRegions;
   }
 
+
+  static getPlatform(browserOptions) {
+    let platform;
+    if (browserOptions && browserOptions.desiredCapabilities
+      && (browserOptions.desiredCapabilities.platform || browserOptions.desiredCapabilities.platformName)) {
+      if (browserOptions.desiredCapabilities.platform) {
+        platform = browserOptions.desiredCapabilities.platform;
+      } else {
+        platform = browserOptions.desiredCapabilities.platformName;
+      }
+    } else {
+      platform = process.platform;
+
+      switch (process.platform) {
+        case 'win32':
+          platform = 'Windows';
+          break;
+        case 'linux':
+          platform = 'Linux';
+          break;
+        case 'darwin':
+          platform = 'macOS';
+          break;
+        default:
+      }
+    }
+
+    return platform;
+  }
+
+  static getSeleniumStandAloneMode() {
+    return process.env.SELENIUM_STANDALONE_MODE ? eval(process.env.SELENIUM_STANDALONE_MODE) : false;
+  }
 }
 
 module.exports = Common;

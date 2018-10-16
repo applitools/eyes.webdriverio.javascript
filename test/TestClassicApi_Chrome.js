@@ -1,47 +1,34 @@
 'use strict';
 
-const chromedriver = require('chromedriver');
 const {TestClassicApi} = require('./TestClassicApi');
 const Common = require('./Common');
-
 
 const appName = 'Eyes Selenium SDK - Classic API';
 const testedPageUrl = 'http://applitools.github.io/demo/TestPages/FramesTestPage/';
 
 
-const test = new Common({testedPageUrl});
+const test = new Common({testedPageUrl: testedPageUrl, browserName: 'chrome'});
 
+const platforms = ['Linux'/*, 'Windows'*/];
+platforms.forEach(function (platform) {
+  describe(appName, function () {
 
-describe(appName, function () {
-
-  before(function () {
-    chromedriver.start();
-    test.beforeTest({});
-  });
-
-  beforeEach(async function () {
-    const browserOptions = Common.CHROME;
-    browserOptions.port = '9515';
-    browserOptions.path = '/';
-    await test.beforeEachTest({
-      appName: appName,
-      testName: this.currentTest.title,
-      browserOptions: browserOptions,
-      test: this
+    before(function () {
+      test.beforeTest({});
     });
+
+    beforeEach(function () {
+      return test.beforeEachTest({appName: appName, testName: this.currentTest.title, browserOptions: Common.CHROME, platform: platform});
+    });
+
+    afterEach(function () {
+      return test.afterEachTest();
+    });
+
+    after(function () {
+      test.afterTest();
+    });
+
+    TestClassicApi.shouldBehaveLike('TestClassicApi', test);
   });
-
-  afterEach(async function () {
-    try {
-      await test.afterEachTest();
-    } catch (ignored) {
-    }
-  });
-
-  after(async function () {
-    chromedriver.stop();
-  });
-
-  TestClassicApi.shouldBehaveLike('TestClassicApi', test);
-
 });

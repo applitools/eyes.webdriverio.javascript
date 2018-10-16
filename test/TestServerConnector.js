@@ -1,5 +1,6 @@
 'use strict';
 
+const chromedriver = require('chromedriver');
 const webdriverio = require('webdriverio');
 const {equal} = require('assert');
 const {Eyes, Target} = require('../index');
@@ -12,9 +13,11 @@ const appName = 'TestServerConnector';
 describe.skip(appName, function () {
 
 
-  it('TestSessionSummary_Status_Failed', async function () {
+  it('TestSessionSummary_Status_Failed', function () {
     const eyes = new Eyes();
     eyes.setApiKey(process.env.APPLITOOLS_API_KEY);
+
+    chromedriver.start();
 
     const chrome = {
       desiredCapabilities: {
@@ -24,25 +27,26 @@ describe.skip(appName, function () {
         }
       }
     };
-    const driver = webdriverio.remote(chrome);
-    const browser = driver.init();
-
-
-    try {
+    chrome.port = '9515';
+    chrome.path = '/';
+    const browser = webdriverio.remote(chrome);
+    return browser.init().then(() => {
       const viewportSize = new RectangleSize({width: 800, height: 600});
-      await eyes.open(browser, appName, appName, viewportSize);
-      await browser.url('https://applitools.com/helloworld');
 
-
-      await eyes.check("Hello", Target.window());
-
+      return eyes.open(browser, appName, appName, viewportSize);
+    }).url('https://applitools.com/helloworld').then(() => {
+      return eyes.check("Hello", Target.window());
+    }).then(() => {
       const results = eyes.close();
-
+    }).catch(e => {
+      console.error(e.message);
+      return eyes.abortIfNotClosed();
+    }).then(/** @type {TestResults} */results => {
       results.delete();
-    } finally {
-      await browser.end();
-      await eyes.abortIfNotClosed();
-    }
-  });
 
+      return browser.end();
+    }).then(() => {
+      chromedriver.stop();
+    })
+  });
 });

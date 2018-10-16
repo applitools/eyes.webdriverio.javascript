@@ -3,29 +3,39 @@
 const {TestClassicApi} = require('./TestClassicApi');
 const Common = require('./Common');
 
-
 const appName = 'Eyes Selenium SDK - Classic API - ForceFPS';
 const testedPageUrl = 'http://applitools.github.io/demo/TestPages/FramesTestPage/';
 
 
-const test = new Common({testedPageUrl});
+const test = new Common({testedPageUrl: testedPageUrl, browserName: 'firefox'});
 
 
-describe(appName, function () {
+const platforms = ['Linux'/*, 'Windows'*/];
+platforms.forEach(function (platform) {
+  describe(appName, function () {
 
-  before(function () {
-    test.beforeTest({fps: true});
+    before(function () {
+      test.beforeTest({fps: true});
+    });
+
+    beforeEach(function () {
+      return test.beforeEachTest({
+        appName: appName,
+        testName: this.currentTest.title,
+        browserOptions: Common.FIREFOX,
+        platform: platform
+      });
+    });
+
+    afterEach(function () {
+      return test.afterEachTest();
+    });
+
+    after(function () {
+      test.afterTest();
+    });
+
+    TestClassicApi.shouldBehaveLike('TestClassicApi', test);
+
   });
-
-  beforeEach(async function () {
-    await test.beforeEachTest({appName: appName, testName: this.currentTest.title, browserOptions: Common.FIREFOX});
-  });
-
-  afterEach(async function () {
-    await test.afterEachTest();
-  });
-
-
-  TestClassicApi.shouldBehaveLike('TestClassicApi', test);
-
 });

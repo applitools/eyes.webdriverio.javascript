@@ -1,6 +1,16 @@
 'use strict';
 
-const {ArgumentGuard, EyesScreenshot, CoordinatesType, Region, Location, RectangleSize, CoordinatesTypeConversionError, OutOfBoundsError} = require('@applitools/eyes.sdk.core');
+const {
+  ArgumentGuard,
+  BrowserNames,
+  EyesScreenshot,
+  CoordinatesType,
+  Region,
+  Location,
+  RectangleSize,
+  CoordinatesTypeConversionError,
+  OutOfBoundsError
+} = require('@applitools/eyes.sdk.core');
 
 const WDIOJSExecutor = require('../WDIOJSExecutor');
 const ScrollPositionProvider = require('../positioning/ScrollPositionProvider');
@@ -55,6 +65,11 @@ class EyesWDIOScreenshot extends EyesScreenshot {
      *
      * @type {Region} */
     this._frameWindow = null;
+
+    /**
+     * @type {Region}
+     */
+    this._regionWindow = null;
   }
 
   // noinspection JSUnusedGlobalSymbols
@@ -79,25 +94,33 @@ class EyesWDIOScreenshot extends EyesScreenshot {
    * @param {Location} [frameLocationInScreenshot[ The current frame's location in the screenshot.
    * @return {Promise.<EyesWDIOScreenshot>}
    */
-  async init(screenshotType, frameLocationInScreenshot) {
-    this._screenshotType = await this._updateScreenshotType(screenshotType, this._image);
+  init(screenshotType, frameLocationInScreenshot) {
+    const that = this;
+    return that._updateScreenshotType(screenshotType, that._image).then(screenshotType => {
+      that._screenshotType = screenshotType;
 
-    this._frameChain = this._driver.getFrameChain();
+      const positionProvider = that._driver.eyes.getPositionProvider();
 
-    const positionProvider = this._driver.eyes.getPositionProvider();
-    const frameSize = await this._getFrameSize(positionProvider);
-    this._currentFrameScrollPosition = await EyesWDIOScreenshot.getUpdatedScrollPosition(positionProvider);
-    this._frameLocationInScreenshot = await this._getUpdatedFrameLocationInScreenshot(frameLocationInScreenshot);
+      that._frameChain = that._driver.getFrameChain();
+      return that._getFrameSize(positionProvider).then(frameSize => {
+        return EyesWDIOScreenshot.getUpdatedScrollPosition(positionProvider).then(currentFrameScrollPosition => {
+          that._currentFrameScrollPosition = currentFrameScrollPosition;
+          return that._getUpdatedFrameLocationInScreenshot(frameLocationInScreenshot);
+        }).then(frameLocationInScreenshot => {
+          that._frameLocationInScreenshot = frameLocationInScreenshot;
 
-    this._logger.verbose("Calculating frame window...");
-    this._frameWindow = new Region(this._frameLocationInScreenshot, frameSize);
-    this._frameWindow.intersect(new Region(0, 0, this._image.getWidth(), this._image.getHeight()));
-    if (this._frameWindow.getWidth() <= 0 || this._frameWindow.getHeight() <= 0) {
-      throw new Error("Got empty frame window for screenshot!");
-    }
+          that._logger.verbose("Calculating frame window...");
+          that._frameWindow = new Region(frameLocationInScreenshot, frameSize);
+          that._frameWindow.intersect(new Region(0, 0, that._image.getWidth(), that._image.getHeight()));
+          if (that._frameWindow.getWidth() <= 0 || that._frameWindow.getHeight() <= 0) {
+            throw new Error("Got empty frame window for screenshot!");
+          }
 
-    this._logger.verbose("Done!");
-    return this;
+          that._logger.verbose("Done!");
+          return that;
+        });
+      });
+    });
   }
 
   /**
@@ -106,7 +129,7 @@ class EyesWDIOScreenshot extends EyesScreenshot {
    * @param {EyesWebDriver} driver
    * @return {Promise.<Location>}
    */
-  static async getDefaultContentScrollPosition(logger, currentFrames, driver) {
+  static getDefaultContentScrollPosition(logger, currentFrames, driver) {
     const jsExecutor = new WDIOJSExecutor(driver);
     const positionProvider = new ScrollPositionProvider(logger, jsExecutor);
     if (currentFrames.size() === 0) {
@@ -116,10 +139,11 @@ class EyesWDIOScreenshot extends EyesScreenshot {
     const originalFC = new FrameChain(logger, currentFrames);
 
     const switchTo = driver.switchTo();
-    await switchTo.defaultContent();
-    const defaultContentScrollPosition = await positionProvider.getCurrentPosition();
-    await switchTo.frames(originalFC);
-    return defaultContentScrollPosition;
+    return switchTo.defaultContent().then(() => {
+      return positionProvider.getCurrentPosition();
+    }).then(defaultContentScrollPosition => {
+      return switchTo.frames(originalFC).then(() => defaultContentScrollPosition);
+    });
   }
 
   /**
@@ -129,33 +153,34 @@ class EyesWDIOScreenshot extends EyesScreenshot {
    * @param {ScreenshotType} screenshotType
    * @return {Promise.<Location>}
    */
-  static async calcFrameLocationInScreenshot(logger, driver, frameChain, screenshotType) {
-    const windowScroll = await EyesWDIOScreenshot.getDefaultContentScrollPosition(logger, frameChain, driver);
-    logger.verbose("Getting first frame...");
-    const firstFrame = frameChain.getFrame(0);
-    logger.verbose("Done!");
-    let locationInScreenshot = new Location(firstFrame.getLocation());
-
-    // We only consider scroll of the default content if this is a viewport screenshot.
-    if (screenshotType === ScreenshotType.VIEWPORT) {
-      locationInScreenshot = locationInScreenshot.offset(-windowScroll.getX(), -windowScroll.getY());
-    }
-
-    logger.verbose("Iterating over frames..");
-    let frame;
-    for (let i = 1, l = frameChain.size(); i < l; ++i) {
-      logger.verbose("Getting next frame...");
-      frame = frameChain.getFrame(i);
+  static calcFrameLocationInScreenshot(logger, driver, frameChain, screenshotType) {
+    return EyesWDIOScreenshot.getDefaultContentScrollPosition(logger, frameChain, driver).then(windowScroll => {
+      logger.verbose("Getting first frame...");
+      const firstFrame = frameChain.getFrame(0);
       logger.verbose("Done!");
-      const frameLocation = frame.getLocation();
-      // For inner frames we must consider the scroll
-      const frameOriginalLocation = frame.getOriginalLocation();
-      // Offsetting the location in the screenshot
-      locationInScreenshot = locationInScreenshot.offset(frameLocation.getX() - frameOriginalLocation.getX(), frameLocation.getY() - frameOriginalLocation.getY());
-    }
+      let locationInScreenshot = new Location(firstFrame.getLocation());
 
-    logger.verbose("Done!");
-    return locationInScreenshot;
+      // We only consider scroll of the default content if this is a viewport screenshot.
+      if (screenshotType === ScreenshotType.VIEWPORT) {
+        locationInScreenshot = locationInScreenshot.offset(-windowScroll.getX(), -windowScroll.getY());
+      }
+
+      logger.verbose("Iterating over frames..");
+      let frame;
+      for (let i = 1, l = frameChain.size(); i < l; ++i) {
+        logger.verbose("Getting next frame...");
+        frame = frameChain.getFrame(i);
+        logger.verbose("Done!");
+        const frameLocation = frame.getLocation();
+        // For inner frames we must consider the scroll
+        const frameOriginalLocation = frame.getOriginalLocation();
+        // Offsetting the location in the screenshot
+        locationInScreenshot = locationInScreenshot.offset(frameLocation.getX() - frameOriginalLocation.getX(), frameLocation.getY() - frameOriginalLocation.getY());
+      }
+
+      logger.verbose("Done!");
+      return locationInScreenshot;
+    });
   }
 
   /**
@@ -178,16 +203,15 @@ class EyesWDIOScreenshot extends EyesScreenshot {
    * @param {PositionProvider} positionProvider
    * @return {Promise.<Location>}
    */
-  static async getUpdatedScrollPosition(positionProvider) {
-    try {
-      let sp = await positionProvider.getCurrentPosition();
+  static getUpdatedScrollPosition(positionProvider) {
+    return positionProvider.getCurrentPosition().then(sp => {
       if (!sp) {
-        sp = Location.ZERO;
+        sp = new Location(0, 0);
       }
       return sp;
-    } catch (e) {
-      return Location.ZERO;
-    }
+    }).catch(() => {
+      return new Location(0, 0);
+    });
   }
 
   /**
@@ -195,18 +219,16 @@ class EyesWDIOScreenshot extends EyesScreenshot {
    * @param {PositionProvider} positionProvider
    * @return {Promise.<RectangleSize>}
    */
-  async _getFrameSize(positionProvider) {
-    if (this._frameChain.size() !== 0) {
-      return this._promiseFactory.resolve(this._frameChain.getCurrentFrameInnerSize());
-    } else {
+  _getFrameSize(positionProvider) {
+    if (this._frameChain.size() === 0) {
       // get entire page size might throw an exception for applications which don't support Javascript (e.g., Appium).
       // In that case we'll use the viewport size as the frame's size.
-      try {
-        const entireSize = await positionProvider.getEntireSize();
-        return entireSize;
-      } catch (e) {
-        return this._driver.getDefaultContentViewportSize();
-      }
+      const that = this;
+      return positionProvider.getEntireSize().catch(() => {
+        return that._driver.getDefaultContentViewportSize();
+      });
+    } else {
+      return this._promiseFactory.resolve(this._frameChain.getCurrentFrameInnerSize());
     }
   }
 
@@ -216,21 +238,26 @@ class EyesWDIOScreenshot extends EyesScreenshot {
    * @param {MutableImage} image
    * @return {Promise.<ScreenshotType>}
    */
-  async _updateScreenshotType(screenshotType, image) {
+  _updateScreenshotType(screenshotType, image) {
     if (!screenshotType) {
-      let viewportSize = await this._driver.eyes.getViewportSize();
-      const scaleViewport = this._driver.eyes.shouldStitchContent();
+      const that = this;
+      return that._driver.eyes.getViewportSize().then(viewportSize => {
+        const scaleViewport = that._driver.eyes.shouldStitchContent();
 
-      if (scaleViewport) {
-        const pixelRatio = this._driver.eyes.getDevicePixelRatio();
-        viewportSize = viewportSize.scale(pixelRatio);
-      }
+        if (scaleViewport) {
+          const pixelRatio = that._driver.eyes.getDevicePixelRatio();
+          viewportSize = viewportSize.scale(pixelRatio);
+        }
 
-      if (image.getWidth() <= viewportSize.getWidth() && image.getHeight() <= viewportSize.getHeight()) {
-        return ScreenshotType.VIEWPORT;
-      } else {
-        return ScreenshotType.ENTIRE_FRAME;
-      }
+        if (image.getWidth() <= viewportSize.getWidth() && image.getHeight() <= viewportSize.getHeight()
+        || (that._driver.eyes._checkSettings.getFrameChain().length > 0 // workaround: define screenshotType as VIEWPORT
+            && that._driver.eyes._userAgent.getBrowser() === BrowserNames.Firefox
+            && parseInt(that._driver.eyes._userAgent.getBrowserMajorVersion(), 10) < 48)) {
+          return ScreenshotType.VIEWPORT;
+        } else {
+          return ScreenshotType.ENTIRE_FRAME;
+        }
+      })
     }
     return this._promiseFactory.resolve(screenshotType);
   }
@@ -258,7 +285,7 @@ class EyesWDIOScreenshot extends EyesScreenshot {
    * @param {Boolean} throwIfClipped Throw an EyesException if the region is not fully contained in the screenshot.
    * @return {Promise.<EyesWDIOScreenshot>} A screenshot instance containing the given region.
    */
-  async getSubScreenshot(region, throwIfClipped) {
+  getSubScreenshot(region, throwIfClipped) {
     this._logger.verbose(`getSubScreenshot([${region}], ${throwIfClipped})`);
 
     ArgumentGuard.notNull(region, "region");
@@ -266,17 +293,20 @@ class EyesWDIOScreenshot extends EyesScreenshot {
     // We calculate intersection based on as-is coordinates.
     const asIsSubScreenshotRegion = this.getIntersectedRegion(region, CoordinatesType.SCREENSHOT_AS_IS);
 
-    if (asIsSubScreenshotRegion.isEmpty() || (throwIfClipped && !asIsSubScreenshotRegion.getSize().equals(region.getSize()))) {
+    // todo isSizeEmpty
+    if ((asIsSubScreenshotRegion.getWidth() <= 0 && asIsSubScreenshotRegion.getHeight() <= 0) || (throwIfClipped && !asIsSubScreenshotRegion.getSize().equals(region.getSize()))) {
       throw new OutOfBoundsError(`Region [${region}] is out of screenshot bounds [${this._frameWindow}]`);
     }
 
-    const subScreenshotImage = await this._image.getImagePart(asIsSubScreenshotRegion);
-    const screenshot = new EyesWDIOScreenshot(this._logger, this._driver, subScreenshotImage, this._promiseFactory);
-    const result = await screenshot.initFromFrameSize(new RectangleSize(subScreenshotImage.getWidth(), subScreenshotImage.getHeight()));
-    result._frameLocationInScreenshot = new Location(-region.getLeft(), -region.getTop());
-
-    this._logger.verbose("Done!");
-    return result;
+    const that = this;
+    return this._image.getImagePart(asIsSubScreenshotRegion).then(subScreenshotImage => {
+      const result = new EyesWDIOScreenshot(that._logger, that._driver, subScreenshotImage, that._promiseFactory);
+      return result.initFromFrameSize(new RectangleSize(subScreenshotImage.getWidth(), subScreenshotImage.getHeight()));
+    }).then(/** EyesWDIOScreenshot */ result => {
+      result._frameLocationInScreenshot = new Location(-region.getLeft(), -region.getTop());
+      that._logger.verbose("Done!");
+      return result;
+    });
   }
 
   //noinspection JSUnusedGlobalSymbols
@@ -306,6 +336,10 @@ class EyesWDIOScreenshot extends EyesScreenshot {
       if ((from === CoordinatesType.CONTEXT_RELATIVE || from === CoordinatesType.CONTEXT_AS_IS) && to === CoordinatesType.SCREENSHOT_AS_IS) {
         // If this is not a sub-screenshot, this will have no effect.
         result = result.offset(this._frameLocationInScreenshot.getX(), this._frameLocationInScreenshot.getY());
+
+        // FIXME: 18/03/2018 Region workaround
+        // If this is not a region subscreenshot, this will have no effect.
+        // result = result.offset(-this._regionWindow.getLeft(), -this._regionWindow.getTop());
       } else if (from === CoordinatesType.SCREENSHOT_AS_IS && (to === CoordinatesType.CONTEXT_RELATIVE || to === CoordinatesType.CONTEXT_AS_IS)) {
         result = result.offset(-this._frameLocationInScreenshot.getX(), -this._frameLocationInScreenshot.getY());
       }
@@ -388,7 +422,7 @@ class EyesWDIOScreenshot extends EyesScreenshot {
    * @return {Region}
    */
   getIntersectedRegion(region, resultCoordinatesType) {
-    if (region.isEmpty()) {
+    if (region.getWidth() <= 0 || region.getHeight() <= 0) {
       return new Region(region);
     }
 
@@ -426,22 +460,25 @@ class EyesWDIOScreenshot extends EyesScreenshot {
    * @param {WebElement} element The element which region we want to intersect.
    * @return {Promise.<Region>} The intersected region, in {@code SCREENSHOT_AS_IS} coordinates type.
    */
-  async getIntersectedRegionFromElement(element) {
+  getIntersectedRegionFromElement(element) {
     ArgumentGuard.notNull(element, "element");
 
-    const point = await element.getLocation();
-    const size = await element.getSize();
-    // Since the element coordinates are in context relative
-    let elementRegion = new Region(point.x, point.y, size.width, size.height);
+    const that = this;
+    return element.getLocation().then(point => {
+      return element.getSize().then(size => {
+        // Since the element coordinates are in context relative
+        let elementRegion = new Region(point.x, point.y, size.width, size.height);
 
-    // Since the element coordinates are in context relative
-    elementRegion = this.getIntersectedRegion(elementRegion, CoordinatesType.CONTEXT_RELATIVE);
+        // Since the element coordinates are in context relative
+        elementRegion = that.getIntersectedRegion(elementRegion, CoordinatesType.CONTEXT_RELATIVE);
 
-    if (!elementRegion.isEmpty()) {
-      elementRegion = this.convertRegionLocation(elementRegion, CoordinatesType.CONTEXT_RELATIVE, CoordinatesType.SCREENSHOT_AS_IS);
-    }
+        if (!elementRegion.isEmpty()) {
+          elementRegion = that.convertRegionLocation(elementRegion, CoordinatesType.CONTEXT_RELATIVE, CoordinatesType.SCREENSHOT_AS_IS);
+        }
 
-    return elementRegion;
+        return elementRegion;
+      });
+    });
   }
 
   /**

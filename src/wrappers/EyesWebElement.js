@@ -67,7 +67,7 @@ class EyesWebElement extends WebElement {
     ArgumentGuard.notNull(eyesDriver, "eyesDriver");
     ArgumentGuard.notNull(webElement, "webElement");
 
-    super(eyesDriver.webDriver, webElement.element);
+    super(eyesDriver.webDriver, webElement.element, webElement.locator);
 
     /** @type {Logger}*/
     this._logger = logger;
@@ -80,32 +80,36 @@ class EyesWebElement extends WebElement {
   /**
    * @return {Promise.<Region>}
    */
-  async getBounds() {
-    const location = await this.getLocation();
-    let left = location.getX();
-    let top = location.getY();
-    let width = 0;
-    let height = 0;
+  getBounds() {
+    let location;
+    return this.getLocation().then(res_ => {
+      location = res_;
+      return this.getSize();
+    }).catch(ignored => {
+      return null;
+    }).then(size => {
+      let left = location.getX();
+      let top = location.getY();
+      let width = 0;
+      let height = 0;
 
-    try {
-      const size = await this.getSize();
-      width = size.getWidth();
-      height = size.getHeight();
-    } catch (ignored) {
-      // Not supported on all platforms.
-    }
+      if (size) {
+        width = size.getWidth();
+        height = size.getHeight();
+      }
 
-    if (left < 0) {
-      width = Math.max(0, width + left);
-      left = 0;
-    }
+      if (left < 0) {
+        width = Math.max(0, width + left);
+        left = 0;
+      }
 
-    if (top < 0) {
-      height = Math.max(0, height + top);
-      top = 0;
-    }
+      if (top < 0) {
+        height = Math.max(0, height + top);
+        top = 0;
+      }
 
-    return new Region(left, top, width, height, CoordinatesType.CONTEXT_RELATIVE);
+      return new Region(left, top, width, height, CoordinatesType.CONTEXT_RELATIVE);
+    });
   }
 
   /**
@@ -114,14 +118,15 @@ class EyesWebElement extends WebElement {
    * @param {String} propStyle The style property which value we would like to extract.
    * @return {Promise.<String>} The value of the style property of the element, or {@code null}.
    */
-  async getComputedStyle(propStyle) {
-    try {
-      const {value} = await this.executeScript(JS_GET_COMPUTED_STYLE_FORMATTED_STR(propStyle));
+  getComputedStyle(propStyle) {
+    const that = this;
+    return this.executeScript(JS_GET_COMPUTED_STYLE_FORMATTED_STR(propStyle)).then(res_ => {
+      const {value} = res_;
       return value;
-    } catch (e) {
-      this._logger.verbose("WARNING: getComputedStyle error: " + e);
+    }).catch(e => {
+      that._logger.verbose("WARNING: getComputedStyle error: " + e);
       throw e;
-    }
+    });
   }
 
 
@@ -129,62 +134,75 @@ class EyesWebElement extends WebElement {
    * @param {String} propStyle The style property which value we would like to extract.
    * @return {Promise.<int>} The integer value of a computed style.
    */
-  async getComputedStyleInteger(propStyle) {
-    try {
-      const value = await this.getComputedStyle(propStyle);
-      return Math.round(parseFloat(value.trim().replace("px", "")));
-    } catch (e) {
-      this._logger.log("WARNING: getComputedStyleInteger error: " + e);
+  getComputedStyleInteger(propStyle) {
+    const that = this;
+    return this.getComputedStyle(propStyle).then(value => {
+      return Math.round(parseFloat(value.trim().replace('px', '')));
+    }).catch(e => {
+      that._logger.log(`WARNING: getComputedStyleInteger error: ${e}`);
       throw e;
-    }
+    });
   }
 
   /**
    * @return {Promise.<int>} The value of the scrollLeft property of the element.
    */
-  async getScrollLeft() {
-    const {value} = await this.executeScript(JS_GET_SCROLL_LEFT);
-    return Math.ceil(parseFloat(value));
+  getScrollLeft() {
+    return this.executeScript(JS_GET_SCROLL_LEFT).then(res_ => {
+      const {value} = res_;
+
+      return Math.ceil(parseFloat(value));
+    });
   }
 
   /**
    * @return {Promise.<int>} The value of the scrollTop property of the element.
    */
-  async getScrollTop() {
-    const {value} = await this.executeScript(JS_GET_SCROLL_TOP);
-    return Math.ceil(parseFloat(value));
+  getScrollTop() {
+    return this.executeScript(JS_GET_SCROLL_TOP).then(r => {
+      const {value} = r;
+      return Math.ceil(parseFloat(value));
+    });
   }
 
   /**
    * @return {Promise.<int>} The value of the scrollWidth property of the element.
    */
-  async getScrollWidth() {
-    const {value} = await this.executeScript(JS_GET_SCROLL_WIDTH);
-    return Math.ceil(parseFloat(value));
+  getScrollWidth() {
+    return this.executeScript(JS_GET_SCROLL_WIDTH).then(r => {
+      const {value} = r;
+      return Math.ceil(parseFloat(value));
+    });
   }
 
   /**
    * @return {Promise.<int>} The value of the scrollHeight property of the element.
    */
-  async getScrollHeight() {
-    const {value} = await this.executeScript(JS_GET_SCROLL_HEIGHT);
-    return Math.ceil(parseFloat(value));
+  getScrollHeight() {
+    return this.executeScript(JS_GET_SCROLL_HEIGHT).then(r => {
+      const {value} = r;
+      return Math.ceil(parseFloat(value));
+    });
   }
 
   /**
    * @return {Promise.<int>}
    */
-  async getClientWidth() {
-    const {value} = await this.executeScript(JS_GET_CLIENT_WIDTH);
-    return Math.ceil(parseFloat(value));
+  getClientWidth() {
+    return this.executeScript(JS_GET_CLIENT_WIDTH).then(r => {
+      const {value} = r;
+      return Math.ceil(parseFloat(value));
+    });
   }
 
   /**
    * @return {Promise.<int>}
    */
-  async getClientHeight() {
-    const {value} = await this.executeScript(JS_GET_CLIENT_HEIGHT);
-    return Math.ceil(parseFloat(value));
+  getClientHeight() {
+    return this.executeScript(JS_GET_CLIENT_HEIGHT).then(r => {
+      const {value} = r;
+      return Math.ceil(parseFloat(value));
+    });
   }
 
   // noinspection JSUnusedGlobalSymbols
@@ -232,9 +250,12 @@ class EyesWebElement extends WebElement {
   /**
    * @return {Promise.<String>} The overflow of the element.
    */
-  async getOverflow() {
-    const {value} = await this.executeScript(JS_GET_OVERFLOW);
-    return value;
+  getOverflow() {
+    return this.executeScript(JS_GET_OVERFLOW).then(r => {
+      const {value} = r;
+      const overflow = Math.ceil(parseFloat(value));
+      return overflow ? overflow : null;
+    });
   }
 
   /**
@@ -250,7 +271,11 @@ class EyesWebElement extends WebElement {
    * @returns {Promise} The result returned from the script
    */
   executeScript(script) {
-    return this._eyesWebDriver.executeScript(script, this.getWebElement()._element);
+    const webElementPromise = WebElement.findElement(this._eyesWebDriver.webDriver, this.getWebElement()._locator);
+
+    return webElementPromise.then(webElement => {
+      return this._eyesWebDriver.executeScript(script, webElement.element);
+    });
   }
 
   /**
@@ -274,9 +299,10 @@ class EyesWebElement extends WebElement {
    * @inheritDoc
    * return {EyesWebElement}
    */
-  async findElement(locator) {
-    const element = await this.getWebElement().findElement(locator);
-    return new EyesWebElement(this._logger, this._eyesWebDriver, element);
+  findElement(locator) {
+    return this.getWebElement().findElement(locator).then(element => {
+      return new EyesWebElement(this._logger, this._eyesWebDriver, element);
+    });
   }
 
   /**
@@ -294,13 +320,15 @@ class EyesWebElement extends WebElement {
    * @inheritDoc
    * @return {Promise}
    */
-  async click() {
+  click() {
+    const that = this;
     // Letting the driver know about the current action.
-    const currentControl = await this.getBounds();
-    this._eyesWebDriver.eyes.addMouseTrigger(MouseTrigger.MouseAction.Click, this);
-    this._logger.verbose(`click(${currentControl})`);
+    return this.getBounds().then(currentControl => {
+      that._eyesWebDriver.eyes.addMouseTrigger(MouseTrigger.MouseAction.Click, that);
+      that._logger.verbose(`click(${currentControl})`);
 
-    return this.getWebElement().click();
+      return that.getWebElement().click();
+    });
   }
 
   // noinspection JSCheckFunctionSignatures
@@ -308,13 +336,8 @@ class EyesWebElement extends WebElement {
    * @Override
    * @inheritDoc
    */
-  sendKeys(...keysToSend) {
-    const that = this;
-    return keysToSend.reduce((promise, keys) => {
-      return promise.then(() => that._eyesWebDriver.eyes.addTextTriggerForElement(this.getWebElement(), String(keys)));
-    }, that._eyesWebDriver.getPromiseFactory().resolve()).then(() => {
-      return that.getWebElement().sendKeys(...keysToSend);
-    });
+  sendKeys(keysToSend) {
+    return super.sendKeys(keysToSend);
   }
 
   /**
@@ -353,25 +376,29 @@ class EyesWebElement extends WebElement {
   /**
    * @override
    * @inheritDoc
-   * @returns {RectangleSize}
+   * @returns {Promise.<RectangleSize>}
    */
-  async getSize() {
-    let {width, height} = await EyesWebElement.prototype.getSize.call(this);
-    return new RectangleSize(width, height);
+  getSize() {
+    return super.getSize().then(r => {
+      let {width, height} = r;
+      return new RectangleSize(width, height);
+    });
   }
 
   // noinspection JSCheckFunctionSignatures
   /**
    * @override
    * @inheritDoc
-   * @returns {Location}
+   * @returns {Promise.<Location>}
    */
-  async getLocation() {
+  getLocation() {
     // The workaround is similar to Java one, but in js we always get raw data with decimal value which we should round up.
-    let {x = 0, y = 0} = await EyesWebElement.prototype.getLocation.call(this);
-    x = Math.ceil(x);
-    y = Math.ceil(y);
-    return new Location(x, y);
+    return super.getLocation().then(r => {
+      let {x = 0, y = 0} = r;
+      x = Math.ceil(x);
+      y = Math.ceil(y);
+      return new Location(x, y);
+    });
   }
 
   /**
@@ -420,6 +447,20 @@ class EyesWebElement extends WebElement {
    */
   takeScreenshot(opt_scroll) {
     return this.getWebElement().takeScreenshot(opt_scroll);
+  }
+
+  /**
+   * @returns {Promise.<{offsetLeft, offsetTop}>}
+   */
+  getElementOffset() {
+    return this.getWebElement().getElementOffset();
+  }
+
+  /**
+   * @returns {Promise.<{scrollLeft, scrollTop}>}
+   */
+  getElementScroll() {
+    return this.getWebElement().getElementScroll();
   }
 
   // noinspection JSUnusedGlobalSymbols

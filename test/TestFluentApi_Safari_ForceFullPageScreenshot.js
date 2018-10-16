@@ -10,21 +10,23 @@ const testedPageUrl = 'http://applitools.github.io/demo/TestPages/FramesTestPage
 const test = new Common({testedPageUrl});
 
 
-describe.skip(appName, function () {
+let platforms = ['macOS 10.13'];
+platforms.forEach(function (platform) {
+  describe.skip(appName, function () {
 
-  before(function () {
-    test.beforeTest({fps: true});
+    before(function () {
+      test.beforeTest({fps: true});
+    });
+
+    beforeEach(function () {
+      return test.beforeEachTest({appName: appName, testName: this.currentTest.title, browserOptions: Common.SAFARI, platform: platform});
+    });
+
+    afterEach(function () {
+      return test.afterEachTest();
+    });
+
+
+    TestFluentApi.shouldBehaveLike('TestFluentApi', test);
   });
-
-  beforeEach(async function () {
-    await test.beforeEachTest({appName: appName, testName: this.currentTest.title, browserOptions: Common.SAFARI});
-  });
-
-  afterEach(async function () {
-    await test.afterEachTest();
-  });
-
-
-  TestFluentApi.shouldBehaveLike('TestFluentApi', test);
-
 });

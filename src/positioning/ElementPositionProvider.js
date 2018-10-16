@@ -27,45 +27,58 @@ class ElementPositionProvider extends PositionProvider {
    * @override
    * @inheritDoc
    */
-  async getCurrentPosition() {
+  getCurrentPosition() {
     this._logger.verbose("getCurrentScrollPosition()");
-    const scrollLeft = await this._element.getScrollLeft();
-    const scrollTop = await this._element.getScrollTop();
-    const location = new Location(scrollLeft, scrollTop);
-    this._logger.verbose(`Current position: ${location}`);
-    return location;
+
+    const that = this;
+    let scrollLeft;
+    return that._element.getScrollLeft().then(_scrollLeft => {
+      scrollLeft = _scrollLeft;
+      return that._element.getScrollTop();
+    }).then(_scrollTop => {
+      const location = new Location(scrollLeft, _scrollTop);
+      that._logger.verbose(`Current position: ${location}`);
+      return location;
+    });
   }
 
   /**
    * @override
    * @inheritDoc
    */
-  async setPosition(location) {
-    this._logger.verbose(`Scrolling element to: ${location}`);
-    await this._element.scrollTo(location);
-    this._logger.verbose("Done scrolling element!");
+  setPosition(location) {
+    const that = this;
+    that._logger.verbose(`Scrolling element to: ${location}`);
+    return that._element.scrollTo(location).then(() => {
+      that._logger.verbose("Done scrolling element!");
+    });
   }
 
   /**
    * @override
    * @inheritDoc
    */
-  async getEntireSize() {
+  getEntireSize() {
     this._logger.verbose("ElementPositionProvider - getEntireSize()");
-    const scrollWidth = await this._element.getScrollWidth();
-    const scrollHeight = await this._element.getScrollHeight();
-    const size = new RectangleSize(scrollWidth, scrollHeight);
-    this._logger.verbose(`ElementPositionProvider - Entire size: ${size}`);
-    return size;
+
+    const that = this;
+    let scrollWidth;
+    return that._element.getScrollWidth().then(_scrollWidth => {
+      scrollWidth = _scrollWidth;
+      return that._element.getScrollHeight();
+    }).then(_scrollHeight => {
+      const size = new RectangleSize(scrollWidth, _scrollHeight);
+      that._logger.verbose(`ElementPositionProvider - Entire size: ${size}`);
+      return size;
+    });
   }
 
   /**
    * @override
    * @return {Promise.<ElementPositionMemento>}
    */
-  async getState() {
-    const position = await this.getCurrentPosition();
-    return new ElementPositionMemento(position);
+  getState() {
+    return this.getCurrentPosition().then(position => new ElementPositionMemento(position));
   }
 
   // noinspection JSCheckFunctionSignatures
@@ -74,9 +87,19 @@ class ElementPositionProvider extends PositionProvider {
    * @param {ElementPositionMemento} state The initial state of position
    * @return {Promise}
    */
-  async restoreState(state) {
-    await this.setPosition(new Location(state.getX(), state.getY()));
-    this._logger.verbose("Position restored.");
+  restoreState(state) {
+    const that = this;
+    return this.setPosition(new Location(state.getX(), state.getY())).then(() => {
+      that._logger.verbose("Position restored.");
+    });
+  }
+
+  /**
+   *
+   * @returns {EyesWebElement|*}
+   */
+  get element() {
+    return this._element;
   }
 }
 
