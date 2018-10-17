@@ -95,7 +95,7 @@ class Common {
     }
   }
 
-  beforeEachTest({
+  async beforeEachTest({
                    appName,
                    testName,
                    browserOptions: browserOptions,
