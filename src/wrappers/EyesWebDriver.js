@@ -262,8 +262,31 @@ class EyesWebDriver {
       throw e;
     }).then(result => {
       that._logger.verbose('Done!');
-      return result;
+      return result.value;
     });
+  }
+
+
+  /**
+   * @param {String} url
+   * @return {*|Promise}
+   * @override
+   */
+  url(url) {
+    this._frameChain.clear();
+    return Promise.resolve(this.remoteWebDriver.url(url));
+  }
+
+
+  // noinspection JSUnusedGlobalSymbols
+  async getCurrentUrl(url) {
+    const {value: result} = await this.url(url);
+    return result;
+  }
+
+
+  end() {
+    return this.remoteWebDriver.end();
   }
 
 

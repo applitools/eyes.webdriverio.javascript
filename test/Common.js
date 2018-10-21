@@ -70,7 +70,6 @@ class Common {
     this._eyes.setForceFullPageScreenshot(fps);
     this._eyes.setStitchMode(stitchMode);
     this._eyes.setHideScrollbars(true);
-    this._eyes.setSendDom(true);
 
 
     if (batchName) {
@@ -146,7 +145,10 @@ class Common {
       }
 
       return this._eyes.open(this._browser, appName, testName, viewportSize);
-    }).url(testedPageUrl).then(() => {
+    }).then(eyesWebDriver => {
+      that._browser = eyesWebDriver;
+      return that._browser.url(testedPageUrl);
+    }).then(() => {
       that._expectedFloatingsRegions = null;
     });
   }

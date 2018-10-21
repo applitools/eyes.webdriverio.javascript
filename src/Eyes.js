@@ -21,9 +21,9 @@ const {
   ArgumentGuard,
   SimplePropertyHandler
 } = require('@applitools/eyes.sdk.core');
+const {DomCapture} = require('@applitools/dom-utils');
 
 const ImageProviderFactory = require('./capture/ImageProviderFactory');
-const DomCapture = require('./capture/DomCapture');
 const CssTranslatePositionProvider = require('./positioning/CssTranslatePositionProvider');
 const CssTranslateElementPositionProvider = require('./positioning/CssTranslateElementPositionProvider');
 const ScrollPositionProvider = require('./positioning/ScrollPositionProvider');
@@ -148,10 +148,6 @@ class Eyes extends EyesBase {
 
     if (driver && driver.isMobile) { // set viewportSize to null if browser is mobile
       viewportSize = null;
-    }
-
-    if (this._stitchMode === StitchMode.CSS) {
-      this.setSendDom(true);
     }
 
     this._driver = new EyesWebDriver(new WebDriver(driver), this, this._logger);

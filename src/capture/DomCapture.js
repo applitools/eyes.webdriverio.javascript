@@ -9,6 +9,9 @@ const request = require('request-promise-native');
 const cssParser = require('css');
 const cssUrlParser = require('css-url-parser');
 
+/**
+ * @deprecated
+ */
 class DomCapture {
 
   static get CAPTURE_FRAME_SCRIPT() {
@@ -252,7 +255,7 @@ class DomCapture {
     return sb.toString();
   }
 
-  static async _downloadCss(logger, baseUri, value) {
+  static async _downloadCss(logger, baseUri, value, retriesCount = 1) {
     try {
       logger.verbose("Given URL to download: {0}", value);
       // let href = cssParser.parse(value);
@@ -262,11 +265,14 @@ class DomCapture {
       }
       // Stopwatch stopwatch = Stopwatch.StartNew();
 
-      const css = await request(href);
       // logger.verbose("downloading CSS in length of {0} chars took {1} ms", css.Length, stopwatch.Elapsed.TotalMilliseconds);
-      return Promise.resolve(css);
+      return request(href);
     } catch (ex) {
       logger.verbose(ex.toString());
+      if (retriesCount > 0) {
+        retriesCount--;
+        return DomCapture._downloadCss(logger, baseUri, value, retriesCount);
+      }
       return '';
     }
   }
