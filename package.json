@@ -1,6 +1,6 @@
 {
   "name": "@applitools/eyes.webdriverio",
-  "version": "1.2.1",
+  "version": "2.0.0",
   "description": "Applitools Eyes SDK for Webdriverio ",
   "main": "index.js",
   "scripts": {
@@ -12,7 +12,7 @@
   "repository": "https://github.com/applitools/eyes.webdriverio.javascript",
   "dependencies": {
     "@applitools/dom-utils": "1.1.0",
-    "@applitools/eyes.sdk.core": "2.2.2",
+    "@applitools/eyes.sdk.core": "2.3.0",
     "chromedriver": "^2.37.0",
     "css": "2.2.4",
     "css-url-parser": "^1.1.3",
