@@ -10,7 +10,7 @@ const testedPageUrl = 'http://applitools.github.io/demo/TestPages/FramesTestPage
 const test = new Common({testedPageUrl: testedPageUrl, browserName: 'firefox'});
 
 
-const platforms = ['Linux'/*, 'Windows'*/];
+const platforms = ['Linux', 'Windows 10'];
 platforms.forEach(function (platform) {
   describe(appName, function () {
 

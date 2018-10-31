@@ -6,6 +6,7 @@ const {By} = require('../index');
 
 
 shared.examplesFor('TestClassicApi', function (test) {
+
   it('TestCheckWindow', function () {
     return test.eyes.checkWindow('Window').then(result => {
       equal(result.getAsExpected(), true);
