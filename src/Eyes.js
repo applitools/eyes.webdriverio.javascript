@@ -21,6 +21,7 @@ const {
   ArgumentGuard,
   SimplePropertyHandler
 } = require('@applitools/eyes.sdk.core');
+const {DomCapture} = require('@applitools/dom-utils');
 
 const ImageProviderFactory = require('./capture/ImageProviderFactory');
 const CssTranslatePositionProvider = require('./positioning/CssTranslatePositionProvider');
@@ -116,6 +117,8 @@ class Eyes extends EyesBase {
     this._stitchingOverlap = DEFAULT_STITCHING_OVERLAP;
     /** @type {Region} */
     this._effectiveViewport = Region.EMPTY;
+    /** @type {string}*/
+    this._domUrl;
   }
 
 
@@ -929,6 +932,30 @@ class Eyes extends EyesBase {
     return this._tryHideScrollbars();
   }
 
+  /** @override */
+  async tryCaptureDom() {
+    try {
+      this._logger.verbose('Getting window DOM...');
+      return await DomCapture.getFullWindowDom(this._logger, this.getDriver());
+    } catch (ignored) {
+      return '';
+    }
+  }
+
+  /**
+   * @override
+   */
+  getDomUrl() {
+    return this.getPromiseFactory().resolve(this._domUrl);
+  }
+
+  /**
+   * @override
+   */
+  setDomUrl(domUrl) {
+    return this._domUrl = domUrl;
+  }
+
   /**
    * @private
    * @return {Promise}
@@ -1137,6 +1164,15 @@ class Eyes extends EyesBase {
       that._logger.verbose("Done!");
       return result;
     });
+  }
+
+
+  getImageLocation() {
+    let location = Location.ZERO;
+    if (this.regionToCheck) {
+      location = this.regionToCheck.getLocation();
+    }
+    return location;
   }
 
 

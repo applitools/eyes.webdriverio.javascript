@@ -1,15 +1,15 @@
 'use strict';
 
-const {TestClassicApi} = require('./TestClassicApi');
+const {TestDomSending} = require('./TestDomSending');
 const Common = require('./Common');
 
-const appName = 'Eyes Selenium SDK - Classic API';
-const testedPageUrl = 'http://applitools.github.io/demo/TestPages/FramesTestPage/';
+const appName = 'Eyes Selenium SDK - Dom Sending';
+const testedPageUrl = 'http://applitools.github.io/demo/TestPages/DomTest/dom_capture.html';
 
 
 const test = new Common({testedPageUrl: testedPageUrl, browserName: 'chrome'});
 
-const platforms = ['Linux', 'Windows 10'];
+const platforms = ['Windows'];
 platforms.forEach(function (platform) {
   describe(appName, function () {
 
@@ -29,6 +29,6 @@ platforms.forEach(function (platform) {
       test.afterTest();
     });
 
-    TestClassicApi.shouldBehaveLike('TestClassicApi', test);
+    TestDomSending.shouldBehaveLike('TestDomSending', test);
   });
 });

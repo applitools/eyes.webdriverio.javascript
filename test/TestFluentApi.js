@@ -56,6 +56,42 @@ shared.examplesFor('TestFluentApi', function (test) {
     equal(result.getAsExpected(), true);
   });
 
+  it.skip('TestScrollbarsHiddenAndReturned_Fluent', async () => {
+    const result1 = test.eyes.check('Fluent - Window (Before)', Target.window().fully());
+    const result2 = test.eyes.check('Fluent - Inner frame div', Target.frame('frame1').region(By.id('inner-frame-div')).fully());
+    const result3 = test.eyes.check('Fluent - Window (After)', Target.window().fully());
+    equal(result1.getAsExpected() && result2.getAsExpected() && result3.getAsExpected(), true);
+  });
+
+  it('TestCheckRegionInFrame2_Fluent', async () => {
+    const result1 = await test.eyes.check("Fluent - Inner frame div 1", Target.frame("frame1")
+      .region(By.id("inner-frame-div"))
+      .fully()
+      .timeout(5000)
+      .ignore(new Region(50, 50, 100, 100)));
+
+    const result2 = await test.eyes.check("Fluent - Inner frame div 2", Target.frame("frame1")
+      .region(By.id("inner-frame-div"))
+      .fully()
+      .ignore(new Region(50, 50, 100, 100))
+      .ignore(new Region(70, 170, 90, 90)));
+
+    const result3 = await test.eyes.check("Fluent - Inner frame div 3", Target.frame("frame1")
+      .region(By.id("inner-frame-div"))
+      .fully()
+      .timeout(5000));
+
+    const result4 = await test.eyes.check("Fluent - Inner frame div 4", Target.frame("frame1")
+      .region(By.id("inner-frame-div"))
+      .fully());
+
+    const result5 = await test.eyes.check("Fluent - Full frame with floating region", Target.frame("frame1")
+      .fully()
+      .layout()
+      .floating(new Region(200, 200, 150, 150), 25));
+    equal(result1.getAsExpected() && result2.getAsExpected() && result3.getAsExpected() && result4.getAsExpected() && result5.getAsExpected(), true);
+  });
+
   it('TestCheckFrameInFrame_Fully_Fluent2', async () => {
     let result = await test.eyes.check("Fluent - Window with Ignore region 2", Target.window().fully());
     equal(result.getAsExpected(), true);
@@ -100,6 +136,25 @@ shared.examplesFor('TestFluentApi', function (test) {
     const result = await test.eyes.check("Fluent - Region by element", Target.region(webElement).ignore(webElement));
     equal(result.getAsExpected(), true);
     test.setExpectedIgnoreRegions(new Region(0, 0, 304, 184));
+  });
+
+  it('TestCheckFullWindowWithMultipleIgnoreRegionsBySelector_Fluent', async () => {
+    const result = await test.eyes.check('Fluent - Region by element', Target.window().fully().ignore(By.cssSelector('.ignore')));
+    equal(result.getAsExpected(), true);
+    test.setExpectedIgnoreRegions(new Region(172, 928, 456, 306), new Region(8, 1270, 784, 206), new Region(10, 284, 302, 182));
+  });
+
+  it.skip('TestCheckMany', async () => {
+    //todo need to implement according to java3
+    const result = await test.eyes.check(
+      Target.region(By.id("overflowing-div-image")).withName("overflowing div image"),
+      Target.region(By.id("overflowing-div")).withName("overflowing div"),
+      Target.region(By.id("overflowing-div-image")).fully().withName("overflowing div image (fully)"),
+      Target.frame("frame1").frame("frame1-1").fully().withName("Full Frame in Frame"),
+      Target.frame("frame1").withName("frame1"),
+      Target.region(new Region(30, 50, 300, 620)).withName("rectangle")
+    );
+    equal(result.getAsExpected(), true);
   });
 });
 

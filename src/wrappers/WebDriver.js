@@ -21,7 +21,7 @@ class WebDriver {
    * @return {WebElement}
    */
   findElement(locator) {
-    return this._remoteWebDriver.element(locator.value).then(r => {
+    return this.remoteWebDriver.element(locator.value).then(r => {
       const {value: element} = r;
       return new WebElement(this, element, locator);
     });
@@ -33,12 +33,12 @@ class WebDriver {
    * @return {Promise.Buffer} returns base64 string buffer
    */
   takeScreenshot() {
-    return this._remoteWebDriver.saveScreenshot();
+    return this.remoteWebDriver.saveScreenshot();
   }
 
 
   defaultContent() {
-    return this._remoteWebDriver.frame();
+    return this.remoteWebDriver.frame();
   }
 
 
@@ -48,36 +48,66 @@ class WebDriver {
 
 
   frame(id) {
-    return this._remoteWebDriver.frame(id);
+    return this.remoteWebDriver.frame(id);
   }
 
 
   sleep(ms) {
-    return this._remoteWebDriver.pause(ms);
+    return this.remoteWebDriver.pause(ms);
   }
 
 
-  quit() {
-    return this._remoteWebDriver.end();
+  end() {
+    return this.remoteWebDriver.end();
   }
 
+
+  url(url) {
+    return this.remoteWebDriver.url(url);
+  }
+
+
+  getUrl() {
+    return this.remoteWebDriver.getUrl();
+  }
+
+  getTitle() {
+    return this.remoteWebDriver.getTitle();
+  }
+
+  close() {
+    return this.remoteWebDriver.close();
+  }
+
+  windowHandle() {
+    return this.remoteWebDriver.windowHandle();
+  }
+
+  getSource() {
+    return this.remoteWebDriver.getSource();
+  }
 
   /**
-   *
    * @return {Promise}
    */
   execute(f) {
-    return Promise.resolve(this._remoteWebDriver.execute(f));
+    return Promise.resolve(this.remoteWebDriver.execute(f));
+  }
+
+  /**
+   * @return {Promise}
+   */
+  executeAsync(f) {
+    return Promise.resolve(this.remoteWebDriver.executeAsync(f));
   }
 
   get remoteWebDriver() {
     return this._remoteWebDriver;
   }
 
-
   getCapabilities() {
+    return this.remoteWebDriver.getCapabilities();
   }
-
 
   /**
    * @param {Command} cmd
