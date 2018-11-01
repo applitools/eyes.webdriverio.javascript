@@ -118,15 +118,13 @@ class EyesWebElement extends WebElement {
    * @param {String} propStyle The style property which value we would like to extract.
    * @return {Promise.<String>} The value of the style property of the element, or {@code null}.
    */
-  getComputedStyle(propStyle) {
-    const that = this;
-    return this.executeScript(JS_GET_COMPUTED_STYLE_FORMATTED_STR(propStyle)).then(res_ => {
-      const {value} = res_;
-      return value;
-    }).catch(e => {
-      that._logger.verbose("WARNING: getComputedStyle error: " + e);
+  async getComputedStyle(propStyle) {
+    try {
+      return await this.executeScript(JS_GET_COMPUTED_STYLE_FORMATTED_STR(propStyle));
+    } catch (e) {
+      this._logger.verbose("WARNING: getComputedStyle error: " + e);
       throw e;
-    });
+    }
   }
 
 
@@ -147,62 +145,49 @@ class EyesWebElement extends WebElement {
   /**
    * @return {Promise.<int>} The value of the scrollLeft property of the element.
    */
-  getScrollLeft() {
-    return this.executeScript(JS_GET_SCROLL_LEFT).then(res_ => {
-      const {value} = res_;
-
-      return Math.ceil(parseFloat(value));
-    });
+  async getScrollLeft() {
+    const value = await this.executeScript(JS_GET_SCROLL_LEFT);
+    return Math.ceil(parseFloat(value));
   }
 
   /**
    * @return {Promise.<int>} The value of the scrollTop property of the element.
    */
-  getScrollTop() {
-    return this.executeScript(JS_GET_SCROLL_TOP).then(r => {
-      const {value} = r;
-      return Math.ceil(parseFloat(value));
-    });
+  async getScrollTop() {
+    const value = await this.executeScript(JS_GET_SCROLL_TOP);
+    return Math.ceil(parseFloat(value));
   }
 
   /**
    * @return {Promise.<int>} The value of the scrollWidth property of the element.
    */
-  getScrollWidth() {
-    return this.executeScript(JS_GET_SCROLL_WIDTH).then(r => {
-      const {value} = r;
-      return Math.ceil(parseFloat(value));
-    });
+  async getScrollWidth() {
+    const value = await this.executeScript(JS_GET_SCROLL_WIDTH);
+    return Math.ceil(parseFloat(value));
   }
 
   /**
    * @return {Promise.<int>} The value of the scrollHeight property of the element.
    */
-  getScrollHeight() {
-    return this.executeScript(JS_GET_SCROLL_HEIGHT).then(r => {
-      const {value} = r;
-      return Math.ceil(parseFloat(value));
-    });
+  async getScrollHeight() {
+    const value = await this.executeScript(JS_GET_SCROLL_HEIGHT);
+    return Math.ceil(parseFloat(value));
   }
 
   /**
    * @return {Promise.<int>}
    */
-  getClientWidth() {
-    return this.executeScript(JS_GET_CLIENT_WIDTH).then(r => {
-      const {value} = r;
-      return Math.ceil(parseFloat(value));
-    });
+  async getClientWidth() {
+    const value = await this.executeScript(JS_GET_CLIENT_WIDTH);
+    return Math.ceil(parseFloat(value));
   }
 
   /**
    * @return {Promise.<int>}
    */
-  getClientHeight() {
-    return this.executeScript(JS_GET_CLIENT_HEIGHT).then(r => {
-      const {value} = r;
-      return Math.ceil(parseFloat(value));
-    });
+  async getClientHeight() {
+    const value = await this.executeScript(JS_GET_CLIENT_HEIGHT);
+    return Math.ceil(parseFloat(value));
   }
 
   // noinspection JSUnusedGlobalSymbols
@@ -250,12 +235,10 @@ class EyesWebElement extends WebElement {
   /**
    * @return {Promise.<String>} The overflow of the element.
    */
-  getOverflow() {
-    return this.executeScript(JS_GET_OVERFLOW).then(r => {
-      const {value} = r;
-      const overflow = Math.ceil(parseFloat(value));
-      return overflow ? overflow : null;
-    });
+  async getOverflow() {
+    const value = await this.executeScript(JS_GET_OVERFLOW);
+    const overflow = Math.ceil(parseFloat(value));
+    return overflow ? overflow : null;
   }
 
   /**
