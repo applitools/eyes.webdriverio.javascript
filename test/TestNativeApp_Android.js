@@ -19,7 +19,7 @@ describe(appName, function () {
     eyes.setLogHandler(new ConsoleLogHandler(true));
   });
 
-  beforeEach(function () {
+  beforeEach(async () => {
     const browserOptions = {
       port: '80',
       path: '/wd/hub',
@@ -40,17 +40,18 @@ describe(appName, function () {
     };
 
     const browser = webdriverio.remote(browserOptions);
-    return browser.init().then(() => {
-      return eyes.open(browser, 'Android Example', 'Main activity');
-    });
+    await browser.init();
+    return eyes.open(browser, 'Android Example', 'Main activity');
   });
 
-  afterEach(function () {
-    return eyes.close(false).catch(() => {
-      return eyes.abortIfNotClosed();
-    }).then(() => {
-      return browser.end();
-    });
+  afterEach(async () => {
+    try {
+      return eyes.close(false);
+    } catch (e) {
+      await eyes.abortIfNotClosed();
+    } finally {
+      await browser.end();
+    }
   });
 
 

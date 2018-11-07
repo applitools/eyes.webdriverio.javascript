@@ -80,14 +80,11 @@ class EyesWebElement extends WebElement {
   /**
    * @return {Promise.<Region>}
    */
-  getBounds() {
-    let location;
-    return this.getLocation().then(res_ => {
-      location = res_;
-      return this.getSize();
-    }).catch(ignored => {
-      return null;
-    }).then(size => {
+  async getBounds() {
+    try {
+      const location = await this.getLocation();
+      const size = await this.getSize();
+
       let left = location.getX();
       let top = location.getY();
       let width = 0;
@@ -109,7 +106,9 @@ class EyesWebElement extends WebElement {
       }
 
       return new Region(left, top, width, height, CoordinatesType.CONTEXT_RELATIVE);
-    });
+    } catch (ignored) {
+      return null;
+    }
   }
 
   /**
@@ -132,14 +131,14 @@ class EyesWebElement extends WebElement {
    * @param {String} propStyle The style property which value we would like to extract.
    * @return {Promise.<int>} The integer value of a computed style.
    */
-  getComputedStyleInteger(propStyle) {
-    const that = this;
-    return this.getComputedStyle(propStyle).then(value => {
+  async getComputedStyleInteger(propStyle) {
+    try {
+      const value = await this.getComputedStyle(propStyle);
       return Math.round(parseFloat(value.trim().replace('px', '')));
-    }).catch(e => {
-      that._logger.log(`WARNING: getComputedStyleInteger error: ${e}`);
+    } catch (e) {
+      this._logger.log(`WARNING: getComputedStyleInteger error: ${e}`);
       throw e;
-    });
+    }
   }
 
   /**
@@ -253,12 +252,9 @@ class EyesWebElement extends WebElement {
    * @param {String} script The script to execute with the element as last parameter
    * @returns {Promise} The result returned from the script
    */
-  executeScript(script) {
-    const webElementPromise = WebElement.findElement(this._eyesWebDriver.webDriver, this.getWebElement()._locator);
-
-    return webElementPromise.then(webElement => {
-      return this._eyesWebDriver.executeScript(script, webElement.element);
-    });
+  async executeScript(script) {
+    const webElement = await WebElement.findElement(this._eyesWebDriver.webDriver, this.getWebElement()._locator);
+    return this._eyesWebDriver.executeScript(script, webElement.element);
   }
 
   /**
@@ -282,19 +278,18 @@ class EyesWebElement extends WebElement {
    * @inheritDoc
    * return {EyesWebElement}
    */
-  findElement(locator) {
-    return this.getWebElement().findElement(locator).then(element => {
-      return new EyesWebElement(this._logger, this._eyesWebDriver, element);
-    });
+  async findElement(locator) {
+    const element = await this.getWebElement().findElement(locator);
+    return new EyesWebElement(this._logger, this._eyesWebDriver, element);
   }
 
   /**
    * @Override
    * @inheritDoc
    */
-  findElements(locator) {
-    const that = this;
-    return this.getWebElement().findElements(locator).then(elements => elements.map(element => new EyesWebElement(that._logger, that._eyesWebDriver, element)));
+  async findElements(locator) {
+    const elements = await this.getWebElement().findElements(locator);
+    elements.map(element => new EyesWebElement(this._logger, this._eyesWebDriver, element));
   }
 
   // noinspection JSCheckFunctionSignatures
@@ -303,15 +298,13 @@ class EyesWebElement extends WebElement {
    * @inheritDoc
    * @return {Promise}
    */
-  click() {
-    const that = this;
+  async click() {
     // Letting the driver know about the current action.
-    return this.getBounds().then(currentControl => {
-      that._eyesWebDriver.eyes.addMouseTrigger(MouseTrigger.MouseAction.Click, that);
-      that._logger.verbose(`click(${currentControl})`);
+    const currentControl = await this.getBounds();
+    this._eyesWebDriver.eyes.addMouseTrigger(MouseTrigger.MouseAction.Click, this);
+    this._logger.verbose(`click(${currentControl})`);
 
-      return that.getWebElement().click();
-    });
+    return this.getWebElement().click();
   }
 
   // noinspection JSCheckFunctionSignatures
@@ -361,11 +354,9 @@ class EyesWebElement extends WebElement {
    * @inheritDoc
    * @returns {Promise.<RectangleSize>}
    */
-  getSize() {
-    return super.getSize().then(r => {
-      let {width, height} = r;
-      return new RectangleSize(width, height);
-    });
+  async getSize() {
+    const {width, height} = await super.getSize();
+    return new RectangleSize(width, height);
   }
 
   // noinspection JSCheckFunctionSignatures
@@ -374,14 +365,13 @@ class EyesWebElement extends WebElement {
    * @inheritDoc
    * @returns {Promise.<Location>}
    */
-  getLocation() {
+  async getLocation() {
     // The workaround is similar to Java one, but in js we always get raw data with decimal value which we should round up.
-    return super.getLocation().then(r => {
-      let {x = 0, y = 0} = r;
-      x = Math.ceil(x);
-      y = Math.ceil(y);
-      return new Location(x, y);
-    });
+    const r = await super.getLocation();
+    let {x = 0, y = 0} = r;
+    x = Math.ceil(x);
+    y = Math.ceil(y);
+    return new Location(x, y);
   }
 
   /**
