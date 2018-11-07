@@ -244,10 +244,7 @@ class EyesWDIOUtils {
       script += `'${tk}': ${EyesWDIOUtils.JS_GET_TRANSFORM_VALUE('arguments[0]', tk)},`;
     }
     script += " }";
-    return executor.executeScript(script, element).then(res_ => {
-      const {value: result} = res_;
-      return result;
-    });
+    return executor.executeScript(script, element);
   }
 
 
@@ -257,7 +254,7 @@ class EyesWDIOUtils {
    * @param transform
    * @return {*|Promise}
    */
-  static setElementTransforms(executor, webElementPromise, transform) {
+  static async setElementTransforms(executor, webElementPromise, transform) {
     let script = '';
     for (let i = 0, l = EyesWDIOUtils.JS_TRANSFORM_KEYS.length; i < l; i++) {
       const tk = EyesWDIOUtils.JS_TRANSFORM_KEYS[i];
@@ -265,14 +262,8 @@ class EyesWDIOUtils {
       // script += `${EyesWDIOUtils.JS_SET_TRANSFORM_VALUE("document.getElementsByTagName('img')[0]", tk, transform)};`;
     }
 
-    return webElementPromise.then(webElement => {
-      return executor.executeScript(script, webElement.element).then(res_ => {
-        const {value: result} = res_;
-        return result;
-      }).catch(e => {
-        throw e;
-      });
-    });
+    const webElement = await webElementPromise;
+    return executor.executeScript(script, webElement.element);
   }
 
   /**
@@ -341,12 +332,10 @@ class EyesWDIOUtils {
    * @param {EyesJsExecutor} executor The executor to use.
    * @return {Promise.<Location>} The current scroll position of the current frame.
    */
-  static getCurrentScrollPosition(executor) {
-    return executor.executeScript(EyesWDIOUtils.JS_GET_CURRENT_SCROLL_POSITION).then(res_ => {
-      const {value} = res_;
-      // If we can't find the current scroll position, we use 0 as default.
-      return new Location(Math.ceil(value[0]) || 0, Math.ceil(value[1]) || 0);
-    });
+  static async getCurrentScrollPosition(executor) {
+    const value = await executor.executeScript(EyesWDIOUtils.JS_GET_CURRENT_SCROLL_POSITION);
+    // If we can't find the current scroll position, we use 0 as default.
+    return new Location(Math.ceil(value[0]) || 0, Math.ceil(value[1]) || 0);
   }
 
 
@@ -356,16 +345,16 @@ class EyesWDIOUtils {
    * @param {EyesJsExecutor} executor The executor to use.
    * @return {RectangleSize} A promise which resolves to an object containing the width/height of the page.
    */
-  static getCurrentFrameContentEntireSize(executor) {
+  static async getCurrentFrameContentEntireSize(executor) {
     // IMPORTANT: Notice there's a major difference between scrollWidth and scrollHeight.
     // While scrollWidth is the maximum between an element's width and its content width,
     // scrollHeight might be smaller (!) than the clientHeight, which is why we take the maximum between them.
-    return executor.executeScript(EyesWDIOUtils.JS_GET_CONTENT_ENTIRE_SIZE).then(r => {
-      const {value} = r;
+    try {
+      const {value} = await executor.executeScript(EyesWDIOUtils.JS_GET_CONTENT_ENTIRE_SIZE);
       return new RectangleSize(parseInt(value[0], 10) || 0, parseInt(value[1], 10) || 0);
-    }).catch(e => {
+    } catch (e) {
       throw new EyesDriverOperationError("Failed to extract entire size!", e);
-    });
+    }
   }
 
 
@@ -390,12 +379,11 @@ class EyesWDIOUtils {
         "return origOverflow";
     }
 
-    return executor.executeScript(script).then(res_ => {
-      const {value: result} = res_;
-      return result;
-    }).catch(e => {
+    try {
+      return executor.executeScript(script);
+    } catch (e) {
       throw new EyesDriverOperationError('Failed to set overflow', e);
-    });
+    }
   }
 
 
@@ -405,12 +393,11 @@ class EyesWDIOUtils {
    * @return {Promise.<Boolean>} A promise which resolves to the {@code true} if body overflow is hidden, {@code false} otherwise.
    */
   static isBodyOverflowHidden(executor) {
-    return executor.executeScript(EyesWDIOUtils.JS_GET_IS_BODY_OVERFLOW_HIDDEN).then(res_ => {
-      const {value: isBodyOverflowHidden} = res_;
-      return isBodyOverflowHidden;
-    }).catch(e => {
+    try {
+      return executor.executeScript(EyesWDIOUtils.JS_GET_IS_BODY_OVERFLOW_HIDDEN);
+    } catch (e) {
       throw new EyesDriverOperationError('Failed to get state of body overflow', e);
-    });
+    }
   }
 
 
@@ -436,12 +423,11 @@ class EyesWDIOUtils {
         "return origOverflow";
     }
 
-    return executor.executeScript(script).then(res_ => {
-      const {value: result} = res_;
-      return result;
-    }).catch(e => {
+    try {
+      return executor.executeScript(script);
+    } catch (e) {
       throw new EyesDriverOperationError('Failed to set body overflow', e);
-    });
+    }
   }
 
 
@@ -469,12 +455,10 @@ class EyesWDIOUtils {
    * @param {EyesJsExecutor} executor The executor to use.
    * @return {RectangleSize} The viewport size.
    */
-  static getViewportSize(executor) {
-    return executor.executeScript(EyesWDIOUtils.JS_GET_VIEWPORT_SIZE).then(res_ => {
-      const {value} = res_;
-      // await browser.getViewportSize()
-      return new RectangleSize(parseInt(value[0], 10) || 0, parseInt(value[1], 10) || 0);
-    });
+  static async getViewportSize(executor) {
+    const {value} = await executor.executeScript(EyesWDIOUtils.JS_GET_VIEWPORT_SIZE);
+    // await browser.getViewportSize()
+    return new RectangleSize(parseInt(value[0], 10) || 0, parseInt(value[1], 10) || 0);
   }
 
   /**
