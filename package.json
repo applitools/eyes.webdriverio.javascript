@@ -19,6 +19,8 @@
     "webdriverio": "4.12.0"
   },
   "devDependencies": {
+    "chromedriver": "^2.37.0",
+    "geckodriver": "^1.11.0",
     "mocha": "4.0.1",
     "mocha-parallel-tests": "2.0.0-alpha.2",
     "shared-examples-for": "^0.1.3"

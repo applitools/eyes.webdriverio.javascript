@@ -116,6 +116,7 @@ class Common {
 
       browserOptions.port = '80';
       browserOptions.path = '/wd/hub';
+      browserOptions.desiredCapabilities.seleniumVersion = '3.11.0';
 
       browserOptions.desiredCapabilities.baseUrl = `http://${process.env.SAUCE_USERNAME}:${process.env.SAUCE_ACCESS_KEY}@ondemand.saucelabs.com:80/wd/hub`;
       browserOptions.desiredCapabilities.username = process.env.SAUCE_USERNAME;
@@ -150,6 +151,7 @@ class Common {
       return that._browser.url(testedPageUrl);
     }).then(() => {
       that._expectedFloatingsRegions = null;
+      that._expectedIgnoreRegions = null;
     });
   }
 
@@ -182,7 +184,7 @@ class Common {
         }
 
         if (that._expectedIgnoreRegions) {
-          const ignoreRegions = Region.fromObject(imageMatchSettings.getIgnore()[0]);
+          const ignoreRegions = Region.fromObject(imageMatchSettings.getIgnore());
 
           deepEqual(that._expectedIgnoreRegions, ignoreRegions, 'Ignore regions lists differ');
         }
@@ -224,7 +226,7 @@ class Common {
   /**
    * @param {Region} expectedIgnoreRegions
    */
-  setExpectedIgnoreRegions(expectedIgnoreRegions) {
+  setExpectedIgnoreRegions(...expectedIgnoreRegions) {
     this._expectedIgnoreRegions = expectedIgnoreRegions;
   }
 
