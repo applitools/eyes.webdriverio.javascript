@@ -21,7 +21,7 @@ const {
   ArgumentGuard,
   SimplePropertyHandler
 } = require('@applitools/eyes.sdk.core');
-const {DomCapture} = require('@applitools/dom-utils');
+const { getCaptureDomScript } = require('@applitools/dom-capture');
 
 const ImageProviderFactory = require('./capture/ImageProviderFactory');
 const CssTranslatePositionProvider = require('./positioning/CssTranslatePositionProvider');
@@ -936,7 +936,16 @@ class Eyes extends EyesBase {
   async tryCaptureDom() {
     try {
       this._logger.verbose('Getting window DOM...');
-      return await DomCapture.getFullWindowDom(this._logger, this.getDriver());
+      const captureDomScript = await getCaptureDomScript();
+
+      let wrappedScript = `var callback = arguments[arguments.length - 1];
+        ${captureDomScript}.then(res => {
+        return callback(res)
+      })`;
+      const {value: domSnapshot} = await this.getDriver().executeAsyncScript(wrappedScript);
+      // return JSON.parse(domSnapshot);
+
+      return domSnapshot;
     } catch (ignored) {
       return '';
     }
