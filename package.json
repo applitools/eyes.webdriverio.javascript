@@ -4,7 +4,7 @@
   "description": "Applitools Eyes SDK for Webdriverio ",
   "main": "index.js",
   "scripts": {
-    "test": "mocha-parallel-tests ./test/Test*.js -t 300000 --max-parallel 7 --timeout 300000",
+    "test": "mocha-parallel-tests ./test/Test*.js -t 300000 --max-parallel 5 --timeout 300000",
     "test.mocha": "mocha ./test/Test*.js -t 300000"
   },
   "author": "Applitools Team <team@applitools.com> (http://www.applitools.com/)",
