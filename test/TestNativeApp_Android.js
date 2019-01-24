@@ -19,7 +19,7 @@ describe(appName, function () {
     eyes.setLogHandler(new ConsoleLogHandler(true));
   });
 
-  beforeEach(function () {
+  beforeEach(async () => {
     const browserOptions = {
       port: '80',
       path: '/wd/hub',
@@ -39,10 +39,9 @@ describe(appName, function () {
       }
     };
 
-    const browser = webdriverio.remote(browserOptions);
-    return browser.init().then(() => {
-      return eyes.open(browser, 'Android Example', 'Main activity');
-    });
+    browser = webdriverio.remote(browserOptions);
+    await browser.init();
+    return eyes.open(browser, 'Android Example', 'Main activity');
   });
 
   afterEach(function () {
