@@ -374,7 +374,7 @@ class EyesWDIOUtils {
 
     return executor.executeScript(script).catch(e => {
       throw new EyesDriverOperationError('Failed to set overflow', e);
-    }
+    })
   }
 
 
