@@ -345,9 +345,9 @@ class EyesWDIOUtils {
     // scrollHeight might be smaller (!) than the clientHeight, which is why we take the maximum between them.
     return executor.executeScript(EyesWDIOUtils.JS_GET_CONTENT_ENTIRE_SIZE).then(value => {
       return new RectangleSize(parseInt(value[0], 10) || 0, parseInt(value[1], 10) || 0);
-    } catch (e) {
+    }, (e) => {
       throw new EyesDriverOperationError("Failed to extract entire size!", e);
-    }
+    });
   }
 
 
@@ -386,7 +386,7 @@ class EyesWDIOUtils {
   static isBodyOverflowHidden(executor) {
     return executor.executeScript(EyesWDIOUtils.JS_GET_IS_BODY_OVERFLOW_HIDDEN).catch(e => {
       throw new EyesDriverOperationError('Failed to get state of body overflow', e);
-    }
+    });
   }
 
 
@@ -414,7 +414,7 @@ class EyesWDIOUtils {
 
     return executor.executeScript(script).catch(e => {
       throw new EyesDriverOperationError('Failed to set body overflow', e);
-    }
+    });
   }
 
 
