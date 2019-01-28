@@ -18,7 +18,12 @@ platforms.forEach(function (platform) {
     });
 
     beforeEach(function () {
-      return test.beforeEachTest({appName: appName, testName: this.currentTest.title, browserOptions: Common.CHROME, platform: platform});
+      return test.beforeEachTest({
+        appName: appName,
+        testName: this.currentTest.title,
+        browserOptions: Common.CHROME,
+        platform: platform
+      });
     });
 
     afterEach(function () {

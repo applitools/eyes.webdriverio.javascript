@@ -108,6 +108,8 @@ class Eyes extends EyesBase {
     this._regionToCheck = null;
     /** @type {EyesWebElement} */
     this._targetElement = null;
+    /** @type {Location} */
+    this._targetElementLocation = Location.ZERO;
     /** @type {ElementPositionProvider} */
     this._elementPositionProvider = undefined;
     /** @type {int} */
@@ -333,6 +335,7 @@ class Eyes extends EyesBase {
       }).then(r => {
         result = r;
         that._targetElement = null;
+        that._targetElementLocation = Location.ZERO;
         return that._switchToParentFrame(switchedToFrameCount);
       }).then(() => {
         that._stitchContent = false;
@@ -356,6 +359,7 @@ class Eyes extends EyesBase {
       /** @override */
       getRegion() {
         return that._targetElement.getLocation().then(p => {
+          that._targetElementLocation = p;
           return that._targetElement.getSize().then(d => {
             return new Region(Math.ceil(p.getX()), Math.ceil(p.getY()), d.getWidth(), d.getHeight(), CoordinatesType.CONTEXT_RELATIVE);
           });
@@ -396,6 +400,7 @@ class Eyes extends EyesBase {
       originalScrollPosition = originalScrollPosition_;
       return eyesElement.getLocation();
     }).then(pl => {
+      that._targetElementLocation = pl;
       that._checkFrameOrElement = true;
 
       let elementLocation, elementSize;
@@ -581,6 +586,7 @@ class Eyes extends EyesBase {
       return this._checkRegion(name, checkSettings);
     }).then(r => {
       that._targetElement = null;
+      that._targetElementLocation = Location.ZERO;
       return r;
     });
   }
@@ -1164,12 +1170,11 @@ class Eyes extends EyesBase {
   }
 
 
-  getImageLocation() {
-    let location = Location.ZERO;
-    if (this.regionToCheck) {
-      location = this.regionToCheck.getLocation();
-    }
-    return location;
+  /**
+   * @return {Promise<Location>}
+   */
+  async getImageLocation() {
+    return this._targetElementLocation;
   }
 
 
