@@ -143,21 +143,18 @@ class EyesWebDriver {
   }
 
 
-  //noinspection JSUnusedGlobalSymbols
-  getUserAgent() {
-    const that = this;
-    return Promise.resolve(this.remoteWebDriver.execute('return navigator.userAgent')).then(res_ => {
-      let {value: userAgent} = res_;
-      that._logger.verbose("user agent: " + userAgent);
+  async getUserAgent() {
+    try {
+      let {value: userAgent} = await this.remoteWebDriver.execute('return navigator.userAgent');
+      this._logger.verbose("user agent: " + userAgent);
       return userAgent;
-    }).catch(() => {
+    } catch (e) {
       this._logger.verbose("Failed to obtain user-agent string");
       return null;
-    });
+    }
   }
 
 
-  // noinspection JSUnusedGlobalSymbols
   /**
    * @returns {FrameChain}
    */
@@ -258,27 +255,27 @@ class EyesWebDriver {
    * @returns {*}
    * @override
    */
-  executeScript(script, ...varArgs) {
-    const that = this;
-    return Promise.resolve(this.remoteWebDriver.execute(script, ...varArgs)).catch(e => {
-      that._logger.verbose("WARNING: execute script error: " + e);
-      throw e;
-    }).then(result => {
-      that._logger.verbose('Done!');
+  async executeScript(script, ...varArgs) {
+    try {
+      const result = await this.remoteWebDriver.execute(script, ...varArgs);
+      this._logger.verbose('Done!');
       return result.value;
-    });
+    } catch (e) {
+      this._logger.verbose("WARNING: execute script error: " + e);
+      throw e;
+    }
   }
 
   /** @override */
-  executeAsyncScript(script, ...varArgs) {
-    const that = this;
-    return Promise.resolve(this.webDriver.executeAsync(script, ...varArgs)).catch(e => {
-      that._logger.verbose("WARNING: execute async script error: " + e);
+  async executeAsyncScript(script, ...varArgs) {
+    try {
+      const result = await this.remoteWebDriver.executeAsync(script, ...varArgs);
+      this._logger.verbose('Done!');
+      return result.value;
+    } catch (e) {
+      this._logger.verbose("WARNING: execute script error: " + e);
       throw e;
-    }).then(result => {
-      that._logger.verbose('Done!');
-      return result;
-    });
+    }
   }
 
   /**

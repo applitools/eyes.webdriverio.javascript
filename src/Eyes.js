@@ -1,7 +1,6 @@
 'use strict';
 
 const {
-  BrowserNames,
   ContextBasedScaleProviderFactory,
   CoordinatesType,
   EyesBase,
@@ -31,7 +30,6 @@ const RegionPositionCompensationFactory = require('./positioning/RegionPositionC
 const EyesWebDriver = require('./wrappers/EyesWebDriver');
 const EyesWebElement = require('./wrappers/EyesWebElement');
 const EyesWDIOScreenshot = require('./capture/EyesWDIOScreenshot');
-const Frame = require('./frames/Frame');
 const FrameChain = require('./frames/FrameChain');
 const FullPageCaptureAlgorithm = require('./capture/FullPageCaptureAlgorithm');
 const EyesWDIOScreenshotFactory = require('./capture/EyesWDIOScreenshotFactory');
@@ -48,6 +46,7 @@ const VERSION = require('../package.json').version;
 
 const DEFAULT_STITCHING_OVERLAP = 50; // px
 const DEFAULT_WAIT_BEFORE_SCREENSHOTS = 100; // Milliseconds
+// noinspection JSUnusedLocalSymbols
 const DEFAULT_WAIT_SCROLL_STABILIZATION = 200; // Milliseconds
 const USE_DEFAULT_MATCH_TIMEOUT = -1;
 
@@ -132,7 +131,7 @@ class Eyes extends EyesBase {
    * @param {SessionType} [sessionType=null] The type of test (e.g.,  standard test / visual performance test).
    * @returns {Promise.<*>}
    */
-  open(driver, appName, testName, viewportSize = null, sessionType = null) {
+  async open(driver, appName, testName, viewportSize = null, sessionType = null) {
     ArgumentGuard.notNull(driver, 'driver');
 
     this.getPromiseFactory().setFactoryMethod(asyncAction => {
@@ -152,27 +151,25 @@ class Eyes extends EyesBase {
 
     this._driver = new EyesWebDriver(new WebDriver(driver), this, this._logger);
 
-    const that = this;
-    return this._driver.getUserAgent().then(userAgentString => {
-      if (userAgentString) {
-        that._userAgent = UserAgent.parseUserAgentString(userAgentString, true);
-      }
+    const userAgentString = await this._driver.getUserAgent();
+    if (userAgentString) {
+      this._userAgent = UserAgent.parseUserAgentString(userAgentString, true);
+    }
 
-      that._imageProvider = ImageProviderFactory.getImageProvider(that._userAgent, that, that._logger, that._driver);
-      that._regionPositionCompensation = RegionPositionCompensationFactory.getRegionPositionCompensation(that._userAgent, that, that._logger);
+    this._imageProvider = ImageProviderFactory.getImageProvider(this._userAgent, this, this._logger, this._driver);
+    this._regionPositionCompensation = RegionPositionCompensationFactory.getRegionPositionCompensation(this._userAgent, this, this._logger);
 
-      that._jsExecutor = new WDIOJSExecutor(that._driver);
+    this._jsExecutor = new WDIOJSExecutor(this._driver);
 
-      return that.openBase(appName, testName, viewportSize, sessionType);
-    }).then(() => {
-      that._devicePixelRatio = Eyes.UNKNOWN_DEVICE_PIXEL_RATIO;
+    await this.openBase(appName, testName, viewportSize, sessionType);
 
-      that._initPositionProvider();
+    this._devicePixelRatio = Eyes.UNKNOWN_DEVICE_PIXEL_RATIO;
 
-      that._driver.rotation = that._rotation;
+    this._initPositionProvider();
 
-      return that._driver;
-    });
+    this._driver.rotation = this._rotation;
+
+    return this._driver;
   }
 
 
