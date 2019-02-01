@@ -13,7 +13,7 @@ const appName = 'TestServerConnector';
 describe.skip(appName, function () {
 
 
-  it('TestSessionSummary_Status_Failed', function () {
+  it('TestSessionSummary_Status_Failed', async () => {
     const eyes = new Eyes();
     eyes.setApiKey(process.env.APPLITOOLS_API_KEY);
 
@@ -29,24 +29,24 @@ describe.skip(appName, function () {
     };
     chrome.port = '9515';
     chrome.path = '/';
-    const browser = webdriverio.remote(chrome);
-    return browser.init().then(() => {
+
+    let results;
+    try {
+      let browser = webdriverio.remote(chrome);
+      await browser.init();
       const viewportSize = new RectangleSize({width: 800, height: 600});
 
-      return eyes.open(browser, appName, appName, viewportSize);
-    }).url('https://applitools.com/helloworld').then(() => {
-      return eyes.check("Hello", Target.window());
-    }).then(() => {
-      const results = eyes.close();
-    }).catch(e => {
+      browser = await eyes.open(browser, appName, appName, viewportSize);
+      await browser.url('https://applitools.com/helloworld');
+      await eyes.check("Hello", Target.window());
+      results = await eyes.close();
+    } catch (e) {
       console.error(e.message);
-      return eyes.abortIfNotClosed();
-    }).then(/** @type {TestResults} */results => {
+      await eyes.abortIfNotClosed();
+    } finally {
       results.delete();
-
-      return browser.end();
-    }).then(() => {
+      await browser.end();
       chromedriver.stop();
-    })
+    }
   });
 });

@@ -129,7 +129,7 @@ class Eyes extends EyesBase {
    * @param {String} testName
    * @param {RectangleSize|{width: number, height: number}} viewportSize
    * @param {SessionType} [sessionType=null] The type of test (e.g.,  standard test / visual performance test).
-   * @returns {Promise.<*>}
+   * @returns {Promise<EyesWebDriver>}
    */
   async open(driver, appName, testName, viewportSize = null, sessionType = null) {
     ArgumentGuard.notNull(driver, 'driver');
@@ -149,7 +149,7 @@ class Eyes extends EyesBase {
       viewportSize = null;
     }
 
-    this._driver = new EyesWebDriver(new WebDriver(driver), this, this._logger);
+    this._driver = driver instanceof EyesWebDriver ? driver : new EyesWebDriver(new WebDriver(driver), this, this._logger);
 
     const userAgentString = await this._driver.getUserAgent();
     if (userAgentString) {
@@ -177,11 +177,9 @@ class Eyes extends EyesBase {
    * @private
    * @return {Promise<ScaleProviderFactory>}
    */
-  _getScaleProviderFactory() {
-    const that = this;
-    return this.getPositionProvider().getEntireSize().then(entireSize => {
-      return new ContextBasedScaleProviderFactory(that._logger, entireSize, that._viewportSizeHandler.get(), that._devicePixelRatio, false, that._scaleProviderHandler);
-    });
+  async _getScaleProviderFactory() {
+    const entireSize = await this.getPositionProvider().getEntireSize();
+    return new ContextBasedScaleProviderFactory(this._logger, entireSize, this._viewportSizeHandler.get(), this._devicePixelRatio, false, this._scaleProviderHandler);
   }
 
 
@@ -257,7 +255,7 @@ class Eyes extends EyesBase {
    * @param {WebdriverioCheckSettings} checkSettings
    * @returns {Promise.<*>}
    */
-  check(name, checkSettings) {
+  async check(name, checkSettings) {
     ArgumentGuard.notNull(checkSettings, "checkSettings");
 
     this._checkSettings = checkSettings;
@@ -270,7 +268,7 @@ class Eyes extends EyesBase {
       const targetRegion = checkSettings.getTargetRegion();
 
       let switchedToFrameCount;
-      return this._switchToFrame(checkSettings).then(switchedToFrameCount_ => {
+      return this._switchToFrame(checkSettings).then(async (switchedToFrameCount_) => {
         switchedToFrameCount = switchedToFrameCount_;
         that._regionToCheck = null;
 
@@ -284,51 +282,42 @@ class Eyes extends EyesBase {
           const targetSelector = checkSettings.targetSelector;
           let targetElement = checkSettings.targetElement;
           if (!targetElement && targetSelector) {
-            targetElement = that._driver.findElement(targetSelector);
+            targetElement = await that._driver.findElement(targetSelector);
           }
 
-          if (targetElement && !targetElement.then) {
-            targetElement = that.getPromiseFactory().resolve(targetElement);
-          } else {
-            targetElement = Promise.resolve(targetElement);
-          }
-
-          return targetElement.then(targetElement_ => {
-            targetElement = targetElement_;
-            if (targetElement) {
-              that._targetElement = targetElement instanceof EyesWebElement ? targetElement : new EyesWebElement(that._logger, that._driver, targetElement);
-              if (that._stitchContent) {
-                return that._checkElement(name, checkSettings);
-              } else {
-                return that._checkRegion(name, checkSettings);
-              }
-            } else if (checkSettings.getFrameChain().length > 0) {
-              if (that._stitchContent) {
-                return that._checkFullFrameOrElement(name, checkSettings);
-              } else {
-                return that._checkFrameFluent(name, checkSettings);
-              }
+          if (targetElement) {
+            that._targetElement = targetElement instanceof EyesWebElement ? targetElement : new EyesWebElement(that._logger, that._driver, targetElement);
+            if (that._stitchContent) {
+              return that._checkElement(name, checkSettings);
             } else {
-              let res;
-              let originalPosition;
-
-              return this._driver.switchTo().defaultContent().then(() => {
-                return that.getPositionProvider().getState();
-              }).then(originalPosition_ => {
-                originalPosition = originalPosition_;
-                return that.getPositionProvider().setPosition(Location.ZERO);
-              }).then(() => {
-                return that._tryHideScrollbars();
-              }).then(() => {
-                return super.checkWindowBase(new NullRegionProvider(that.getPromiseFactory()), name, false, checkSettings);
-              }).then(res_ => {
-                res = res_;
-                return that.getPositionProvider().restoreState(originalPosition);
-              }).then(() => {
-                return res;
-              });
+              return that._checkRegion(name, checkSettings);
             }
-          });
+          } else if (checkSettings.getFrameChain().length > 0) {
+            if (that._stitchContent) {
+              return that._checkFullFrameOrElement(name, checkSettings);
+            } else {
+              return that._checkFrameFluent(name, checkSettings);
+            }
+          } else {
+            let res;
+            let originalPosition;
+
+            return this._driver.switchTo().defaultContent().then(() => {
+              return that.getPositionProvider().getState();
+            }).then(originalPosition_ => {
+              originalPosition = originalPosition_;
+              return that.getPositionProvider().setPosition(Location.ZERO);
+            }).then(() => {
+              return that._tryHideScrollbars();
+            }).then(() => {
+              return super.checkWindowBase(new NullRegionProvider(that.getPromiseFactory()), name, false, checkSettings);
+            }).then(res_ => {
+              res = res_;
+              return that.getPositionProvider().restoreState(originalPosition);
+            }).then(() => {
+              return res;
+            });
+          }
         }
       }).then(r => {
         result = r;
@@ -348,25 +337,22 @@ class Eyes extends EyesBase {
    * @private
    * @return {Promise}
    */
-  _checkRegion(name, checkSettings) {
+  async _checkRegion(name, checkSettings) {
     const that = this;
 
     const RegionProviderImpl = class RegionProviderImpl extends RegionProvider {
       // noinspection JSUnusedGlobalSymbols
       /** @override */
-      getRegion() {
-        return that._targetElement.getLocation().then(p => {
-          return that._targetElement.getSize().then(d => {
-            return new Region(Math.ceil(p.getX()), Math.ceil(p.getY()), d.getWidth(), d.getHeight(), CoordinatesType.CONTEXT_RELATIVE);
-          });
-        });
+      async getRegion() {
+        const p = await that._targetElement.getLocation();
+        const d = await that._targetElement.getSize();
+        return new Region(Math.ceil(p.getX()), Math.ceil(p.getY()), d.getWidth(), d.getHeight(), CoordinatesType.CONTEXT_RELATIVE);
       }
     };
 
-    return super.checkWindowBase(new RegionProviderImpl(), name, false, checkSettings).then(r => {
-      that._logger.verbose("Done! trying to scroll back to original position..");
-      return r;
-    });
+    const r = await super.checkWindowBase(new RegionProviderImpl(), name, false, checkSettings);
+    this._logger.verbose("Done! trying to scroll back to original position..");
+    return r;
   }
 
 
@@ -515,7 +501,7 @@ class Eyes extends EyesBase {
    * @private
    * @return {Promise}
    */
-  _checkFullFrameOrElement(name, checkSettings) {
+  async _checkFullFrameOrElement(name, checkSettings) {
     this._checkFrameOrElement = true;
 
     const that = this;
@@ -560,10 +546,9 @@ class Eyes extends EyesBase {
       }
     };
 
-    return super.checkWindowBase(new RegionProviderImpl(), name, false, checkSettings).then(r => {
-      that._checkFrameOrElement = false;
-      return r;
-    });
+    const r = await super.checkWindowBase(new RegionProviderImpl(), name, false, checkSettings);
+    that._checkFrameOrElement = false;
+    return r;
   }
 
 
@@ -571,18 +556,15 @@ class Eyes extends EyesBase {
    * @private
    * @return {Promise}
    */
-  _checkFrameFluent(name, checkSettings) {
+  async _checkFrameFluent(name, checkSettings) {
     const frameChain = new FrameChain(this._logger, this._driver.getFrameChain());
     const targetFrame = frameChain.pop();
     this._targetElement = targetFrame.getReference();
 
-    const that = this;
-    return this._driver.switchTo().framesDoScroll(frameChain).then(() => {
-      return this._checkRegion(name, checkSettings);
-    }).then(r => {
-      that._targetElement = null;
-      return r;
-    });
+    await this._driver.switchTo().framesDoScroll(frameChain);
+    const r = await this._checkRegion(name, checkSettings);
+    this._targetElement = null;
+    return r;
   }
 
 
@@ -590,13 +572,12 @@ class Eyes extends EyesBase {
    * @private
    * @return {Promise.<int>}
    */
-  _switchToParentFrame(switchedToFrameCount) {
+  async _switchToParentFrame(switchedToFrameCount) {
     if (switchedToFrameCount > 0) {
       const that = this;
-      return that._driver.switchTo().parentFrame().then(() => {
-        switchedToFrameCount--;
-        return that._switchToParentFrame(switchedToFrameCount);
-      });
+      await that._driver.switchTo().parentFrame();
+      switchedToFrameCount--;
+      return that._switchToParentFrame(switchedToFrameCount);
     }
 
     return this.getPromiseFactory().resolve();
@@ -614,13 +595,13 @@ class Eyes extends EyesBase {
     const that = this;
     const frameChain = checkSettings.getFrameChain();
     let switchedToFrameCount = 0;
-    return frameChain.reduce((promise, frameLocator) => {
-      return promise.then(() => that._switchToFrameLocator(frameLocator)).then(isSuccess => {
-        if (isSuccess) {
-          switchedToFrameCount++;
-        }
-        return switchedToFrameCount;
-      });
+    return frameChain.reduce(async (promise, frameLocator) => {
+      await promise;
+      const isSuccess = await that._switchToFrameLocator(frameLocator);
+      if (isSuccess) {
+        switchedToFrameCount++;
+      }
+      return switchedToFrameCount;
     }, this.getPromiseFactory().resolve());
   }
 
@@ -629,7 +610,7 @@ class Eyes extends EyesBase {
    * @private
    * @return {Promise.<boolean>}
    */
-  _switchToFrameLocator(frameLocator) {
+  async _switchToFrameLocator(frameLocator) {
     const switchTo = this._driver.switchTo();
 
     if (frameLocator.getFrameIndex()) {
@@ -686,7 +667,7 @@ class Eyes extends EyesBase {
    * @param {WebElement} element The WebElement on which the click was called.
    * @return {Promise}
    */
-  addMouseTriggerForElement(action, element) {
+  async addMouseTriggerForElement(action, element) {
     if (this.getIsDisabled()) {
       this._logger.verbose(`Ignoring ${action} (disabled)`);
       return this.getPromiseFactory().resolve();
@@ -705,14 +686,10 @@ class Eyes extends EyesBase {
 
     ArgumentGuard.notNull(element, "element");
 
-    let p1;
-    return element.getLocation().then(loc => {
-      p1 = loc;
-      return element.getSize();
-    }).then(ds => {
-      const elementRegion = new Region(p1.x, p1.y, ds.width, ds.height);
-      EyesBase.prototype.addMouseTriggerBase.call(this, action, elementRegion, elementRegion.getMiddleOffset());
-    });
+    const loc = await element.getLocation();
+    const ds = await element.getSize();
+    const elementRegion = new Region(loc.x, loc.y, ds.width, ds.height);
+    EyesBase.prototype.addMouseTriggerBase.call(this, action, elementRegion, elementRegion.getMiddleOffset());
   }
 
   /**
@@ -748,7 +725,7 @@ class Eyes extends EyesBase {
    * @param {String} text  The trigger's text.
    * @return {Promise}
    */
-  addTextTriggerForElement(element, text) {
+  async addTextTriggerForElement(element, text) {
     if (this.getIsDisabled()) {
       this._logger.verbose(`Ignoring ${text} (disabled)`);
       return this.getPromiseFactory().resolve();
@@ -767,12 +744,10 @@ class Eyes extends EyesBase {
 
     ArgumentGuard.notNull(element, "element");
 
-    return element.getLocation().then(p1 => {
-      return element.getSize().then(ds => {
-        const elementRegion = new Region(Math.ceil(p1.x), Math.ceil(p1.y), ds.width, ds.height);
-        EyesBase.prototype.addTextTrigger.call(this, elementRegion, text);
-      });
-    });
+    const p1 = await element.getLocation();
+    const ds = await element.getSize();
+    const elementRegion = new Region(Math.ceil(p1.x), Math.ceil(p1.y), ds.width, ds.height);
+    EyesBase.prototype.addTextTrigger.call(this, elementRegion, text);
   }
 
 
@@ -855,20 +830,11 @@ class Eyes extends EyesBase {
    * @param {By} locator
    * @returns {Region}
    */
-  getRegionByLocator(locator) {
-    let element;
-    let elementSize;
-    let point;
-    return this._driver.findElement(locator).then(element_ => {
-      element = element_;
-      return element.getSize();
-    }).then(elementSize_ => {
-      elementSize = elementSize_;
-      return element.getLocation();
-    }).then(point_ => {
-      point = point_;
-      return new Region(point.x, point.y, elementSize.width, elementSize.height);
-    });
+  async getRegionByLocator(locator) {
+    const element = await this._driver.findElement(locator);
+    const elementSize = await element.getSize();
+    const point = await element.getLocation();
+    return new Region(point.x, point.y, elementSize.width, elementSize.height);
   };
 
 
@@ -998,14 +964,13 @@ class Eyes extends EyesBase {
    * @private
    * @return {Promise}
    */
-  _tryRestoreScrollbars() {
+  async _tryRestoreScrollbars() {
     if (this._hideScrollbars) {
       const that = this;
       const originalFC = new FrameChain(that._logger, that._driver.getFrameChain());
       const fc = new FrameChain(that._logger, that._driver.getFrameChain());
-      return that._tryRestoreScrollbarsLoop(fc).then(() => {
-        return that._driver.switchTo().frames(originalFC);
-      });
+      await that._tryRestoreScrollbarsLoop(fc);
+      return that._driver.switchTo().frames(originalFC);
     }
   }
 

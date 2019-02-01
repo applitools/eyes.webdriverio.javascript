@@ -6,10 +6,9 @@ const shared = require('shared-examples-for');
 
 shared.examplesFor('TestMobile', function (test) {
 
-  it('TestCheckWindow', function () {
-    return test.eyes.checkWindow('Window').then(result => {
-      equal(result.getAsExpected(), true);
-    });
+  it('TestCheckWindow', async () => {
+    const result = await test.eyes.checkWindow('Window');
+    equal(result.getAsExpected(), true);
   });
 
 });

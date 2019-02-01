@@ -95,17 +95,17 @@ class Common {
     }
   }
 
-  beforeEachTest({
-                   appName,
-                   testName,
-                   browserOptions: browserOptions,
-                   rectangleSize = {
-                     width: 800,
-                     height: 600
-                   },
-                   testedPageUrl = this._testedPageUrl,
-                   platform = Common.getPlatform(browserOptions)
-                 }) {
+  async beforeEachTest({
+                         appName,
+                         testName,
+                         browserOptions: browserOptions,
+                         rectangleSize = {
+                           width: 800,
+                           height: 600
+                         },
+                         testedPageUrl = this._testedPageUrl,
+                         platform = Common.getPlatform(browserOptions)
+                       }) {
 
     if (process.env.SELENIUM_SERVER_URL === 'http://ondemand.saucelabs.com/wd/hub'
       && process.env.SAUCE_USERNAME && process.env.SAUCE_ACCESS_KEY) {
@@ -134,32 +134,28 @@ class Common {
 
     const that = this;
     this._browser = webdriverio.remote(browserOptions);
-    return this._browser.init().then(() => {
-      const viewportSize = rectangleSize ? new RectangleSize(rectangleSize) : null;
+    await this._browser.init();
+    const viewportSize = rectangleSize ? new RectangleSize(rectangleSize) : null;
 
-      if (that._eyes.getForceFullPageScreenshot()) {
-        testName += '_FPS';
-      }
+    if (that._eyes.getForceFullPageScreenshot()) {
+      testName += '_FPS';
+    }
 
-      if (that._mobileBrowser) {
-        testName += '_Mobile';
-      }
+    if (that._mobileBrowser) {
+      testName += '_Mobile';
+    }
 
-      return this._eyes.open(this._browser, appName, testName, viewportSize);
-    }).then(eyesWebDriver => {
-      that._browser = eyesWebDriver;
-      return that._browser.url(testedPageUrl);
-    }).then(() => {
-      that._expectedFloatingsRegions = null;
-      that._expectedIgnoreRegions = null;
-    });
+    this._browser = await this._eyes.open(this._browser, appName, testName, viewportSize);
+    await this._browser.url(testedPageUrl);
+    that._expectedFloatingsRegions = null;
+    that._expectedIgnoreRegions = null;
   }
 
-  afterEachTest() {
+  async afterEachTest() {
     let error;
-    const that = this;
-    return this._eyes.close(false).then(results => {
-      const query = `?format=json&AccessToken=${results.getSecretToken()}&apiKey=${that.eyes.getApiKey()}`;
+    try {
+      const results = await this._eyes.close(false);
+      const query = `?format=json&AccessToken=${results.getSecretToken()}&apiKey=${this.eyes.getApiKey()}`;
       const apiSessionUrl = results.getApiUrls().getSession() + query;
 
       const apiSessionUri = url.parse(apiSessionUrl);
@@ -167,41 +163,40 @@ class Common {
       // apiSessionUri.searchParams.append('AccessToken', results.getSecretToken());
       // apiSessionUri.searchParams.append('apiKey', this.eyes.getApiKey());
 
-      return NetHelper.get(apiSessionUri).then(res => {
-        const resultObject = JSON.parse(res);
-        /** @type {SessionResults} */
-        const sessionResults = SessionResults.fromObject(resultObject);
-        /** @type {ActualAppOutput} */
-        const actualAppOutput = ActualAppOutput.fromObject(sessionResults.getActualAppOutput()[0]);
-        /** @type {ImageMatchSettings} */
-        const imageMatchSettings = ImageMatchSettings.fromObject(actualAppOutput.getImageMatchSettings());
+      const res = await NetHelper.get(apiSessionUri);
+      const resultObject = JSON.parse(res);
+      /** @type {SessionResults} */
+      const sessionResults = SessionResults.fromObject(resultObject);
+      /** @type {ActualAppOutput} */
+      const actualAppOutput = ActualAppOutput.fromObject(sessionResults.getActualAppOutput()[0]);
+      /** @type {ImageMatchSettings} */
+      const imageMatchSettings = ImageMatchSettings.fromObject(actualAppOutput.getImageMatchSettings());
 
-        if (that._expectedFloatingsRegions) {
-          const f = imageMatchSettings.getFloating()[0];
-          const floating = new FloatingMatchSettings(f.left, f.top, f.width, f.height, f.maxUpOffset, f.maxDownOffset, f.maxLeftOffset, f.maxRightOffset);
+      if (this._expectedFloatingsRegions) {
+        const f = imageMatchSettings.getFloating()[0];
+        const floating = new FloatingMatchSettings(f.left, f.top, f.width, f.height, f.maxUpOffset, f.maxDownOffset, f.maxLeftOffset, f.maxRightOffset);
 
-          deepEqual(that._expectedFloatingsRegions, floating, 'Floating regions lists differ');
-        }
+        deepEqual(this._expectedFloatingsRegions, floating, 'Floating regions lists differ');
+      }
 
-        if (that._expectedIgnoreRegions) {
-          const ignoreRegions = Region.fromObject(imageMatchSettings.getIgnore());
+      if (this._expectedIgnoreRegions) {
+        const ignoreRegions = Region.fromObject(imageMatchSettings.getIgnore());
 
-          deepEqual(that._expectedIgnoreRegions, ignoreRegions, 'Ignore regions lists differ');
-        }
-      });
-    }).catch(e => {
+        deepEqual(this._expectedIgnoreRegions, ignoreRegions, 'Ignore regions lists differ');
+      }
+    } catch (e) {
       if (e instanceof AssertionError) {
         error = e;
       }
 
-      return that._eyes.abortIfNotClosed();
-    }).then(() => {
-      return that._browser.end();
-    }).then(() => {
+      return this._eyes.abortIfNotClosed();
+    } finally {
+      await this._browser.end();
+
       if (error) {
         throw error;
       }
-    });
+    }
   }
 
   afterTest() {
