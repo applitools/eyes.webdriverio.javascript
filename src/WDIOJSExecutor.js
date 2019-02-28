@@ -1,25 +1,17 @@
 'use strict';
 
-const {ArgumentGuard, EyesJsExecutor} = require('@applitools/eyes.sdk.core');
+const {ArgumentGuard, EyesJsExecutor} = require('@applitools/eyes-sdk-core');
 
 class WDIOJSExecutor extends EyesJsExecutor {
 
   /**
    * @param {EyesWebDriver} driver
-   * @param {PromiseFactory} [promiseFactory]
    */
-  constructor(driver, promiseFactory) {
+  constructor(driver) {
     super();
 
     /** @type {EyesWebDriver} */
     this._driver = driver;
-
-    if (!driver.getPromiseFactory()) {
-      ArgumentGuard.notNull(promiseFactory, 'promiseFactory')
-    }
-
-    /** @type {PromiseFactory} */
-    this._promiseFactory = promiseFactory || driver.getPromiseFactory();
   }
 
   /**
@@ -40,14 +32,6 @@ class WDIOJSExecutor extends EyesJsExecutor {
    */
   sleep(millis) { // todo
     return this._driver.sleep(millis);
-  }
-
-
-  /**
-   * @return {PromiseFactory}
-   */
-  getPromiseFactory() {
-    return this._driver.eyes.getPromiseFactory();
   }
 }
 

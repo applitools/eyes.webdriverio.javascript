@@ -1,6 +1,6 @@
 'use strict';
 
-const {ArgumentGuard, MutableImage} = require('@applitools/eyes.sdk.core');
+const {ArgumentGuard, MutableImage} = require('@applitools/eyes-sdk-core');
 const FrameChain = require('../frames/FrameChain');
 const EyesWebElement = require('./EyesWebElement');
 const EyesTargetLocator = require('./EyesTargetLocator');
@@ -26,11 +26,11 @@ class EyesWebDriver {
    * C'tor = initializes the module settings
    *
    * @constructor
+   * @param {Object} logger
    * @param {WebDriver} webDriver
    * @param {Eyes} eyes An instance of Eyes
-   * @param {Object} logger
    **/
-  constructor(webDriver, eyes, logger) {
+  constructor(logger, webDriver, eyes) {
     /** @type {WebDriver} */
     this._tsInstance = webDriver;
     /** @type {Eyes} */
@@ -96,14 +96,6 @@ class EyesWebDriver {
 
 
   /**
-   * @return {PromiseFactory}
-   */
-  getPromiseFactory() {
-    return this._eyes.getPromiseFactory();
-  }
-
-
-  /**
    * @param {boolean} [forceQuery=false] If true, we will perform the query even if we have a cached viewport size.
    * @return {Promise.<RectangleSize>} The viewport size of the default content (outer most frame).
    */
@@ -111,7 +103,7 @@ class EyesWebDriver {
     this._logger.verbose("getDefaultContentViewportSize()");
     if (this._defaultContentViewportSize && !forceQuery) {
       this._logger.verbose("Using cached viewport size: ", this._defaultContentViewportSize);
-      return this.getPromiseFactory().resolve(this._defaultContentViewportSize);
+      return this._defaultContentViewportSize;
     }
 
     const switchTo = this.switchTo();
@@ -123,7 +115,7 @@ class EyesWebDriver {
     }
 
     this._logger.verbose("Extracting viewport size...");
-    this._defaultContentViewportSize = await EyesWDIOUtils.getViewportSizeOrDisplaySize(this._logger, that);
+    this._defaultContentViewportSize = await EyesWDIOUtils.getViewportSizeOrDisplaySize(this._logger, this);
     this._logger.verbose("Done! Viewport size: ", this._defaultContentViewportSize);
 
     if (currentFrames.size() > 0) {
@@ -228,8 +220,8 @@ class EyesWebDriver {
   async takeScreenshot() {
     // Get the image as base64.
     const screenshot64 = await this._tsInstance.takeScreenshot();
-    let screenshot = new MutableImage(screenshot64, this.getPromiseFactory());
-    screenshot = await EyesWebDriver.normalizeRotation(this._logger, this._tsInstance, screenshot, this._rotation, this.getPromiseFactory());
+    let screenshot = new MutableImage(screenshot64);
+    screenshot = await EyesWebDriver.normalizeRotation(this._logger, this._tsInstance, screenshot, this._rotation);
     return screenshot.getImageBase64();
   }
 
@@ -326,15 +318,13 @@ class EyesWebDriver {
    *                 negative values = counter-clockwise,
    *                 0 = force no rotation,
    *                 null = rotate automatically as needed.
-   * @param {PromiseFactory} promiseFactory
    * @return {Promise.<MutableImage>} A normalized image.
    */
-  static async normalizeRotation(logger, driver, image, rotation, promiseFactory) {
+  static async normalizeRotation(logger, driver, image, rotation) {
     ArgumentGuard.notNull(logger, "logger");
     ArgumentGuard.notNull(driver, "driver");
     ArgumentGuard.notNull(image, "image");
 
-    await promiseFactory.resolve();
     let degrees;
     if (rotation) {
       degrees = await rotation.getRotation();

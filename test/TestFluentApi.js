@@ -3,7 +3,7 @@
 const {equal} = require('assert');
 const shared = require('shared-examples-for');
 const {By, Target} = require('../index');
-const {FloatingMatchSettings, Region} = require('@applitools/eyes.sdk.core');
+const {FloatingMatchSettings, Region} = require('@applitools/eyes-sdk-core');
 
 
 shared.examplesFor('TestFluentApi', function (test) {
@@ -35,9 +35,7 @@ shared.examplesFor('TestFluentApi', function (test) {
   });
 
   it('TestCheckFrameInFrame_Fully_Fluent', async () => {
-    const result = await test.eyes.check("Fluent - Full Frame in Frame", Target.frame("frame1")
-      .frame("frame1-1")
-      .fully());
+    const result = await test.eyes.check("Fluent - Full Frame in Frame", Target.frame("frame1").frame("frame1-1").fully());
     equal(result.getAsExpected(), true);
   });
 
@@ -93,10 +91,9 @@ shared.examplesFor('TestFluentApi', function (test) {
   });
 
   it('TestCheckFrameInFrame_Fully_Fluent2', async () => {
-    let result = await test.eyes.check("Fluent - Window with Ignore region 2", Target.window().fully());
-    equal(result.getAsExpected(), true);
-    result = await test.eyes.check("Fluent - Full Frame in Frame 2", Target.frame("frame1").frame("frame1-1").fully());
-    equal(result.getAsExpected(), true);
+    const result1 = await test.eyes.check("Fluent - Window with Ignore region 2", Target.window().fully());
+    const result2 = await test.eyes.check("Fluent - Full Frame in Frame 2", Target.frame("frame1").frame("frame1-1").fully());
+    equal(result1.getAsExpected() && result2.getAsExpected(), true);
   });
 
   it('TestCheckWindowWithIgnoreBySelector_Fluent', async () => {
@@ -115,7 +112,9 @@ shared.examplesFor('TestFluentApi', function (test) {
     const settings = Target.window().floating(new Region(10, 10, 20, 20), 3, 3, 20, 30);
     const result = await test.eyes.check("Fluent - Window with floating region by region", settings);
     equal(result.getAsExpected(), true);
-    test.setExpectedFloatingsRegions(new FloatingMatchSettings(10, 10, 20, 20, 3, 3, 20, 30));
+    test.setExpectedFloatingsRegions(new FloatingMatchSettings({
+      left: 10, top: 10, width: 20, height: 20, maxUpOffset: 3, maxDownOffset: 3, maxLeftOffset: 20, maxRightOffset: 30
+    }));
   });
 
   it('TestCheckElementFully_Fluent', async () => {

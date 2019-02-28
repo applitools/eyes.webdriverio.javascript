@@ -1,6 +1,6 @@
 "use strict";
 
-const {Location, RectangleSize, ArgumentGuard, GeneralUtils} = require('@applitools/eyes.sdk.core');
+const {Location, RectangleSize, ArgumentGuard, GeneralUtils} = require('@applitools/eyes-sdk-core');
 
 const EyesDriverOperationError = require('./errors/EyesDriverOperationError');
 const ImageOrientationHandler = require('./ImageOrientationHandler');
@@ -533,7 +533,7 @@ class EyesWDIOUtils {
     logger.verbose("Trying to set browser size to:", requiredSize);
 
     await browser.remoteWebDriver.windowHandleSize({width: requiredSize.getWidth(), height: requiredSize.getHeight()});
-    await GeneralUtils.sleep(sleep, browser.eyes.getPromiseFactory());
+    await GeneralUtils.sleep(sleep);
     const size = await browser.remoteWebDriver.windowHandleSize();
     const currentSize = new RectangleSize(size.value.width, size.value.height);
     logger.log(`Current browser size: ${currentSize}`);
@@ -542,7 +542,8 @@ class EyesWDIOUtils {
     }
 
     if (retries === 0) {
-      return browser.eyes.getPromiseFactory().reject("Failed to set browser size: retries is out.");
+      logger.verbose('Failed to set browser size: retries is out.');
+      return false;
     }
 
     return EyesWDIOUtils._setBrowserSizeLoop(logger, browser, requiredSize, sleep, retries - 1);
@@ -572,7 +573,7 @@ class EyesWDIOUtils {
    * @param {Logger} logger
    * @param {EyesWebDriver} browser The browser to use.
    * @param {RectangleSize} requiredSize The viewport size.
-   * @returns {Promise<void>}
+   * @returns {Promise<boolean>}
    */
   static async setViewportSize(logger, browser, requiredSize) {
     ArgumentGuard.notNull(requiredSize, "requiredSize");
@@ -588,7 +589,7 @@ class EyesWDIOUtils {
 
     // If the viewport size is already the required size
     if (actualViewportSize.equals(requiredSize)) {
-      return browser.eyes.getPromiseFactory().resolve();
+      return true;
     }
 
     // We move the window to (0,0) to have the best chance to be able to
@@ -603,7 +604,7 @@ class EyesWDIOUtils {
     actualViewportSize = await EyesWDIOUtils.getViewportSize(jsExecutor);
 
     if (actualViewportSize.equals(requiredSize)) {
-      return;
+      return true;
     }
 
     // Additional attempt. This Solves the "maximized browser" bug
@@ -616,7 +617,7 @@ class EyesWDIOUtils {
     logger.verbose("Current viewport size:", actualViewportSize);
 
     if (actualViewportSize.equals(requiredSize)) {
-      return;
+      return true;
     }
 
     const MAX_DIFF = 3;
@@ -635,10 +636,9 @@ class EyesWDIOUtils {
       const retriesLeft = Math.abs((widthDiff === 0 ? 1 : widthDiff) * (heightDiff === 0 ? 1 : heightDiff)) * 2;
       const lastRequiredBrowserSize = null;
 
-      await EyesWDIOUtils._setViewportSizeLoop(logger, browser, requiredSize, actualViewportSize, browserSize,
+      return EyesWDIOUtils._setViewportSizeLoop(logger, browser, requiredSize, actualViewportSize, browserSize,
         widthDiff, widthStep, heightDiff, heightStep, currWidthChange, currHeightChange,
         retriesLeft, lastRequiredBrowserSize);
-      return browser.eyes.getPromiseFactory().resolve();
     } else {
       throw new Error("Failed to set viewport size!");
     }
@@ -659,7 +659,7 @@ class EyesWDIOUtils {
    * @param currHeightChange
    * @param retriesLeft
    * @param {RectangleSize} lastRequiredBrowserSize
-   * @return {Promise<void>}
+   * @return {Promise<boolean>}
    */
   static async _setViewportSizeLoop(logger,
                                     browser,
@@ -691,7 +691,7 @@ class EyesWDIOUtils {
       logger.verbose("Browser size is as required but viewport size does not match!");
       logger.verbose("Browser size: " + requiredBrowserSize + " , Viewport size: " + actualViewportSize);
       logger.verbose("Stopping viewport size attempts.");
-      return browser.eyes.getPromiseFactory().resolve();
+      return true;
     }
 
     await EyesWDIOUtils.setBrowserSize(logger, browser, requiredBrowserSize);
@@ -700,7 +700,7 @@ class EyesWDIOUtils {
 
     logger.verbose("Current viewport size:", actualViewportSize);
     if (actualViewportSize.equals(requiredSize)) {
-      return browser.eyes.getPromiseFactory().resolve();
+      return true;
     }
 
     if ((Math.abs(currWidthChange) <= Math.abs(widthDiff) || Math.abs(currHeightChange) <= Math.abs(heightDiff)) && (--retriesLeft > 0)) {

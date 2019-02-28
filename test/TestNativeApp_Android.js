@@ -1,6 +1,6 @@
 'use strict';
 
-const {ConsoleLogHandler} = require('@applitools/eyes.sdk.core');
+const {ConsoleLogHandler} = require('@applitools/eyes-sdk-core');
 const {Eyes} = require('../index');
 const {TestNativeApp} = require('./TestNativeApp');
 const webdriverio = require('webdriverio');

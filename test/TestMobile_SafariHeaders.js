@@ -1,7 +1,7 @@
 'use strict';
 
 const webdriverio = require('webdriverio');
-const {ConsoleLogHandler, BatchInfo} = require('@applitools/eyes.sdk.core');
+const {ConsoleLogHandler, BatchInfo} = require('@applitools/eyes-sdk-core');
 const {TestUtils} = require('./TestUtils');
 const {By, Eyes, Target, StitchMode} = require('../index');
 const {equal} = require('assert');

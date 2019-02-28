@@ -1,6 +1,6 @@
 'use strict';
 
-const {GetFloatingRegion, FloatingMatchSettings, Location, CoordinatesType} = require('@applitools/eyes.sdk.core');
+const {GetFloatingRegion, FloatingMatchSettings, Location, CoordinatesType} = require('@applitools/eyes-sdk-core');
 
 class FloatingRegionBySelector extends GetFloatingRegion {
 
@@ -35,7 +35,16 @@ class FloatingRegionBySelector extends GetFloatingRegion {
         return element.getSize();
       }).then(size => {
         const lTag = screenshot.convertLocation(location, CoordinatesType.CONTEXT_RELATIVE, CoordinatesType.SCREENSHOT_AS_IS);
-        return new FloatingMatchSettings(lTag.getX(), lTag.getY(), size.getWidth(), size.getHeight(), that._maxUpOffset, that._maxDownOffset, that._maxLeftOffset, that._maxRightOffset);
+        return new FloatingMatchSettings({
+          left: lTag.getX(),
+          top: lTag.getY(),
+          width: size.getWidth(),
+          height: size.getHeight(),
+          maxUpOffset: that._maxUpOffset,
+          maxDownOffset: that._maxDownOffset,
+          maxLeftOffset: that._maxLeftOffset,
+          maxRightOffset: that._maxRightOffset
+        });
       });
     });
   }

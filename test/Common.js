@@ -5,7 +5,7 @@ const webdriverio = require('webdriverio');
 const chromedriver = require('chromedriver');
 const geckodriver = require('geckodriver');
 const {Eyes, NetHelper, StitchMode} = require('../index');
-const {BatchInfo, ConsoleLogHandler, FloatingMatchSettings, metadata, RectangleSize, Region} = require('@applitools/eyes.sdk.core');
+const {BatchInfo, ConsoleLogHandler, FloatingMatchSettings, metadata, RectangleSize, Region} = require('@applitools/eyes-sdk-core');
 const {ActualAppOutput, ImageMatchSettings, SessionResults} = metadata;
 const url = require('url');
 

@@ -1,25 +1,23 @@
 'use strict';
 
-const {EyesScreenshotFactory} = require('@applitools/eyes.sdk.core');
+const {EyesScreenshotFactory} = require('@applitools/eyes-sdk-core');
 
 const EyesWebDriverScreenshot = require('./EyesWDIOScreenshot');
 
 /**
  * Encapsulates the instantiation of an {@link EyesWebDriverScreenshot} .
  */
-class EyesWebDriverScreenshotFactory extends EyesScreenshotFactory {
+class EyesWDIOScreenshotFactory extends EyesScreenshotFactory {
 
   /**
    * @param {Logger} logger
    * @param {EyesWebDriver} driver
-   * @param {PromiseFactory} promiseFactory
    */
-  constructor(logger, driver, promiseFactory) {
+  constructor(logger, driver) {
     super();
 
     this._logger = logger;
     this._executor = driver;
-    this._promiseFactory = promiseFactory;
   }
 
   /**
@@ -27,9 +25,9 @@ class EyesWebDriverScreenshotFactory extends EyesScreenshotFactory {
    * @inheritDoc
    */
   makeScreenshot(image) {
-    const result = new EyesWebDriverScreenshot(this._logger, this._executor, image, this._promiseFactory);
+    const result = new EyesWebDriverScreenshot(this._logger, this._executor, image);
     return result.init();
   }
 }
 
-module.exports = EyesWebDriverScreenshotFactory;
+module.exports = EyesWDIOScreenshotFactory;

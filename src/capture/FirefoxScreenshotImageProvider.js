@@ -1,6 +1,6 @@
 'use strict';
 
-const {ImageProvider, MutableImage, Region} = require('@applitools/eyes.sdk.core');
+const {ImageProvider, MutableImage, Region} = require('@applitools/eyes-sdk-core');
 
 const EyesWDIOScreenshot = require('./EyesWDIOScreenshot');
 
@@ -28,41 +28,29 @@ class FirefoxScreenshotImageProvider extends ImageProvider {
    * @override
    * @return {Promise.<MutableImage>}
    */
-  getImage() {
-    const that = this;
-    this._logger.verbose("Getting screenshot as base64...");
-    return this._tsInstance.takeScreenshot().then(screenshot64 => {
-      that._logger.verbose("Done getting base64! Creating BufferedImage...");
-      const image = new MutableImage(screenshot64, that._eyes.getPromiseFactory());
+  async getImage() {
+    this._logger.verbose('Getting screenshot as base64...');
+    const screenshot64 = await this._tsInstance.takeScreenshot();
+    this._logger.verbose('Done getting base64! Creating BufferedImage...');
 
-      return that._eyes.getDebugScreenshotsProvider().save(image, "FIREFOX_FRAME").then(() => {
-        const frameChain = that._tsInstance.getFrameChain();
-        if (frameChain.size() > 0) {
-          let fullImage;
-          //Frame frame = frameChain.peek();
-          //Region region = eyes.getRegionToCheck();
-          const screenshot = new EyesWDIOScreenshot(that._logger, that._tsInstance, image, that._eyes.getPromiseFactory());
-          return screenshot.init().then(() => {
-            return that._eyes.getViewportSize();
-          }).then(viewportSize => {
-            let loc = screenshot.getFrameWindow().getLocation();
-            that._logger.verbose("frame.getLocation(): " + loc);
+    const image = new MutableImage(screenshot64);
+    await this._eyes.getDebugScreenshotsProvider().save(image, 'FIREFOX_FRAME');
 
-            const scaleRatio = that._eyes.getDevicePixelRatio();
-            viewportSize = viewportSize.scale(scaleRatio);
-            loc = loc.scale(scaleRatio);
+    const frameChain = this._eyes.getDriver().getFrameChain();
+    if (frameChain.size() > 0) {
+      // Frame frame = frameChain.peek();
+      // Region region = this._eyes.getRegionToCheck();
+      const screenshot = await EyesWDIOScreenshot.fromScreenshotType(this._logger, this._eyes.getDriver(), image);
 
-            fullImage = MutableImage.newImage(viewportSize.getWidth(), viewportSize.getHeight(), that._eyes.getPromiseFactory());
+      const viewportSize = await this._eyes.getViewportSize();
+      const location = screenshot.getFrameWindow().getLocation();
+      this._logger.verbose(`frame.getLocation(): ${location}`);
 
-            return fullImage.copyRasterData(loc.getX(), loc.getY(), image);
-          }).then(() => {
-            return fullImage;
-          });
-        }
+      const scaleRatio = this._eyes.getDevicePixelRatio();
+      return image.crop(new Region(location.scale(scaleRatio), viewportSize.scale(scaleRatio)));
+    }
 
-        return image;
-      });
-    });
+    return image;
   }
 }
 

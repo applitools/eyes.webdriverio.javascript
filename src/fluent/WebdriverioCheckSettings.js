@@ -1,6 +1,6 @@
 'use strict';
 
-const {CheckSettings, GeneralUtils, Region} = require('@applitools/eyes.sdk.core');
+const {CheckSettings, GeneralUtils, Region, TypeUtils} = require('@applitools/eyes-sdk-core');
 const By = require('../By');
 const WebElement = require('../wrappers/WebElement');
 const FrameLocator = require('./FrameLocator');
@@ -62,9 +62,9 @@ class WebdriverioCheckSettings extends CheckSettings {
   frame(frame) {
     const fl = new FrameLocator();
     // noinspection IfStatementWithTooManyBranchesJS
-    if (Number.isInteger(frame)) {
+    if (TypeUtils.isInteger(frame)) {
       fl.setFrameIndex(frame);
-    } else if (GeneralUtils.isString(frame)) {
+    } else if (TypeUtils.isString(frame)) {
       fl.setFrameNameOrId(frame);
     } else if (frame instanceof By) {
       fl.setFrameSelector(frame);
@@ -130,7 +130,7 @@ class WebdriverioCheckSettings extends CheckSettings {
     } else if (regionOrContainer instanceof WebElement) {
       this._floatingRegions.push(new FloatingRegionByElement(regionOrContainer, maxUpOffset, maxDownOffset, maxLeftOffset, maxRightOffset));
     } else {
-      super.floating(regionOrContainer, maxUpOffset, maxDownOffset, maxLeftOffset, maxRightOffset);
+      super.floatingRegion(regionOrContainer, maxUpOffset, maxDownOffset, maxLeftOffset, maxRightOffset);
     }
     return this;
   }

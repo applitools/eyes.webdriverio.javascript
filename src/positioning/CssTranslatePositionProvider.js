@@ -1,6 +1,6 @@
 'use strict';
 
-const {PositionProvider, ArgumentGuard, Location} = require('@applitools/eyes.sdk.core');
+const {PositionProvider, ArgumentGuard, Location} = require('@applitools/eyes-sdk-core');
 
 const EyesWDIOUtils = require('../EyesWDIOUtils');
 const CssTranslatePositionMemento = require('./CssTranslatePositionMemento');
@@ -32,9 +32,9 @@ class CssTranslatePositionProvider extends PositionProvider {
    * @override
    * @inheritDoc
    */
-  getCurrentPosition() {
+  async getCurrentPosition() {
     this._logger.verbose("position to return: ", this._lastSetPosition);
-    return this._executor.getPromiseFactory().resolve(this._lastSetPosition);
+    return this._lastSetPosition;
   }
 
   /**

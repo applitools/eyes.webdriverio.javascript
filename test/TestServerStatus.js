@@ -4,7 +4,7 @@ const chromedriver = require('chromedriver');
 const webdriverio = require('webdriverio');
 const {equal} = require('assert');
 const {Eyes, Target} = require('../index');
-const {RectangleSize} = require('@applitools/eyes.sdk.core');
+const {RectangleSize} = require('@applitools/eyes-sdk-core');
 const Common = require('./Common');
 
 
