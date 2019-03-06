@@ -28,7 +28,7 @@ class EyesWebDriver {
    * @constructor
    * @param {Object} logger
    * @param {WebDriver} webDriver
-   * @param {Eyes} eyes An instance of Eyes
+   * @param {Eyes|EyesSelenium|EyesVisualGrid} eyes An instance of Eyes
    **/
   constructor(logger, webDriver, eyes) {
     /** @type {WebDriver} */

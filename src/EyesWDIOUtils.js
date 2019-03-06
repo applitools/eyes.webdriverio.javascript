@@ -203,7 +203,7 @@ class EyesWDIOUtils {
    * @return {Promise<number>} A promise which resolves to the device pixel ratio (float type).
    */
   static async getDevicePixelRatio(executor) {
-    const {value: result} = await executor.executeScript('return window.devicePixelRatio');
+    const result = await executor.executeScript('return window.devicePixelRatio');
     return parseFloat(result);
   }
 
@@ -219,8 +219,7 @@ class EyesWDIOUtils {
       script += `'${EyesWDIOUtils.JS_TRANSFORM_KEYS[i]}': document.documentElement.style['${EyesWDIOUtils.JS_TRANSFORM_KEYS[i]}'],`;
     }
     script += " }";
-    const {value: result} = await executor.executeScript(script);
-    return result;
+    return await executor.executeScript(script);
   }
 
   static JS_GET_TRANSFORM_VALUE(element, key) {
@@ -345,7 +344,7 @@ class EyesWDIOUtils {
     // While scrollWidth is the maximum between an element's width and its content width,
     // scrollHeight might be smaller (!) than the clientHeight, which is why we take the maximum between them.
     try {
-      const {value} = await executor.executeScript(EyesWDIOUtils.JS_GET_CONTENT_ENTIRE_SIZE);
+      const value = await executor.executeScript(EyesWDIOUtils.JS_GET_CONTENT_ENTIRE_SIZE);
       return new RectangleSize(parseInt(value[0], 10) || 0, parseInt(value[1], 10) || 0);
     } catch (e) {
       throw new EyesDriverOperationError("Failed to extract entire size!", e);
@@ -451,7 +450,7 @@ class EyesWDIOUtils {
    * @return {RectangleSize} The viewport size.
    */
   static async getViewportSize(executor) {
-    const {value} = await executor.executeScript(EyesWDIOUtils.JS_GET_VIEWPORT_SIZE);
+    const value = await executor.executeScript(EyesWDIOUtils.JS_GET_VIEWPORT_SIZE);
     // await browser.getViewportSize()
     return new RectangleSize(parseInt(value[0], 10) || 0, parseInt(value[1], 10) || 0);
   }

@@ -1,6 +1,6 @@
 'use strict';
 
-const {ArgumentGuard, EyesJsExecutor} = require('@applitools/eyes-sdk-core');
+const {EyesJsExecutor} = require('@applitools/eyes-sdk-core');
 
 class WDIOJSExecutor extends EyesJsExecutor {
 
@@ -18,12 +18,27 @@ class WDIOJSExecutor extends EyesJsExecutor {
    * @override
    * @inheritDoc
    */
-  executeScript(script, ...args) {
-    const that = this;
-    return Promise.resolve(that._driver.remoteWebDriver.execute(script, ...args)).catch(e => {
-      that._driver.eyes._logger.verbose(`Error executeScript: ${script}\nargs: ${JSON.stringify(args)}`);
+  async executeScript(script, ...varArgs) {
+    try {
+      const result = await this._driver.remoteWebDriver.execute(script, ...varArgs);
+      this._driver.eyes._logger.verbose('Done!');
+      return result.value;
+    } catch (e) {
+      this._driver.eyes._logger.verbose(`Error executeScript: ${script}\nargs: ${JSON.stringify(varArgs)}`);
       throw e;
-    });
+    }
+  }
+
+  /** @override */
+  async executeAsyncScript(script, ...varArgs) {
+    try {
+      const result = await this._driver.remoteWebDriver.executeAsync(script, ...varArgs);
+      this._driver.eyes._logger.verbose('Done!');
+      return result.value;
+    } catch (e) {
+      this._driver.eyes._logger.verbose("WARNING: execute script error: " + e);
+      throw e;
+    }
   }
 
   /**

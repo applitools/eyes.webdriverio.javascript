@@ -5,11 +5,12 @@ const webdriverio = require('webdriverio');
 const chromedriver = require('chromedriver');
 const geckodriver = require('geckodriver');
 const {Eyes, NetHelper, StitchMode} = require('../index');
-const {BatchInfo, ConsoleLogHandler, FloatingMatchSettings, metadata, RectangleSize, Region} = require('@applitools/eyes-sdk-core');
+const {BatchInfo, ConsoleLogHandler, FloatingMatchSettings, metadata, RectangleSize, Region, TypeUtils} = require('@applitools/eyes-sdk-core');
 const {ActualAppOutput, ImageMatchSettings, SessionResults} = metadata;
 const url = require('url');
 
-let batchInfo = new BatchInfo('WebDriverIO Tests');
+const batchName = TypeUtils.getOrDefault(process.env.APPLITOOLS_BATCH_NAME, 'WebDriverIO Tests');
+let batchInfo = new BatchInfo(batchName);
 
 class Common {
 
@@ -70,6 +71,7 @@ class Common {
     this._eyes.setForceFullPageScreenshot(fps);
     this._eyes.setStitchMode(stitchMode);
     this._eyes.setHideScrollbars(true);
+    this._eyes.setProxy('http://127.0.0.1:8000');
 
 
     if (batchName) {
