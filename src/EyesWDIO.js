@@ -800,6 +800,7 @@ class EyesWDIO extends EyesBase {
     }
 
     ArgumentGuard.notNull(viewportSize, "viewportSize");
+    viewportSize = new RectangleSize(viewportSize);
 
     const that = this;
     const originalFrame = this._driver.getFrameChain();
@@ -1138,7 +1139,7 @@ class EyesWDIO extends EyesBase {
   }
 
 
-/**
+  /**
    * @private
    * @param {WebElement} element
    * @return {Promise<void>}
@@ -1382,31 +1383,31 @@ class EyesWDIO extends EyesBase {
   }
 
 
-/**
- * Sets the time to wait just before taking a screenshot (e.g., to allow positioning to stabilize when performing a
- * full page stitching).
- *
- * @param {number} waitBeforeScreenshots The time to wait (Milliseconds). Values smaller or equal to 0, will cause the
- *   default value to be used.
- */
-setWaitBeforeScreenshots(waitBeforeScreenshots) {
-  if (waitBeforeScreenshots <= 0) {
-    this._waitBeforeScreenshots = DEFAULT_WAIT_BEFORE_SCREENSHOTS;
-  } else {
-    this._waitBeforeScreenshots = waitBeforeScreenshots;
+  /**
+   * Sets the time to wait just before taking a screenshot (e.g., to allow positioning to stabilize when performing a
+   * full page stitching).
+   *
+   * @param {number} waitBeforeScreenshots The time to wait (Milliseconds). Values smaller or equal to 0, will cause the
+   *   default value to be used.
+   */
+  setWaitBeforeScreenshots(waitBeforeScreenshots) {
+    if (waitBeforeScreenshots <= 0) {
+      this._waitBeforeScreenshots = DEFAULT_WAIT_BEFORE_SCREENSHOTS;
+    } else {
+      this._waitBeforeScreenshots = waitBeforeScreenshots;
+    }
   }
-}
 
 // noinspection JSUnusedGlobalSymbols
-/**
- * @return {number} The time to wait just before taking a screenshot.
- */
-getWaitBeforeScreenshots() {
-  return this._waitBeforeScreenshots;
-}
+  /**
+   * @return {number} The time to wait just before taking a screenshot.
+   */
+  getWaitBeforeScreenshots() {
+    return this._waitBeforeScreenshots;
+  }
 
 
-/**
+  /**
    * @return {PositionProvider} The currently set position provider.
    */
   getElementPositionProvider() {
@@ -1470,6 +1471,28 @@ getWaitBeforeScreenshots() {
   async getScreenshotUrl() {
     return undefined;
   }
+
+
+  setCorsIframeHandle(corsIframeHandle) {
+  }
+
+  getCorsIframeHandle() {
+    return null;
+  }
+
+  /**
+   * @return {object}
+   */
+  getRunner() {
+    const runner = {};
+    /** @param  {boolean} throwEx */
+    /** @return {Promise<TestResults|Error>} */
+    runner.getAllResults = async (throwEx) => {
+      return await this.close(throwEx);
+    };
+    return runner;
+  }
+
 }
 
 /**
