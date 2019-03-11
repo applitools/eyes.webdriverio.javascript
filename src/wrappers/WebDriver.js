@@ -90,15 +90,25 @@ class WebDriver {
   /**
    * @return {Promise}
    */
-  execute(f) {
-    return Promise.resolve(this.remoteWebDriver.execute(f));
+  async execute(f) {
+    try {
+      const result = await this.remoteWebDriver.execute(f);
+      return result.value;
+    } catch (e) {
+      throw e;
+    }
   }
 
   /**
    * @return {Promise}
    */
-  executeAsync(f) {
-    return Promise.resolve(this.remoteWebDriver.executeAsync(f));
+  async executeAsync(f) {
+    try {
+      const result = await this.remoteWebDriver.executeAsync(f);
+      return result.value;
+    } catch (e) {
+      throw e;
+    }
   }
 
   get remoteWebDriver() {

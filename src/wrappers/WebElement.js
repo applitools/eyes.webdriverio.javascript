@@ -1,7 +1,7 @@
 'use strict';
 
 
-const {ArgumentGuard} = require('@applitools/eyes.sdk.core');
+const {ArgumentGuard} = require('@applitools/eyes-sdk-core');
 const command = require('../services/selenium/Command');
 
 /**

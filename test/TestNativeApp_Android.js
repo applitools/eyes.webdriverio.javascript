@@ -1,6 +1,6 @@
 'use strict';
 
-const {ConsoleLogHandler} = require('@applitools/eyes.sdk.core');
+const {ConsoleLogHandler} = require('@applitools/eyes-sdk-core');
 const {Eyes} = require('../index');
 const {TestNativeApp} = require('./TestNativeApp');
 const webdriverio = require('webdriverio');
@@ -44,12 +44,14 @@ describe(appName, function () {
     return eyes.open(browser, 'Android Example', 'Main activity');
   });
 
-  afterEach(function () {
-    return eyes.close(false).catch(() => {
-      return eyes.abortIfNotClosed();
-    }).then(() => {
-      return browser.end();
-    });
+  afterEach(async () => {
+    try {
+      return eyes.close(false);
+    } catch (e) {
+      await eyes.abortIfNotClosed();
+    } finally {
+      await browser.end();
+    }
   });
 
 

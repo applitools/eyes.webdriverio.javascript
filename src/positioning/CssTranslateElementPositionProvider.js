@@ -1,6 +1,6 @@
 'use strict';
 
-const {Location} = require('@applitools/eyes.sdk.core');
+const {Location} = require('@applitools/eyes-sdk-core');
 
 const ElementPositionProvider = require('./ElementPositionProvider');
 const EyesWebElement = require('./../wrappers/EyesWebElement');

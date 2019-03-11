@@ -1,7 +1,7 @@
 'use strict';
 
 const webdriverio = require('webdriverio');
-const {ConsoleLogHandler, BatchInfo} = require('@applitools/eyes.sdk.core');
+const {ConsoleLogHandler, BatchInfo} = require('@applitools/eyes-sdk-core');
 const {TestUtils} = require('./TestUtils');
 const {By, Eyes, Target, StitchMode} = require('../index');
 const {equal} = require('assert');
@@ -36,7 +36,7 @@ describe.skip('IOSTest', () => {
     let testName = `${deviceName} ${platformVersion} ${deviceOrientation}`;
     if (fully) testName += ' fully';
 
-    it(testName, function () {
+    it(testName, async function () {
       eyes = new Eyes();
       eyes.setApiKey(process.env.APPLITOOLS_API_KEY);
       eyes.setBatch(batchInfo);
@@ -60,28 +60,28 @@ describe.skip('IOSTest', () => {
       };
 
       browser = webdriverio.remote(browserOptions);
-      return browser.init().then(() => {
-        eyes.setLogHandler(new ConsoleLogHandler(true));
-        eyes.setStitchMode(StitchMode.SCROLL);
+      await browser.init();
+      eyes.setLogHandler(new ConsoleLogHandler(true));
+      eyes.setStitchMode(StitchMode.SCROLL);
 
-        eyes.addProperty('Orientation', deviceOrientation);
-        eyes.addProperty('Stitched', fully ? 'True' : 'False');
+      eyes.addProperty('Orientation', deviceOrientation);
+      eyes.addProperty('Stitched', fully ? 'True' : 'False');
 
-        return eyes.open(browser, 'Eyes Selenium SDK - iOS Safari Cropping', testName);
-      }).url('https://www.applitools.com/customers').then(() => {
-        return eyes.check('Initial view', Target.region(By.cssSelector('body')).fully(fully));
-      }).then(result => {
-        return equal(result.getAsExpected(), true);
-      });
+      browser = await eyes.open(browser, 'Eyes Selenium SDK - iOS Safari Cropping', testName);
+      await browser.url('https://www.applitools.com/customers');
+      const result = await eyes.check('Initial view', Target.region(By.cssSelector('body')).fully(fully));
+      return equal(result.getAsExpected(), true);
     });
   });
 
-  afterEach(function () {
-    return eyes.close(false).catch(() => {
-      return eyes.abortIfNotClosed();
-    }).then(() => {
-      return browser.end();
-    });
+  afterEach(async function () {
+    try {
+      return eyes.close(false);
+    } catch (e) {
+      await eyes.abortIfNotClosed();
+    } finally {
+      await browser.end();
+    }
   });
 
 });

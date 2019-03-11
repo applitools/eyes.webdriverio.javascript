@@ -1,6 +1,6 @@
 'use strict';
 
-const { GeneralUtils } = require('@applitools/eyes.sdk.core');
+const { GeneralUtils } = require('@applitools/eyes-sdk-core');
 
 /**
  * Collection of utility methods.
