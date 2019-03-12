@@ -1510,6 +1510,13 @@ class EyesWDIO extends EyesBase {
     this._configuration = conf;
   }
 
+  /**
+   * @return {Configuration}
+   */
+  getConfiguration() {
+    return this._configuration;
+  }
+
 }
 
 /**

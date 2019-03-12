@@ -400,6 +400,13 @@ class EyesVisualGrid extends EyesBase {
     this._configuration = conf;
   }
 
+  /**
+   * @return {Configuration}
+   */
+  getConfiguration() {
+    return this._configuration;
+  }
+
 }
 
 exports.EyesVisualGrid = EyesVisualGrid;
