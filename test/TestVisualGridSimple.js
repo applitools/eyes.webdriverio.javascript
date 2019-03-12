@@ -32,10 +32,9 @@ describe('VisualGridSimple', function () {
   it('VisualGridTestPage', async function () {
     await browser.url('https://applitools.github.io/demo/TestPages/VisualGridTestPage');
 
-    const eyes = new Eyes(undefined, undefined, true);
+    const eyes = new Eyes(true);
     eyes.setBatch(new BatchInfo('EyesRenderingBatch_WDIO'));
     eyes.setCorsIframeHandle(CorsIframeHandle.BLANK);
-    // eyes.setProxy('http://127.0.0.1:8000');
 
     const configuration = new SeleniumConfiguration();
     configuration.setTestName('Open Concurrency with Batch 2');
@@ -44,11 +43,8 @@ describe('VisualGridSimple', function () {
     configuration.addBrowser(700, 500, BrowserType.CHROME);
     configuration.addBrowser(400, 300, BrowserType.CHROME);
 
-    // await eyes.open(browser, 'app', 'test', new RectangleSize({width: 800, height: 600}));
-    await eyes.open(browser, configuration);
-
-    // await eyes.setViewportSize(new RectangleSize({width: 800, height: 600}));
-    // await eyes.setViewportSize({width: 800, height: 600});
+    eyes.setConfiguration(configuration);
+    await eyes.open(browser);
 
     await eyes.check('window', Target.window().ignoreRegions(new Region(200, 200, 50, 100)));
 

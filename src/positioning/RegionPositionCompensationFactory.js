@@ -10,7 +10,7 @@ class RegionPositionCompensationFactory {
 
     /**
      * @param {UserAgent} userAgent
-     * @param {Eyes} eyes
+     * @param {Eyes|EyesWDIO} eyes
      * @param {Logger} logger
      * @return {RegionPositionCompensation}
      */

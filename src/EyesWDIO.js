@@ -1,7 +1,7 @@
 'use strict';
 
 const {
-  BrowserNames,
+  Configuration,
   ContextBasedScaleProviderFactory,
   CoordinatesType,
   EyesBase,
@@ -18,6 +18,7 @@ const {
   Region,
   RegionProvider,
   TestFailedError,
+  TypeUtils,
   UserAgent,
   ArgumentGuard,
   SimplePropertyHandler
@@ -129,16 +130,31 @@ class EyesWDIO extends EyesBase {
   // noinspection JSUnusedGlobalSymbols
   /**
    * @param {Object} driver
-   * @param {String} appName
-   * @param {String} testName
-   * @param {RectangleSize|{width: number, height: number}} viewportSize
-   * @param {SessionType} [sessionType=null] The type of test (e.g.,  standard test / visual performance test).
+   * @param {String} [varArg1] - Application name
+   * @param {String} [varArg2] - Test name
+   * @param {RectangleSize|{width: number, height: number}} [varArg3] - Viewport size
+   * @param {SessionType} [varArg4=null] - The type of test (e.g.,  standard test / visual performance test).
    * @returns {Promise<EyesWebDriver|object>}
    */
-  async open(driver, appName, testName, viewportSize = null, sessionType = null) {
+  async open(driver, varArg1, varArg2, varArg3 = null, varArg4 = null) {
     ArgumentGuard.notNull(driver, 'driver');
 
     this._logger.verbose('Running using Webdriverio module');
+
+    this._driver = driver instanceof EyesWebDriver ? driver : new EyesWebDriver(this._logger, new WebDriver(driver), this);
+    this._jsExecutor = new WDIOJSExecutor(this._driver);
+
+    if (varArg1 instanceof Configuration) {
+      this._configuration.mergeConfig(varArg1);
+    } else {
+      this._configuration.setAppName(TypeUtils.getOrDefault(varArg1, this._configuration.getAppName()));
+      this._configuration.setTestName(TypeUtils.getOrDefault(varArg2, this._configuration.getTestName()));
+      this._configuration.setViewportSize(TypeUtils.getOrDefault(varArg3, this._configuration.getViewportSize()));
+      this._configuration.setSessionType(TypeUtils.getOrDefault(varArg4, this._configuration.getSessionType()));
+    }
+    if (!this._configuration.getViewportSize()) {
+      this._configuration.setViewportSize(await this._driver.getDefaultContentViewportSize());
+    }
 
     if (this._isDisabled) {
       this._logger.verbose('Ignored');
@@ -146,10 +162,8 @@ class EyesWDIO extends EyesBase {
     }
 
     if (driver && driver.isMobile) { // set viewportSize to null if browser is mobile
-      viewportSize = null;
+      varArg3 = null;
     }
-
-    this._driver = driver instanceof EyesWebDriver ? driver : new EyesWebDriver(this._logger, new WebDriver(driver), this);
 
     this._screenshotFactory = new EyesWDIOScreenshotFactory(this._logger, this._driver);
 
@@ -161,9 +175,7 @@ class EyesWDIO extends EyesBase {
     this._imageProvider = ImageProviderFactory.getImageProvider(this._userAgent, this, this._logger, this._driver);
     this._regionPositionCompensation = RegionPositionCompensationFactory.getRegionPositionCompensation(this._userAgent, this, this._logger);
 
-    this._jsExecutor = new WDIOJSExecutor(this._driver);
-
-    await this.openBase(appName, testName, viewportSize, sessionType);
+    await this.openBase(this._configuration.getAppName(), this._configuration.getTestName(), this._configuration.getViewportSize(), this._configuration.getSessionType());
 
     this._devicePixelRatio = EyesWDIO.UNKNOWN_DEVICE_PIXEL_RATIO;
 
@@ -1491,6 +1503,20 @@ class EyesWDIO extends EyesBase {
       return await this.close(throwEx);
     };
     return runner;
+  }
+
+  /**
+   * @param {Configuration} conf
+   */
+  setConfiguration(conf) {
+    this._configuration = conf;
+  }
+
+  /**
+   * @return {Configuration}
+   */
+  getConfiguration() {
+    return this._configuration;
   }
 
 }
