@@ -63,10 +63,16 @@ class EyesVisualGrid extends EyesBase {
   async open(driver, optArg1, optArg2, optArg3, optArg4) {
     ArgumentGuard.notNull(driver, 'driver');
 
+    await this._initDriver(driver);
+
     let configuration;
     if (optArg1 instanceof Configuration) {
       configuration = optArg1;
     } else {
+      if (!optArg3) {
+        optArg3 = await EyesWDIOUtils.getViewportSize(this._jsExecutor);
+      }
+
       this._configuration.setAppName(optArg1);
       this._configuration.setTestName(optArg2);
       this._configuration.setViewportSize(optArg3);
@@ -82,8 +88,6 @@ class EyesVisualGrid extends EyesBase {
       const viewportSize = this._configuration.getViewportSize();
       this._configuration.addBrowser(viewportSize.getWidth(), viewportSize.getHeight(), BrowserType.CHROME);
     }
-
-    await this._initDriver(driver);
 
     const {openEyes} = makeVisualGridClient({
       apiKey: this._configuration.getApiKey(),
@@ -233,8 +237,8 @@ class EyesVisualGrid extends EyesBase {
 
   getRunner() {
     const runner = {};
-    runner.getAllResults = async () => {
-      return await this.closeAndReturnResults();
+    runner.getAllResults = async (throwEx) => {
+      return await this.closeAndReturnResults(throwEx);
     };
     return runner;
   }

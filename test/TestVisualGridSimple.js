@@ -3,10 +3,9 @@
 const chromedriver = require('chromedriver');
 const webdriverio = require('webdriverio');
 const {BatchInfo, Region, CorsIframeHandle} = require('@applitools/eyes-sdk-core');
-// const {RectangleSize} = require('@applitools/eyes-common');
+const {RectangleSize} = require('@applitools/eyes-common');
 const {BrowserType, SeleniumConfiguration} = require('@applitools/eyes-selenium');
 const {Eyes, Target} = require('../index');
-const {WebDriver} = require('../index');
 
 const Common = require('./Common');
 
@@ -45,10 +44,11 @@ describe('VisualGridSimple', function () {
     configuration.addBrowser(700, 500, BrowserType.CHROME);
     configuration.addBrowser(400, 300, BrowserType.CHROME);
 
+    // await eyes.open(browser, 'app', 'test', new RectangleSize({width: 800, height: 600}));
     await eyes.open(browser, configuration);
 
     // await eyes.setViewportSize(new RectangleSize({width: 800, height: 600}));
-    await eyes.setViewportSize({width: 800, height: 600});
+    // await eyes.setViewportSize({width: 800, height: 600});
 
     await eyes.check('window', Target.window().ignoreRegions(new Region(200, 200, 50, 100)));
 
@@ -56,7 +56,8 @@ describe('VisualGridSimple', function () {
 
     await eyes.check('selector', Target.region('#scroll1'));
 
-    await eyes.close();
+    await eyes.getRunner().getAllResults();
+
     await browser.end();
   });
 
