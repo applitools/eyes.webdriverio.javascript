@@ -71,11 +71,12 @@ class EyesVisualGrid extends EyesBase {
     } else {
       this._configuration.setAppName(TypeUtils.getOrDefault(optArg1, this._configuration.getAppName()));
       this._configuration.setTestName(TypeUtils.getOrDefault(optArg2, this._configuration.getTestName()));
-      if (!optArg3) {
-        optArg3 = TypeUtils.getOrDefault(this._configuration.getViewportSize(), await EyesWDIOUtils.getViewportSize(this._jsExecutor));
-      }
-      this._configuration.setViewportSize(optArg3);
+      this._configuration.setViewportSize(TypeUtils.getOrDefault(optArg3, this._configuration.getViewportSize()));
       this._configuration.setSessionType(TypeUtils.getOrDefault(optArg4, this._configuration.getSessionType()));
+    }
+    if (!this._configuration.getViewportSize()) {
+      //todo set first viewportSize from browsersInfo
+      this._configuration.setViewportSize(await this._driver.getDefaultContentViewportSize());
     }
 
     if (configuration) {

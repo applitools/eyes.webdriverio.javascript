@@ -130,9 +130,9 @@ class EyesWDIO extends EyesBase {
   // noinspection JSUnusedGlobalSymbols
   /**
    * @param {Object} driver
-   * @param {String} varArg1 - Application name
-   * @param {String} varArg2 - Test name
-   * @param {RectangleSize|{width: number, height: number}} varArg3 - Viewport size
+   * @param {String} [varArg1] - Application name
+   * @param {String} [varArg2] - Test name
+   * @param {RectangleSize|{width: number, height: number}} [varArg3] - Viewport size
    * @param {SessionType} [varArg4=null] - The type of test (e.g.,  standard test / visual performance test).
    * @returns {Promise<EyesWebDriver|object>}
    */
@@ -141,6 +141,9 @@ class EyesWDIO extends EyesBase {
 
     this._logger.verbose('Running using Webdriverio module');
 
+    this._driver = driver instanceof EyesWebDriver ? driver : new EyesWebDriver(this._logger, new WebDriver(driver), this);
+    this._jsExecutor = new WDIOJSExecutor(this._driver);
+
     if (varArg1 instanceof Configuration) {
       this._configuration.mergeConfig(varArg1);
     } else {
@@ -148,6 +151,9 @@ class EyesWDIO extends EyesBase {
       this._configuration.setTestName(TypeUtils.getOrDefault(varArg2, this._configuration.getTestName()));
       this._configuration.setViewportSize(TypeUtils.getOrDefault(varArg3, this._configuration.getViewportSize()));
       this._configuration.setSessionType(TypeUtils.getOrDefault(varArg4, this._configuration.getSessionType()));
+    }
+    if (!this._configuration.getViewportSize()) {
+      this._configuration.setViewportSize(await this._driver.getDefaultContentViewportSize());
     }
 
     if (this._isDisabled) {
@@ -159,8 +165,6 @@ class EyesWDIO extends EyesBase {
       varArg3 = null;
     }
 
-    this._driver = driver instanceof EyesWebDriver ? driver : new EyesWebDriver(this._logger, new WebDriver(driver), this);
-
     this._screenshotFactory = new EyesWDIOScreenshotFactory(this._logger, this._driver);
 
     const userAgentString = await this._driver.getUserAgent();
@@ -170,8 +174,6 @@ class EyesWDIO extends EyesBase {
 
     this._imageProvider = ImageProviderFactory.getImageProvider(this._userAgent, this, this._logger, this._driver);
     this._regionPositionCompensation = RegionPositionCompensationFactory.getRegionPositionCompensation(this._userAgent, this, this._logger);
-
-    this._jsExecutor = new WDIOJSExecutor(this._driver);
 
     await this.openBase(this._configuration.getAppName(), this._configuration.getTestName(), this._configuration.getViewportSize(), this._configuration.getSessionType());
 

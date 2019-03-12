@@ -32,8 +32,7 @@ describe('VisualGridSimple', function () {
   it('VisualGridTestPage', async function () {
     await browser.url('https://applitools.github.io/demo/TestPages/VisualGridTestPage');
 
-    // const eyes = new Eyes();
-    const eyes = new Eyes(undefined, undefined, true);
+    const eyes = new Eyes(true);
     eyes.setBatch(new BatchInfo('EyesRenderingBatch_WDIO'));
     eyes.setCorsIframeHandle(CorsIframeHandle.BLANK);
 
@@ -43,15 +42,9 @@ describe('VisualGridSimple', function () {
     configuration.addBrowser(800, 600, BrowserType.CHROME);
     configuration.addBrowser(700, 500, BrowserType.CHROME);
     configuration.addBrowser(400, 300, BrowserType.CHROME);
-    configuration.setViewportSize({width: 800, height: 600});
 
-    // await eyes.open(browser, 'app', 'test', new RectangleSize({width: 800, height: 600}));
     eyes.setConfiguration(configuration);
     await eyes.open(browser);
-    // await eyes.open(browser, 'app', 'test');
-
-    // await eyes.setViewportSize(new RectangleSize({width: 800, height: 600}));
-    // await eyes.setViewportSize({width: 800, height: 600});
 
     await eyes.check('window', Target.window().ignoreRegions(new Region(200, 200, 50, 100)));
 
