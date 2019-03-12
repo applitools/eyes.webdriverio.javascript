@@ -1,7 +1,7 @@
 'use strict';
 
 
-const {ArgumentGuard} = require('@applitools/eyes.sdk.core');
+const {ArgumentGuard} = require('@applitools/eyes-sdk-core');
 const command = require('../services/selenium/Command');
 
 /**
@@ -12,7 +12,7 @@ class WebElement {
 
   /**
    * @param {WebDriver} driver
-   * @param {Object} element WebElement JSON object
+   * @param {Object} element - WebElement JSON object
    * @param {By|Object} locator
    */
   constructor(driver, element, locator) {
@@ -35,8 +35,7 @@ class WebElement {
       const {value: element} = r;
       return new WebElement(driver, element, locator);
     }).catch(e => {
-      const number = 3;
-      if (retry > number) {
+      if (retry > 3) {
         throw e;
       } else {
         return WebElement.findElement(driver, locator, retry++);

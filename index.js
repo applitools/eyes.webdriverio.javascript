@@ -1,4 +1,6 @@
-exports.Eyes = require('./src/Eyes');
+exports.Eyes = require('./src/Eyes').Eyes;
+exports.EyesWDIO = require('./src/EyesWDIO').EyesWDIO;
+exports.EyesVisualGrid = require('./src/EyesVisualGrid').EyesVisualGrid;
 exports.By = require('./src/By');
 exports.Target = require('./src/fluent/Target');
 exports.WebDriver = require('./src/wrappers/WebDriver');

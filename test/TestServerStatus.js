@@ -4,7 +4,7 @@ const chromedriver = require('chromedriver');
 const webdriverio = require('webdriverio');
 const {equal} = require('assert');
 const {Eyes, Target} = require('../index');
-const {RectangleSize} = require('@applitools/eyes.sdk.core');
+const {RectangleSize} = require('@applitools/eyes-sdk-core');
 const Common = require('./Common');
 
 
@@ -34,20 +34,20 @@ describe.skip(appName, function () {
     chromedriver.stop();
   });
 
-  const teardown = function () {
+  const teardown = async () => {
     let result;
-    return eyes.close().catch(() => {
+    try {
+      result = await eyes.close();
+    } catch (e) {
       return eyes.abortIfNotClosed();
-    }).then(r => {
-      result = r;
-      return browser.end();
-    }).then(() => {
-      return result;
-    });
+    } finally {
+      await browser.end();
+    }
+    return result;
   };
 
 
-  it('TestSessionSummary_Status_Failed', function () {
+  it('TestSessionSummary_Status_Failed', async () => {
     return browser.then(() => {
       const viewportSize = new RectangleSize({width: 800, height: 599});
       return eyes.open(browser, appName, appName, viewportSize);
@@ -60,7 +60,7 @@ describe.skip(appName, function () {
     });
   });
 
-  it('TestSessionSummary_Status_New', function () {
+  it('TestSessionSummary_Status_New', async () => {
     return browser.then(() => {
       const time = Date.now();
       const viewportSize = new RectangleSize({width: 800, height: 599});

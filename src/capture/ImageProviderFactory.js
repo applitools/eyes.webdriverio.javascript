@@ -1,6 +1,6 @@
 'use strict';
 
-const {BrowserNames} = require('@applitools/eyes.sdk.core');
+const {BrowserNames} = require('@applitools/eyes-sdk-core');
 
 const TakesScreenshotImageProvider = require('./TakesScreenshotImageProvider');
 const FirefoxScreenshotImageProvider = require('./FirefoxScreenshotImageProvider');
@@ -10,7 +10,7 @@ class ImageProviderFactory {
 
   /**
    * @param {UserAgent} userAgent
-   * @param {Eyes} eyes
+   * @param {Eyes|EyesWDIO} eyes
    * @param {Logger} logger
    * @param {EyesWebDriver} driver
    * @return {ImageProvider}

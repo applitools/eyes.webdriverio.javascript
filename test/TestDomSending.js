@@ -25,8 +25,15 @@ shared.examplesFor('TestDomSending', function (test) {
     equal(result.getAsExpected(), true);
   });
 
-  it('NSA', async () => {
+  it.skip('NSA', async () => {
     const url = 'https://nikita-andreev.github.io/applitools/dom_capture.html?aaa';
+    test._browser.url(url);
+    const result = await test.eyes.check('Window', Target.window().fully().sendDom());
+    equal(result.getAsExpected(), true);
+  });
+
+  it('nytimes', async () => {
+    const url = 'https://cooking.nytimes.com/';
     test._browser.url(url);
     const result = await test.eyes.check('Window', Target.window().fully().sendDom());
     equal(result.getAsExpected(), true);

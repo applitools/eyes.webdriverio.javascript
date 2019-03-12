@@ -1,6 +1,6 @@
 'use strict';
 
-const {CheckSettings, GeneralUtils, Region} = require('@applitools/eyes.sdk.core');
+const {CheckSettings, Region, TypeUtils} = require('@applitools/eyes-sdk-core');
 const By = require('../By');
 const WebElement = require('../wrappers/WebElement');
 const FrameLocator = require('./FrameLocator');
@@ -9,9 +9,9 @@ const IgnoreRegionByElement = require('./IgnoreRegionByElement');
 const FloatingRegionBySelector = require('./FloatingRegionBySelector');
 const FloatingRegionByElement = require('./FloatingRegionByElement');
 
+const USE_DEFAULT_MATCH_TIMEOUT = -1;
 
 class WebdriverioCheckSettings extends CheckSettings {
-
 
   /**
    *
@@ -34,6 +34,8 @@ class WebdriverioCheckSettings extends CheckSettings {
     if (frame) {
       this.frame(frame);
     }
+
+    /** @type {Map<string, string>} */ this._scriptHooks = new Map();
   }
 
 
@@ -43,12 +45,14 @@ class WebdriverioCheckSettings extends CheckSettings {
    * @returns {WebdriverioCheckSettings}
    */
   region(region) {
-    if (region instanceof Region) {
+    if (Region.isRegionCompatible(region)) {
       super.updateTargetRegion(region);
     } else if (region instanceof By) {
       this._targetSelector = region;
     } else if (region instanceof WebElement) {
       this._targetElement = region;
+    } else if (TypeUtils.isString(region)) {
+      this._targetSelector = By.cssSelector(region);
     } else {
       throw new TypeError("region method called with argument of unknown type!");
     }
@@ -62,9 +66,9 @@ class WebdriverioCheckSettings extends CheckSettings {
   frame(frame) {
     const fl = new FrameLocator();
     // noinspection IfStatementWithTooManyBranchesJS
-    if (Number.isInteger(frame)) {
+    if (TypeUtils.isInteger(frame)) {
       fl.setFrameIndex(frame);
-    } else if (GeneralUtils.isString(frame)) {
+    } else if (TypeUtils.isString(frame)) {
       fl.setFrameNameOrId(frame);
     } else if (frame instanceof By) {
       fl.setFrameSelector(frame);
@@ -130,7 +134,7 @@ class WebdriverioCheckSettings extends CheckSettings {
     } else if (regionOrContainer instanceof WebElement) {
       this._floatingRegions.push(new FloatingRegionByElement(regionOrContainer, maxUpOffset, maxDownOffset, maxLeftOffset, maxRightOffset));
     } else {
-      super.floating(regionOrContainer, maxUpOffset, maxDownOffset, maxLeftOffset, maxRightOffset);
+      super.floatingRegion(regionOrContainer, maxUpOffset, maxDownOffset, maxLeftOffset, maxRightOffset);
     }
     return this;
   }
@@ -151,10 +155,10 @@ class WebdriverioCheckSettings extends CheckSettings {
 
   /**
    *
-   * @param timeoutMilliseconds
+   * @param [timeoutMilliseconds]
    * @returns {WebdriverioCheckSettings}
    */
-  timeout(timeoutMilliseconds) {
+  timeout(timeoutMilliseconds = USE_DEFAULT_MATCH_TIMEOUT) {
     super.timeout(timeoutMilliseconds);
     return this;
   }
@@ -203,6 +207,46 @@ class WebdriverioCheckSettings extends CheckSettings {
    */
   getFrameChain() {
     return this._frameChain;
+  }
+
+  /**
+   * @return {string}
+   */
+  getSizeMode() {
+    if (!this._targetRegion && !this._targetElement && !this._targetSelector) {
+      if (this.getStitchContent()) {
+        return 'full-page';
+      }
+      return 'viewport';
+    } if (this._targetRegion) {
+      if (this.getStitchContent()) {
+        return 'region';
+      }
+      return 'region';
+    }
+    if (this.getStitchContent()) {
+      return 'selector';
+    }
+    return 'selector';
+  }
+
+  /**
+   * @param {string} script
+   */
+  addScriptHook(script) {
+    let scripts = this._scriptHooks.get(BEFORE_CAPTURE_SCREENSHOT);
+    if (scripts == null) {
+      scripts = [];
+      this._scriptHooks.set(BEFORE_CAPTURE_SCREENSHOT, scripts);
+    }
+    scripts.add(script);
+  }
+
+  /**
+   * @return {Map<string, string>}
+   */
+  getScriptHooks() {
+    return this._scriptHooks;
   }
 
 }
