@@ -10,7 +10,7 @@ class ImageProviderFactory {
 
   /**
    * @param {UserAgent} userAgent
-   * @param {Eyes} eyes
+   * @param {Eyes|EyesWDIO} eyes
    * @param {Logger} logger
    * @param {EyesWebDriver} driver
    * @return {ImageProvider}

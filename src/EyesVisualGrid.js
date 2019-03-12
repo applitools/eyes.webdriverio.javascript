@@ -67,16 +67,15 @@ class EyesVisualGrid extends EyesBase {
 
     let configuration;
     if (optArg1 instanceof Configuration) {
-      configuration = optArg1;
+      this._configuration.mergeConfig(optArg1);
     } else {
+      this._configuration.setAppName(TypeUtils.getOrDefault(optArg1, this._configuration.getAppName()));
+      this._configuration.setTestName(TypeUtils.getOrDefault(optArg2, this._configuration.getTestName()));
       if (!optArg3) {
-        optArg3 = await EyesWDIOUtils.getViewportSize(this._jsExecutor);
+        optArg3 = TypeUtils.getOrDefault(this._configuration.getViewportSize(), await EyesWDIOUtils.getViewportSize(this._jsExecutor));
       }
-
-      this._configuration.setAppName(optArg1);
-      this._configuration.setTestName(optArg2);
       this._configuration.setViewportSize(optArg3);
-      configuration = optArg4;
+      this._configuration.setSessionType(TypeUtils.getOrDefault(optArg4, this._configuration.getSessionType()));
     }
 
     if (configuration) {
@@ -392,6 +391,13 @@ class EyesVisualGrid extends EyesBase {
    */
   get jsExecutor() {
     return this._jsExecutor;
+  }
+
+  /**
+   * @param {Configuration} conf
+   */
+  setConfiguration(conf) {
+    this._configuration = conf;
   }
 
 }
