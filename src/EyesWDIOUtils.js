@@ -1,6 +1,6 @@
 "use strict";
 
-const {Location, RectangleSize, ArgumentGuard, GeneralUtils} = require('@applitools/eyes-sdk-core');
+const {EyesJsBrowserUtils, Location, RectangleSize, ArgumentGuard, GeneralUtils} = require('@applitools/eyes-sdk-core');
 
 const EyesDriverOperationError = require('./errors/EyesDriverOperationError');
 const ImageOrientationHandler = require('./ImageOrientationHandler');
@@ -355,29 +355,13 @@ class EyesWDIOUtils {
   /**
    * Sets the overflow of the current context's document element.
    *
-   * @param {EyesJsExecutor} executor The executor to use.
-   * @param {String} value The overflow value to set.
-   * @return {Promise.<String>} The previous value of overflow (could be {@code null} if undefined).
+   * @param {EyesJsExecutor} executor - The executor to use.
+   * @param {?string} value - The overflow value to set.
+   * @param {WebElement} [scrollbarsRoot]
+   * @return {Promise<string>} - The previous value of overflow (could be {@code null} if undefined).
    */
-  static setOverflow(executor, value) {
-    let script;
-    if (value) {
-      script =
-        "var origOverflow = document.documentElement.style.overflow; " +
-        "document.documentElement.style.overflow = \"" + value + "\"; " +
-        "return origOverflow";
-    } else {
-      script =
-        "var origOverflow = document.documentElement.style.overflow; " +
-        "document.documentElement.style.overflow = undefined; " +
-        "return origOverflow";
-    }
-
-    try {
-      return executor.executeScript(script);
-    } catch (e) {
-      throw new EyesDriverOperationError('Failed to set overflow', e);
-    }
+  static setOverflow(executor, value, scrollbarsRoot) {
+    return EyesJsBrowserUtils.setOverflow(executor, value, scrollbarsRoot);
   }
 
 
@@ -430,10 +414,11 @@ class EyesWDIOUtils {
    *
    * @param {EyesJsExecutor} executor The executor to use.
    * @param {int} stabilizationTimeout The amount of time to wait for the "hide scrollbars" action to take effect (Milliseconds). Zero/negative values are ignored.
+   * @param {WebElement} [scrollbarsRoot]
    * @return {Promise.<String>} The previous value of the overflow property (could be {@code null}).
    */
-  static async hideScrollbars(executor, stabilizationTimeout) {
-    const res = await EyesWDIOUtils.setOverflow(executor, 'hidden');
+  static async hideScrollbars(executor, stabilizationTimeout, scrollbarsRoot) {
+    const res = await EyesJsBrowserUtils.setOverflow(executor, 'hidden', scrollbarsRoot);
     if (stabilizationTimeout > 0) {
       await executor.sleep(stabilizationTimeout);
       return res;

@@ -71,8 +71,11 @@ class Common {
     this._eyes.setForceFullPageScreenshot(fps);
     this._eyes.setStitchMode(stitchMode);
     this._eyes.setHideScrollbars(true);
-    // this._eyes.setProxy('http://127.0.0.1:8000');
 
+    const proxy = TypeUtils.getOrDefault(process.env.APPLITOOLS_PROXY, null);
+    if (proxy) {
+      this._eyes.setProxy(proxy);
+    }
 
     if (batchName) {
       batchInfo = new BatchInfo(batchName);
