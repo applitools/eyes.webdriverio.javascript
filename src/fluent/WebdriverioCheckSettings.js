@@ -9,9 +9,9 @@ const IgnoreRegionByElement = require('./IgnoreRegionByElement');
 const FloatingRegionBySelector = require('./FloatingRegionBySelector');
 const FloatingRegionByElement = require('./FloatingRegionByElement');
 
+const USE_DEFAULT_MATCH_TIMEOUT = -1;
 
 class WebdriverioCheckSettings extends CheckSettings {
-
 
   /**
    *
@@ -155,10 +155,10 @@ class WebdriverioCheckSettings extends CheckSettings {
 
   /**
    *
-   * @param timeoutMilliseconds
+   * @param [timeoutMilliseconds]
    * @returns {WebdriverioCheckSettings}
    */
-  timeout(timeoutMilliseconds) {
+  timeout(timeoutMilliseconds = USE_DEFAULT_MATCH_TIMEOUT) {
     super.timeout(timeoutMilliseconds);
     return this;
   }

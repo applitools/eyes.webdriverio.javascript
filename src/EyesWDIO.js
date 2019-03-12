@@ -50,7 +50,6 @@ const DEFAULT_STITCHING_OVERLAP = 50; // px
 const DEFAULT_WAIT_BEFORE_SCREENSHOTS = 100; // Milliseconds
 // noinspection JSUnusedLocalSymbols
 const DEFAULT_WAIT_SCROLL_STABILIZATION = 200; // Milliseconds
-const USE_DEFAULT_MATCH_TIMEOUT = -1;
 
 
 class EyesWDIO extends EyesBase {
@@ -123,6 +122,8 @@ class EyesWDIO extends EyesBase {
     this._domUrl;
     /** @type {EyesWDIOScreenshotFactory} */
     this._screenshotFactory = undefined;
+    /** @type {WebElement} */
+    this._scrollRootElement = undefined;
   }
 
 
@@ -192,7 +193,7 @@ class EyesWDIO extends EyesBase {
    * @param {int} matchTimeout The amount of time to retry matching (Milliseconds).
    * @return {Promise} A promise which is resolved when the validation is finished.
    */
-  checkWindow(tag, matchTimeout = USE_DEFAULT_MATCH_TIMEOUT) {
+  checkWindow(tag, matchTimeout) {
     return this.check(tag, Target.window().timeout(matchTimeout));
   }
 
@@ -206,7 +207,7 @@ class EyesWDIO extends EyesBase {
    * @param {String} tag An optional tag to be associated with the match.
    * @return {Promise} A promise which is resolved when the validation is finished.
    */
-  checkFrame(element, matchTimeout = USE_DEFAULT_MATCH_TIMEOUT, tag) {
+  checkFrame(element, matchTimeout, tag) {
     return this.check(tag, Target.frame(element).timeout(matchTimeout).fully());
   }
 
@@ -219,7 +220,7 @@ class EyesWDIO extends EyesBase {
    * @param {int} matchTimeout The amount of time to retry matching.
    * @return {Promise} A promise which is resolved when the validation is finished.
    */
-  checkRegionBy(by, tag, matchTimeout = USE_DEFAULT_MATCH_TIMEOUT) {
+  checkRegionBy(by, tag, matchTimeout) {
     return this.check(tag, Target.region(by).timeout(matchTimeout).fully());
   }
 
@@ -234,7 +235,7 @@ class EyesWDIO extends EyesBase {
    * @param {boolean} stitchContent If {@code true}, stitch the internal content of the region (i.e., perform {@link #checkElement(By, int, String)} on the region.
    * @return {Promise} A promise which is resolved when the validation is finished.
    */
-  checkRegionInFrame(frameNameOrId, selector, matchTimeout = USE_DEFAULT_MATCH_TIMEOUT, tag, stitchContent) {
+  checkRegionInFrame(frameNameOrId, selector, matchTimeout, tag, stitchContent) {
     return this.check(tag, Target.region(selector, frameNameOrId).timeout(matchTimeout).stitchContent(stitchContent));
   }
 
@@ -276,9 +277,11 @@ class EyesWDIO extends EyesBase {
         that._targetElementLocation = null;
 
         if (targetRegion) {
-          return this._tryHideScrollbars().then(() => {
+          return this._tryHideScrollbars().then(async () => {
             that._targetElementLocation = targetRegion.getLocation();
-            return super.checkWindowBase(new RegionProvider(targetRegion), name, false, checkSettings);
+            const res = await super.checkWindowBase(new RegionProvider(targetRegion), name, false, checkSettings);
+            await that._tryRestoreScrollbars();
+            return res;
           });
         }
 
@@ -318,6 +321,8 @@ class EyesWDIO extends EyesBase {
             }).then(res_ => {
               res = res_;
               return that.getPositionProvider().restoreState(originalPosition);
+            }).then(() => {
+              return that._tryRestoreScrollbars();
             }).then(() => {
               return res;
             });
@@ -957,19 +962,13 @@ class EyesWDIO extends EyesBase {
    * @private
    * @return {Promise}
    */
-  _tryHideScrollbars() {
-    if (this._hideScrollbars) {
-      const that = this;
-      const originalFC = new FrameChain(that._logger, that._driver.getFrameChain());
-      const fc = new FrameChain(that._logger, that._driver.getFrameChain());
-      return EyesWDIOUtils.hideScrollbars(that._jsExecutor, 200).then(overflow => {
-        that._originalOverflow = overflow;
-        return that._tryHideScrollbarsLoop(fc);
-      }).then(() => {
-        return that._driver.switchTo().frames(originalFC);
-      }).catch(err => {
-        that._logger.log("WARNING: Failed to hide scrollbars! Error: " + err);
-      });
+  async _tryHideScrollbars() {
+    if (this._hideScrollbars || this._scrollRootElement) {
+      const originalFC = new FrameChain(this._logger, this._driver.getFrameChain());
+      const fc = new FrameChain(this._logger, this._driver.getFrameChain());
+      this._originalOverflow = await EyesWDIOUtils.hideScrollbars(this._jsExecutor, 200, this._scrollRootElement);
+      await this._tryHideScrollbarsLoop(fc);
+      await this._driver.switchTo().frames(originalFC);
     }
 
     return Promise.resolve();
@@ -980,18 +979,13 @@ class EyesWDIO extends EyesBase {
    * @param {FrameChain} fc
    * @return {Promise}
    */
-  _tryHideScrollbarsLoop(fc) {
-    if (fc.size() > 0) {
-      const that = this;
-      return that.getDriver().switchTo().parentFrame().then(() => {
-        const frame = fc.pop();
-        return EyesWDIOUtils.hideScrollbars(that._jsExecutor, 200);
-      }).then(() => {
-        return that._tryHideScrollbarsLoop(fc);
-      });
+  async _tryHideScrollbarsLoop(fc) {
+    if (this._hideScrollbars && fc.size() > 0) {
+      await this.getDriver().switchTo().parentFrame();
+      const frame = fc.pop();
+      await EyesWDIOUtils.hideScrollbars(this._jsExecutor, 200, this._scrollRootElement);
+      return this._tryHideScrollbarsLoop(fc);
     }
-
-    return Promise.resolve();
   }
 
   /**
@@ -1069,6 +1063,11 @@ class EyesWDIO extends EyesBase {
 
       await switchTo.frames(originalFrameChain);
 
+      let scrolledElement = this.getElementPositionProvider().element;
+      if (!scrolledElement) {
+        scrolledElement = await this._driver.findElementByTagName('html');
+      }
+      await this._jsExecutor.executeScript('var e = arguments[0]; if (e != null) e.setAttribute("data-applitools-scroll", "true");', scrolledElement.element);
       const entireFrameOrElement = await fullPageCapture.getStitchedRegion(this._regionToCheck, null, this.getElementPositionProvider());
 
       this._logger.verbose('Building screenshot object...');
@@ -1083,6 +1082,8 @@ class EyesWDIO extends EyesBase {
 
       await switchTo.defaultContent();
 
+      const scrollRootElement = await this.getScrollRootElement();
+      await this._jsExecutor.executeScript('var e = arguments[0]; if (e != null) e.setAttribute("data-applitools-scroll", "true");', scrollRootElement.element);
       const fullPageImage = await fullPageCapture.getStitchedRegion(Region.EMPTY, null, this._positionProviderHandler.get());
 
       await switchTo.frames(originalFrameChain);
@@ -1303,6 +1304,20 @@ class EyesWDIO extends EyesBase {
    */
   getForcedImageRotation() {
     return this.getRotation().getRotation();
+  }
+
+  /**
+   * @param {By} element
+   */
+  setScrollRootElement(element) {
+    this._scrollRootElement = this._driver.findElement(element);
+  }
+
+  /**
+   * @return {WebElement}
+   */
+  async getScrollRootElement() {
+    return this._scrollRootElement ? this._scrollRootElement : await this._driver.findElementByTagName('html');
   }
 
   /**
