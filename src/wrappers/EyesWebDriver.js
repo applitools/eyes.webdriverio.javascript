@@ -255,24 +255,24 @@ class EyesWebDriver {
     }
   }
 
+
   /**
-   * @param {String} url
+   * @param {By} selector
+   * @return {Promise<void>}
+   */
+  async click(selector) {
+    await this.remoteWebDriver.click(selector.value);
+  }
+
+
+  /**
+   * @param {String} [url]
    * @return {*|Promise}
    * @override
    */
   url(url) {
     this._frameChain.clear();
     return this.webDriver.url(url);
-  }
-
-  /**
-   * @param {String} url
-   * @return {*|Promise}
-   * @override
-   */
-  url(url) {
-    this._frameChain.clear();
-    return Promise.resolve(this.remoteWebDriver.url(url));
   }
 
 
@@ -283,17 +283,8 @@ class EyesWebDriver {
   }
 
 
-  end() {
-    return this.remoteWebDriver.end();
-  }
-
-
   /** @override */
   getUrl() {
-    return this.webDriver.getUrl();
-  }
-
-  getCurrentUrl() {
     return this.webDriver.getUrl();
   }
 
