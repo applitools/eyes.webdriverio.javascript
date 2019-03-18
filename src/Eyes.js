@@ -1,6 +1,6 @@
 'use strict';
 
-const {TypeUtils} = require('@applitools/eyes-common');
+const {TypeUtils} = require('@applitools/eyes-sdk-core');
 
 const {EyesWDIO} = require('./EyesWDIO');
 const {EyesVisualGrid} = require('./EyesVisualGrid');

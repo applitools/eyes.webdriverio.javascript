@@ -3,7 +3,6 @@
 const chromedriver = require('chromedriver');
 const webdriverio = require('webdriverio');
 const {BatchInfo, Region, CorsIframeHandle} = require('@applitools/eyes-sdk-core');
-const {RectangleSize} = require('@applitools/eyes-common');
 const {BrowserType, SeleniumConfiguration} = require('@applitools/eyes-selenium');
 const {Eyes, Target} = require('../index');
 
@@ -37,8 +36,8 @@ describe('VisualGridSimple', function () {
     eyes.setCorsIframeHandle(CorsIframeHandle.BLANK);
 
     const configuration = new SeleniumConfiguration();
-    configuration.setTestName('Open Concurrency with Batch 2');
-    configuration.setAppName('RenderingGridIntegration');
+    configuration.testName = 'Open Concurrency with Batch 2';
+    configuration.appName = 'RenderingGridIntegration';
     configuration.addBrowser(800, 600, BrowserType.CHROME);
     configuration.addBrowser(700, 500, BrowserType.CHROME);
     configuration.addBrowser(400, 300, BrowserType.CHROME);
@@ -52,7 +51,7 @@ describe('VisualGridSimple', function () {
 
     await eyes.check('selector', Target.region('#scroll1'));
 
-    await eyes.getRunner().getAllResults();
+    await eyes.getRunner().getAllResults(false);
 
     await browser.end();
   });

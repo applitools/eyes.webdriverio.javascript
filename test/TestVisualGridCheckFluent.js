@@ -28,8 +28,8 @@ describe('VisualGridCheckFluent', function () {
 
   beforeEach(async function () {
     const configuration = new SeleniumConfiguration();
-    configuration.setAppName(this.test.parent.title);
-    configuration.setTestName(this.currentTest.title);
+    configuration.appName = this.test.parent.title;
+    configuration.testName = this.currentTest.title;
     configuration.addBrowser(1200, 800, BrowserType.CHROME);
     configuration.addBrowser(1200, 800, BrowserType.FIREFOX);
 
