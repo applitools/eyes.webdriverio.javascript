@@ -11,3 +11,4 @@ exports.EyesWDIOScreenshot = require('./src/capture/EyesWDIOScreenshot');
 exports.EyesWDIOUtils = require('./src/EyesWDIOUtils');
 exports.NetHelper = require('./src/services/NetHelper');
 exports.StitchMode = require('./src/StitchMode');
+exports.StitchMode = require('./src/StitchMode');

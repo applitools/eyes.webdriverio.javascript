@@ -4,7 +4,7 @@ const chromedriver = require('chromedriver');
 const webdriverio = require('webdriverio');
 const {ConsoleLogHandler, Region} = require('@applitools/eyes-sdk-core');
 const {BrowserType, SeleniumConfiguration} = require('@applitools/eyes-selenium');
-const {By, Eyes, Target, WebDriver} = require('../index');
+const {By, Eyes, Target} = require('../index');
 const Common = require('./Common');
 
 let browser, /** @type {Eyes} */ eyes;
@@ -18,7 +18,7 @@ describe('VisualGridCheckFluent', function () {
     browser = webdriverio.remote(chrome);
     await browser.init();
 
-    eyes = new Eyes(undefined, undefined, true);
+    eyes = new Eyes(true);
     eyes.setApiKey(process.env.APPLITOOLS_API_KEY);
     eyes.setLogHandler(new ConsoleLogHandler(false));
     // eyes.setProxy('http://localhost:8000');
@@ -28,12 +28,13 @@ describe('VisualGridCheckFluent', function () {
 
   beforeEach(async function () {
     const configuration = new SeleniumConfiguration();
-    configuration.setAppName(this.test.parent.title);
-    configuration.setTestName(this.currentTest.title);
+    configuration.appName = this.test.parent.title;
+    configuration.testName = this.currentTest.title;
     configuration.addBrowser(1200, 800, BrowserType.CHROME);
     configuration.addBrowser(1200, 800, BrowserType.FIREFOX);
 
-    browser = await eyes.open(browser, configuration);
+    eyes.configuration = configuration;
+    browser = await eyes.open(browser);
   });
 
   afterEach(async function () {

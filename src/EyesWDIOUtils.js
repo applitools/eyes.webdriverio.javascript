@@ -414,7 +414,7 @@ class EyesWDIOUtils {
    *
    * @param {EyesJsExecutor} executor The executor to use.
    * @param {int} stabilizationTimeout The amount of time to wait for the "hide scrollbars" action to take effect (Milliseconds). Zero/negative values are ignored.
-   * @param {WebElement} [scrollbarsRoot]
+   * @param {WebElement} scrollbarsRoot
    * @return {Promise.<String>} The previous value of the overflow property (could be {@code null}).
    */
   static async hideScrollbars(executor, stabilizationTimeout, scrollbarsRoot) {

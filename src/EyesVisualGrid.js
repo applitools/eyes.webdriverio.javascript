@@ -2,9 +2,9 @@
 
 const {makeVisualGridClient} = require('@applitools/visual-grid-client');
 const {getProcessPageAndSerializeScript} = require('@applitools/dom-snapshot');
-const {ArgumentGuard, TypeUtils} = require('@applitools/eyes-common');
 
 const {
+  ArgumentGuard,
   EyesBase,
   RectangleSize,
   TestFailedError,
@@ -12,6 +12,7 @@ const {
   CorsIframeHandle,
   CorsIframeHandler,
   Configuration,
+  TypeUtils
 } = require('@applitools/eyes-sdk-core');
 
 const {BrowserType, SeleniumConfiguration} = require('@applitools/eyes-selenium');
@@ -69,14 +70,14 @@ class EyesVisualGrid extends EyesBase {
     if (optArg1 instanceof Configuration) {
       this._configuration.mergeConfig(optArg1);
     } else {
-      this._configuration.setAppName(TypeUtils.getOrDefault(optArg1, this._configuration.getAppName()));
-      this._configuration.setTestName(TypeUtils.getOrDefault(optArg2, this._configuration.getTestName()));
-      this._configuration.setViewportSize(TypeUtils.getOrDefault(optArg3, this._configuration.getViewportSize()));
-      this._configuration.setSessionType(TypeUtils.getOrDefault(optArg4, this._configuration.getSessionType()));
+      this._configuration.appName = TypeUtils.getOrDefault(optArg1, this._configuration.appName);
+      this._configuration.testName = TypeUtils.getOrDefault(optArg2, this._configuration.testName);
+      this._configuration.viewportSize = TypeUtils.getOrDefault(optArg3, this._configuration.viewportSize);
+      this._configuration.sessionType = TypeUtils.getOrDefault(optArg4, this._configuration.sessionType);
     }
-    if (!this._configuration.getViewportSize()) {
+    if (!this._configuration.viewportSize) {
       //todo set first viewportSize from browsersInfo
-      this._configuration.setViewportSize(await this._driver.getDefaultContentViewportSize());
+      this._configuration.viewportSize = await this._driver.getDefaultContentViewportSize();
     }
 
     if (configuration) {
@@ -84,48 +85,49 @@ class EyesVisualGrid extends EyesBase {
       this._configuration.mergeConfig(newConfiguration);
     }
 
-    if (this._configuration.getBrowsersInfo().length === 0 && this._configuration.getViewportSize()) {
-      const viewportSize = this._configuration.getViewportSize();
+    if (this._configuration.browsersInfo.length === 0 && this._configuration.viewportSize) {
+      const viewportSize = this._configuration.viewportSize;
       this._configuration.addBrowser(viewportSize.getWidth(), viewportSize.getHeight(), BrowserType.CHROME);
     }
 
     const {openEyes} = makeVisualGridClient({
-      apiKey: this._configuration.getApiKey(),
-      showLogs: this._configuration.getShowLogs(),
-      saveDebugData: this._configuration.getSaveDebugData(),
-      proxy: this._configuration.getProxy(),
-      serverUrl: this._configuration.getServerUrl(),
-      renderConcurrencyFactor: this._configuration.getConcurrentSessions(),
+      apiKey: this._configuration.apiKey,
+      showLogs: this._configuration.showLogs,
+      saveDebugData: this._configuration.saveDebugData,
+      proxy: this._configuration.proxy,
+      serverUrl: this._configuration.serverUrl,
+      renderConcurrencyFactor: this._configuration.concurrentSessions,
     });
 
     this._processPageAndSerializeScript = await getProcessPageAndSerializeScript();
 
-    if (this._configuration.getViewportSize()) {
-      await this.setViewportSize(this._configuration.getViewportSize());
+    if (this._configuration.viewportSize) {
+      const vs = this._configuration.viewportSize;
+      await this.setViewportSize(vs);
     }
 
     const {checkWindow, close} = await openEyes({
       logger: this._logger,
 
-      appName: this._configuration.getAppName(),
-      testName: this._configuration.getTestName(),
-      browser: this._configuration.getBrowsersInfo(),
-      properties: this._configuration.getProperties(),
-      batchName: this._configuration.getBatch() && this._configuration.getBatch().getName(),
-      batchId: this._configuration.getBatch() && this._configuration.getBatch().getId(),
-      baselineBranchName: this._configuration.getBaselineBranchName(),
-      baselineEnvName: this._configuration.getBaselineEnvName(),
-      baselineName: this._configuration.getBaselineEnvName(),
-      envName: this._configuration.getEnvironmentName(),
-      branchName: this._configuration.getBranchName(),
-      saveFailedTests: this._configuration.getSaveFailedTests(),
-      saveNewTests: this._configuration.getSaveNewTests(),
-      compareWithParentBranch: this._configuration.getCompareWithParentBranch(),
-      ignoreBaseline: this._configuration.getIgnoreBaseline(),
-      parentBranchName: this._configuration.getParentBranchName(),
-      agentId: this._configuration.getAgentId(),
-      isDisabled: this._configuration.getIsDisabled(),
-      matchTimeout: this._configuration.getMatchTimeout(),
+      appName: this._configuration.appName,
+      testName: this._configuration.testName,
+      browser: this._configuration.browsersInfo,
+      properties: this._configuration.properties,
+      batchName: this._configuration.batch && this._configuration.batch.getName(),
+      batchId: this._configuration.batch && this._configuration.batch.getId(),
+      baselineBranchName: this._configuration.baselineBranchName,
+      baselineEnvName: this._configuration.baselineEnvName,
+      baselineName: this._configuration.baselineEnvName,
+      envName: this._configuration.environmentName,
+      branchName: this._configuration.branchName,
+      saveFailedTests: this._configuration.saveFailedTests,
+      saveNewTests: this._configuration.saveNewTests,
+      compareWithParentBranch: this._configuration.compareWithParentBranch,
+      ignoreBaseline: this._configuration.ignoreBaseline,
+      parentBranchName: this._configuration.parentBranchName,
+      agentId: this._configuration.agentId,
+      isDisabled: this._configuration.isDisabled,
+      matchTimeout: this._configuration.matchTimeout,
 
       ignoreCaret: this._defaultMatchSettings.getIgnoreCaret(),
       matchLevel: this._defaultMatchSettings.getMatchLevel(),
@@ -310,12 +312,12 @@ class EyesVisualGrid extends EyesBase {
   }
 
   /**
-   * @param {RectangleSize} viewportSize
+   * @param {RectangleSize|object} viewportSize
    */
   async setViewportSize(viewportSize) {
     ArgumentGuard.notNull(viewportSize, 'viewportSize');
     viewportSize = new RectangleSize(viewportSize);
-    this._configuration.setViewportSize(viewportSize);
+    this._configuration.viewportSize = viewportSize;
 
     if (this._driver) {
       const originalFrame = this._driver.getFrameChain();
@@ -323,14 +325,14 @@ class EyesVisualGrid extends EyesBase {
 
       await EyesWDIOUtils.setViewportSize(this._logger, this._driver, viewportSize);
 
-/*
-      try {
-        await EyesWDIOUtils.setViewportSize(this._logger, this._driver, viewportSize);
-      } catch (err) {
-        await this._driver.switchTo().frames(originalFrame); // Just in case the user catches that error
-        throw new TestFailedError('Failed to set the viewport size', err);
-      }
-*/
+      /*
+            try {
+              await EyesWDIOUtils.setViewportSize(this._logger, this._driver, viewportSize);
+            } catch (err) {
+              await this._driver.switchTo().frames(originalFrame); // Just in case the user catches that error
+              throw new TestFailedError('Failed to set the viewport size', err);
+            }
+      */
 
       await this._driver.switchTo().frames(originalFrame);
     }
@@ -395,17 +397,49 @@ class EyesVisualGrid extends EyesBase {
   }
 
   /**
+   * @deprecated
    * @param {Configuration} conf
    */
   setConfiguration(conf) {
-    this._configuration = conf;
+    if (!(conf instanceof Configuration)) {
+      conf = new Configuration(conf);
+    }
+
+    this._configuration.mergeConfig(conf);
+  }
+
+  /**
+   * @deprecated
+   * @return {Configuration}
+   */
+  getConfiguration() {
+    return this._configuration;
+  }
+
+  /**
+   * @param {Configuration} conf
+   */
+  set configuration(conf) {
+    if (!(conf instanceof Configuration)) {
+      conf = new Configuration(conf);
+    }
+
+    this._configuration.mergeConfig(conf);
   }
 
   /**
    * @return {Configuration}
    */
-  getConfiguration() {
+  get configuration() {
     return this._configuration;
+  }
+
+  setApiKey(apiKey) {
+    this._configuration.apiKey = apiKey;
+  }
+
+  getApiKey() {
+    return this._configuration.apiKey;
   }
 
 }
