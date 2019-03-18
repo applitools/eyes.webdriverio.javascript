@@ -1521,6 +1521,7 @@ class EyesWDIO extends EyesBase {
   }
 
   /**
+   * @deprecated
    * @param {Configuration} conf
    */
   setConfiguration(conf) {
@@ -1528,9 +1529,24 @@ class EyesWDIO extends EyesBase {
   }
 
   /**
+   * @deprecated
    * @return {Configuration}
    */
   getConfiguration() {
+    return this._configuration;
+  }
+
+  /**
+   * @param {Configuration} conf
+   */
+  set configuration(conf) {
+    this._configuration = conf;
+  }
+
+  /**
+   * @return {Configuration}
+   */
+  get configuration() {
     return this._configuration;
   }
 

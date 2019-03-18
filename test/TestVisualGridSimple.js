@@ -43,7 +43,7 @@ describe('VisualGridSimple', function () {
     configuration.addBrowser(700, 500, BrowserType.CHROME);
     configuration.addBrowser(400, 300, BrowserType.CHROME);
 
-    eyes.setConfiguration(configuration);
+    eyes.configuration = configuration;
     await eyes.open(browser);
 
     await eyes.check('window', Target.window().ignoreRegions(new Region(200, 200, 50, 100)));
