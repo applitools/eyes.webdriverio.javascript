@@ -1532,7 +1532,7 @@ class EyesWDIO extends EyesBase {
       conf = new Configuration(conf);
     }
 
-    this._configuration.mergeConfig(conf);
+    this._configuration = conf;
   }
 
   /**
@@ -1551,7 +1551,7 @@ class EyesWDIO extends EyesBase {
       conf = new Configuration(conf);
     }
 
-    this._configuration.mergeConfig(conf);
+    this._configuration = conf;
   }
 
   /**

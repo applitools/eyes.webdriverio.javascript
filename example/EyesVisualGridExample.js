@@ -19,8 +19,6 @@ const {BrowserType, SeleniumConfiguration, DeviceName, ScreenOrientation} = requ
 
   // Initialize the eyes SDK and set your private API key.
   const eyes = new Eyes(true);
-  // eyes.setApiKey('Your API Key');
-  eyes.setApiKey('97ELuwdIiAilbeumIilysV8yY24tygCeRFFTYEBO7EfE110');
 
   try {
     const configuration = new SeleniumConfiguration();
@@ -29,6 +27,8 @@ const {BrowserType, SeleniumConfiguration, DeviceName, ScreenOrientation} = requ
     configuration.addBrowser(1200, 800, BrowserType.CHROME);
     configuration.addBrowser(1200, 800, BrowserType.FIREFOX);
     configuration.addDevice(DeviceName.iPhone_4, ScreenOrientation.PORTRAIT);
+    // set your private API key
+    configuration.apiKey = process.env.APPLITOOLS_API_KEY;
     eyes.configuration = configuration;
 
     driver = await eyes.open(driver);
