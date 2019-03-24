@@ -2,7 +2,7 @@
 
 const chromedriver = require('chromedriver');
 const webdriverio = require('webdriverio');
-const {By, Eyes, Target} = require('../index'); // should be replaced to '@applitools/eyes.webdriverio'
+const {By, Eyes, Target, VisualGridRunner} = require('../index'); // should be replaced to '@applitools/eyes.webdriverio'
 const {BrowserType, SeleniumConfiguration, DeviceName, ScreenOrientation} = require('@applitools/eyes-selenium');
 
 (async () => {
@@ -17,8 +17,8 @@ const {BrowserType, SeleniumConfiguration, DeviceName, ScreenOrientation} = requ
   let driver = webdriverio.remote(chrome);
   await driver.init();
 
-  // Initialize the eyes SDK and set your private API key.
-  const eyes = new Eyes(true);
+  // Initialize the eyes SDK
+  const eyes = new Eyes(new VisualGridRunner(3));
 
   try {
     const configuration = new SeleniumConfiguration();
