@@ -131,7 +131,7 @@ class EyesTargetLocator extends TargetLocator {
       this._logger.verbose("Making preparations...");
       this._tsInstance.getFrameChain().pop();
       this._logger.verbose("Done! Switching to parent frame..");
-      return this._tsInstance.remoteWebDriver.frameParent().then(() => {
+      return this._tsInstance.remoteWebDriver.switchToParentFrame().then(() => {
         that._logger.verbose("Done!");
         return that._tsInstance;
       });

@@ -31,8 +31,7 @@ class WebElement {
    * @return {Promise.<WebElement>}
    */
   static findElement(driver, locator, retry = 0) {
-    return driver.remoteWebDriver.element(locator.value).then(r => {
-      const {value: element} = r;
+    return driver.remoteWebDriver.findElement(locator.using, locator.value).then(element => {
       return new WebElement(driver, element, locator);
     }).catch(e => {
       if (retry > 3) {
@@ -55,22 +54,24 @@ class WebElement {
   /**
    * @returns {Promise.<{x, y}>}
    */
-  getLocation() {
-    return this._driver.remoteWebDriver.elementIdLocation(this._element.ELEMENT).then(r => {
-      const {value: location} = r;
-      return location;
-    });
+  async getLocation() {
+    try {
+      return this._driver.remoteWebDriver.getElementLocation(this.element.ELEMENT);
+    } catch (e) {
+      throw e;
+    }
   }
 
 
   /**
    * @returns {Promise.<width, height>}
    */
-  getSize() {
-    return this._driver.remoteWebDriver.elementIdSize(this._element.ELEMENT).then(r => {
-      const {value: size} = r;
-      return size;
-    });
+  async getSize() {
+    try {
+      return this._driver.remoteWebDriver.getElementSize(this.element.ELEMENT);
+    } catch (e) {
+      throw e;
+    }
   }
 
 

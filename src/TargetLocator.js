@@ -13,12 +13,12 @@ class TargetLocator {
 
 
   defaultContent() {
-    return this._tsInstance.remoteWebDriver.frame();
+    return this._tsInstance.remoteWebDriver.switchToFrame(null);
   }
 
 
   frame(id) {
-    return this._tsInstance.remoteWebDriver.frame(id);
+    return this._tsInstance.remoteWebDriver.switchToFrame(id);
   }
 
 

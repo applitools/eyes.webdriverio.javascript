@@ -7,7 +7,7 @@ const EyesTargetLocator = require('./EyesTargetLocator');
 const WebElement = require('./WebElement');
 const WebDriver = require('./WebDriver');
 const EyesWDIOUtils = require('../EyesWDIOUtils');
-const By = require('../By');
+const {By} = require('../By');
 
 /*
  ---
@@ -128,7 +128,7 @@ class EyesWebDriver {
 
   async getUserAgent() {
     try {
-      let {value: userAgent} = await this.remoteWebDriver.execute('return navigator.userAgent');
+      let userAgent = await this.remoteWebDriver.execute('return navigator.userAgent');
       this._logger.verbose("user agent: " + userAgent);
       return userAgent;
     } catch (e) {
@@ -161,7 +161,7 @@ class EyesWebDriver {
    * @return {Promise.<EyesWebElement>}
    */
   async findElement(locator) {
-    const {value: element} = await this.remoteWebDriver.element(locator.value);
+    const element = await this.remoteWebDriver.findElement(locator.using, locator.value);
     return new EyesWebElement(this._logger, this, new WebElement(this._tsInstance, element, locator));
   }
 
@@ -172,7 +172,7 @@ class EyesWebDriver {
    * @return {Promise.<EyesWebElement[]>}
    */
   async findElements(locator) {
-    const {value: elements} = await this.remoteWebDriver.elements(locator.value);
+    const elements = await this.remoteWebDriver.findElements(locator.using, locator.value);
 
     return elements.map((element) => {
       return new EyesWebElement(this._logger, this, new WebElement(this._tsInstance, element, locator));
@@ -236,7 +236,7 @@ class EyesWebDriver {
     try {
       const result = await this.remoteWebDriver.execute(script, ...varArgs);
       this._logger.verbose('Done!');
-      return result.value;
+      return result;
     } catch (e) {
       this._logger.verbose("WARNING: execute script error: " + e);
       throw e;
@@ -248,7 +248,7 @@ class EyesWebDriver {
     try {
       const result = await this.remoteWebDriver.executeAsync(script, ...varArgs);
       this._logger.verbose('Done!');
-      return result.value;
+      return result;
     } catch (e) {
       this._logger.verbose("WARNING: execute script error: " + e);
       throw e;
@@ -280,6 +280,20 @@ class EyesWebDriver {
   async getCurrentUrl() {
     const {value: result} = await this.url();
     return result;
+  }
+
+
+  /**
+   * @deprecated
+   * @return {Promise<void>|void}
+   */
+  end() {
+    return this.remoteWebDriver.deleteSession();
+  }
+
+
+  deleteSession() {
+    return this.remoteWebDriver.deleteSession();
   }
 
 

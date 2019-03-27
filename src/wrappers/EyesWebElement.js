@@ -253,7 +253,7 @@ class EyesWebElement extends WebElement {
    * @returns {Promise} The result returned from the script
    */
   async executeScript(script) {
-    const webElement = await WebElement.findElement(this._eyesWebDriver.webDriver, this.getWebElement()._locator);
+    const webElement = await WebElement.findElement(this._eyesWebDriver.webDriver, this.webElement._locator);
     return this._eyesWebDriver.executeScript(script, webElement.element);
   }
 
@@ -262,7 +262,7 @@ class EyesWebElement extends WebElement {
    * @inheritDoc
    */
   getDriver() {
-    return this.getWebElement().getDriver();
+    return this.webElement.getDriver();
   }
 
   /**
@@ -270,7 +270,7 @@ class EyesWebElement extends WebElement {
    * @return {promise.Thenable.<string>}
    */
   getId() {
-    return this.getWebElement().getId();
+    return this.webElement.getId();
   }
 
   /**
@@ -279,7 +279,7 @@ class EyesWebElement extends WebElement {
    * return {EyesWebElement}
    */
   async findElement(locator) {
-    const element = await this.getWebElement().findElement(locator);
+    const element = await this.webElement.findElement(locator);
     return new EyesWebElement(this._logger, this._eyesWebDriver, element);
   }
 
@@ -288,7 +288,7 @@ class EyesWebElement extends WebElement {
    * @inheritDoc
    */
   async findElements(locator) {
-    const elements = await this.getWebElement().findElements(locator);
+    const elements = await this.webElement.findElements(locator);
     elements.map(element => new EyesWebElement(this._logger, this._eyesWebDriver, element));
   }
 
@@ -304,7 +304,7 @@ class EyesWebElement extends WebElement {
     this._eyesWebDriver.eyes.addMouseTrigger(MouseTrigger.MouseAction.Click, this);
     this._logger.verbose(`click(${currentControl})`);
 
-    return this.getWebElement().click();
+    return this.webElement.click();
   }
 
   // noinspection JSCheckFunctionSignatures
@@ -321,7 +321,7 @@ class EyesWebElement extends WebElement {
    * @inheritDoc
    */
   getTagName() {
-    return this.getWebElement().getTagName();
+    return this.webElement.getTagName();
   }
 
   /**
@@ -329,7 +329,7 @@ class EyesWebElement extends WebElement {
    * @inheritDoc
    */
   getCssValue(cssStyleProperty) {
-    return this.getWebElement().getCssValue(cssStyleProperty);
+    return this.webElement.getCssValue(cssStyleProperty);
   }
 
   /**
@@ -337,7 +337,7 @@ class EyesWebElement extends WebElement {
    * @inheritDoc
    */
   getAttribute(attributeName) {
-    return this.getWebElement().getAttribute(attributeName);
+    return this.webElement.getAttribute(attributeName);
   }
 
   /**
@@ -345,7 +345,7 @@ class EyesWebElement extends WebElement {
    * @inheritDoc
    */
   getText() {
-    return this.getWebElement().getText();
+    return this.webElement.getText();
   }
 
   // noinspection JSCheckFunctionSignatures
@@ -367,11 +367,16 @@ class EyesWebElement extends WebElement {
    */
   async getLocation() {
     // The workaround is similar to Java one, but in js we always get raw data with decimal value which we should round up.
-    const r = await super.getLocation();
-    let {x = 0, y = 0} = r;
-    x = Math.ceil(x);
-    y = Math.ceil(y);
-    return new Location(x, y);
+    try {
+      const r = await super.getLocation();
+      let {x = 0, y = 0} = r;
+      x = Math.ceil(x);
+      y = Math.ceil(y);
+      return new Location(x, y);
+    } catch (e) {
+      this._logger.verbose(`getLocation() error: ${e}`);
+      throw e;
+    }
   }
 
   /**
@@ -379,7 +384,7 @@ class EyesWebElement extends WebElement {
    * @inheritDoc
    */
   isEnabled() {
-    return this.getWebElement().isEnabled();
+    return this.webElement.isEnabled();
   }
 
   /**
@@ -387,7 +392,7 @@ class EyesWebElement extends WebElement {
    * @inheritDoc
    */
   isSelected() {
-    return this.getWebElement().isSelected();
+    return this.webElement.isSelected();
   }
 
   /**
@@ -395,7 +400,7 @@ class EyesWebElement extends WebElement {
    * @inheritDoc
    */
   submit() {
-    return this.getWebElement().submit();
+    return this.webElement.submit();
   }
 
   /**
@@ -403,7 +408,7 @@ class EyesWebElement extends WebElement {
    * @inheritDoc
    */
   clear() {
-    return this.getWebElement().clear();
+    return this.webElement.clear();
   }
 
   /**
@@ -411,7 +416,7 @@ class EyesWebElement extends WebElement {
    * @inheritDoc
    */
   isDisplayed() {
-    return this.getWebElement().isDisplayed();
+    return this.webElement.isDisplayed();
   }
 
   /**
@@ -419,28 +424,36 @@ class EyesWebElement extends WebElement {
    * @inheritDoc
    */
   takeScreenshot(opt_scroll) {
-    return this.getWebElement().takeScreenshot(opt_scroll);
+    return this.webElement.takeScreenshot(opt_scroll);
   }
 
   /**
    * @returns {Promise.<{offsetLeft, offsetTop}>}
    */
   getElementOffset() {
-    return this.getWebElement().getElementOffset();
+    return this.webElement.getElementOffset();
   }
 
   /**
    * @returns {Promise.<{scrollLeft, scrollTop}>}
    */
   getElementScroll() {
-    return this.getWebElement().getElementScroll();
+    return this.webElement.getElementScroll();
   }
 
   // noinspection JSUnusedGlobalSymbols
   /**
+   * @deprecated
    * @return {WebElement} The original element object
    */
   getWebElement() {
+    return this._webElement;
+  }
+
+  /**
+   * @return {WebElement} The original element object
+   */
+  get webElement() {
     return this._webElement;
   }
 

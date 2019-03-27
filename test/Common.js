@@ -1,7 +1,7 @@
 'use strict';
 
 const {AssertionError, deepEqual} = require('assert');
-const webdriverio = require('webdriverio');
+const {remote} = require('webdriverio');
 const chromedriver = require('chromedriver');
 const geckodriver = require('geckodriver');
 const {Eyes, NetHelper, StitchMode} = require('../index');
@@ -16,11 +16,11 @@ class Common {
 
   static get CHROME() {
     return {
-      desiredCapabilities: {
+      capabilities: {
         browserName: 'chrome',
-        chromeOptions: {
+        'goog:chromeOptions': {
           args: [
-            'disable-infobars',
+            '--disable-infobars',
             'headless'
           ]
         }
@@ -30,7 +30,7 @@ class Common {
 
   static get FIREFOX() {
     return {
-      desiredCapabilities: {
+      capabilities: {
         browserName: 'firefox',
         "moz:firefoxOptions": {
           // flag to activate Firefox headless mode (see https://github.com/mozilla/geckodriver/blob/master/README.md#firefox-capabilities for more details about moz:firefoxOptions)
@@ -42,7 +42,7 @@ class Common {
 
   static get SAFARI() {
     return {
-      desiredCapabilities: {
+      capabilities: {
         browserName: 'safari',
         version: '11.1'
       }
@@ -118,28 +118,28 @@ class Common {
 
       const seleniumServerUrl = url.parse(process.env.SELENIUM_SERVER_URL);
       browserOptions.host = seleniumServerUrl.hostname;
+      browserOptions.hostname = seleniumServerUrl.hostname;
 
-      browserOptions.port = '80';
+      browserOptions.port = 80;
       browserOptions.path = '/wd/hub';
-      // browserOptions.desiredCapabilities.seleniumVersion = '3.11.0';
+      // browserOptions.capabilities.seleniumVersion = '3.11.0';
 
-      browserOptions.desiredCapabilities.baseUrl = `http://${process.env.SAUCE_USERNAME}:${process.env.SAUCE_ACCESS_KEY}@ondemand.saucelabs.com:80/wd/hub`;
-      browserOptions.desiredCapabilities.username = process.env.SAUCE_USERNAME;
-      browserOptions.desiredCapabilities.accesskey = process.env.SAUCE_ACCESS_KEY;
-      browserOptions.desiredCapabilities.platform = platform;
-      browserOptions.desiredCapabilities.seleniumVersion = '3.14.0';
+      browserOptions.capabilities.baseUrl = `http://${process.env.SAUCE_USERNAME}:${process.env.SAUCE_ACCESS_KEY}@ondemand.saucelabs.com:80/wd/hub`;
+      browserOptions.capabilities.username = process.env.SAUCE_USERNAME;
+      browserOptions.capabilities.accesskey = process.env.SAUCE_ACCESS_KEY;
+      browserOptions.capabilities.platform = platform;
+      // browserOptions.capabilities.seleniumVersion = '3.14.0';
     } else if (!this._seleniumStandAloneMode) {
-      if (browserOptions.desiredCapabilities.browserName === 'chrome') {
-        browserOptions.port = '9515';
+      if (browserOptions.capabilities.browserName === 'chrome') {
+        browserOptions.port = 9515;
         browserOptions.path = '/';
-      } else if (browserOptions.desiredCapabilities.browserName === 'firefox') {
+      } else if (browserOptions.capabilities.browserName === 'firefox') {
         browserOptions.path = '/';
       }
     }
 
     const that = this;
-    this._browser = webdriverio.remote(browserOptions);
-    await this._browser.init();
+    this._browser = await remote(browserOptions);
     const viewportSize = rectangleSize ? new RectangleSize(rectangleSize) : null;
 
     if (that._eyes.getForceFullPageScreenshot()) {
@@ -189,6 +189,8 @@ class Common {
 
         deepEqual(this._expectedIgnoreRegions, ignoreRegions, 'Ignore regions lists differ');
       }
+
+      // equal(results.isPassed(), true);
     } catch (e) {
       if (e instanceof AssertionError) {
         error = e;
@@ -196,7 +198,7 @@ class Common {
 
       return this._eyes.abortIfNotClosed();
     } finally {
-      await this._browser.end();
+      await this._browser.deleteSession();
 
       if (error) {
         throw error;
@@ -241,12 +243,12 @@ class Common {
 
   static getPlatform(browserOptions) {
     let platform;
-    if (browserOptions && browserOptions.desiredCapabilities
-      && (browserOptions.desiredCapabilities.platform || browserOptions.desiredCapabilities.platformName)) {
-      if (browserOptions.desiredCapabilities.platform) {
-        platform = browserOptions.desiredCapabilities.platform;
+    if (browserOptions && browserOptions.capabilities
+      && (browserOptions.capabilities.platform || browserOptions.capabilities.platformName)) {
+      if (browserOptions.capabilities.platform) {
+        platform = browserOptions.capabilities.platform;
       } else {
-        platform = browserOptions.desiredCapabilities.platformName;
+        platform = browserOptions.capabilities.platformName;
       }
     } else {
       platform = process.platform;

@@ -1352,7 +1352,7 @@ class EyesWDIO extends EyesBase {
       return undefined;
     }
 
-    return this.getRemoteWebDriver().requestHandler.sessionID;
+    return this.getRemoteWebDriver().sessionId;
   };
 
 

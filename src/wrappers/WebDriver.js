@@ -20,11 +20,9 @@ class WebDriver {
    * @param {By} locator
    * @return {WebElement}
    */
-  findElement(locator) {
-    return this.remoteWebDriver.element(locator.value).then(r => {
-      const {value: element} = r;
-      return new WebElement(this, element, locator);
-    });
+  async findElement(locator) {
+    const element = await this.remoteWebDriver.findElement(locator.using, locator.value);
+    return new WebElement(this, element, locator);
   }
 
 
@@ -33,7 +31,7 @@ class WebDriver {
    * @return {Promise.Buffer} returns base64 string buffer
    */
   takeScreenshot() {
-    return this.remoteWebDriver.saveScreenshot();
+    return this.remoteWebDriver.takeScreenshot();
   }
 
 
@@ -92,8 +90,7 @@ class WebDriver {
    */
   async execute(f) {
     try {
-      const result = await this.remoteWebDriver.execute(f);
-      return result.value;
+      return this.remoteWebDriver.execute(f);
     } catch (e) {
       throw e;
     }
@@ -104,8 +101,7 @@ class WebDriver {
    */
   async executeAsync(f) {
     try {
-      const result = await this.remoteWebDriver.executeAsync(f);
-      return result.value;
+      return this.remoteWebDriver.executeAsync(f);
     } catch (e) {
       throw e;
     }

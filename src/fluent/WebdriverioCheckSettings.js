@@ -1,7 +1,7 @@
 'use strict';
 
 const {CheckSettings, Region, TypeUtils} = require('@applitools/eyes-sdk-core');
-const By = require('../By');
+const {By} = require('selenium-webdriver');
 const WebElement = require('../wrappers/WebElement');
 const FrameLocator = require('./FrameLocator');
 const IgnoreRegionBySelector = require('./IgnoreRegionBySelector');

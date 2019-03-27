@@ -46,6 +46,7 @@ shared.examplesFor('TestFluentApi', function (test) {
     equal(result.getAsExpected(), true);
   });
 
+// fixme
   it('TestCheckRegionInFrameInFrame_Fluent', async () => {
     const result = await test.eyes.check('Fluent - Region in Frame in Frame', Target.frame('frame1')
       .frame('frame1-1')
@@ -90,6 +91,7 @@ shared.examplesFor('TestFluentApi', function (test) {
     equal(result1.getAsExpected() && result2.getAsExpected() && result3.getAsExpected() && result4.getAsExpected() && result5.getAsExpected(), true);
   });
 
+// fixme
   it('TestCheckFrameInFrame_Fully_Fluent2', async () => {
     const result1 = await test.eyes.check("Fluent - Window with Ignore region 2", Target.window().fully());
     const result2 = await test.eyes.check("Fluent - Full Frame in Frame 2", Target.frame("frame1").frame("frame1-1").fully());
@@ -123,6 +125,7 @@ shared.examplesFor('TestFluentApi', function (test) {
     equal(result.getAsExpected(), true);
   });
 
+  // fixme
   it('TestCheckElementWithIgnoreRegionByElementOutsideTheViewport_Fluent', async () => {
     const element = await test.eyes.getDriver().webDriver.findElement(By.id('overflowing-div-image'));
     const ignoreElement = await test.eyes.getDriver().webDriver.findElement(By.id('overflowing-div'));
@@ -138,7 +141,7 @@ shared.examplesFor('TestFluentApi', function (test) {
   });
 
   it('TestCheckFullWindowWithMultipleIgnoreRegionsBySelector_Fluent', async () => {
-    const result = await test.eyes.check('Fluent - Region by element', Target.window().fully().ignore(By.cssSelector('.ignore')));
+    const result = await test.eyes.check('Fluent - Region by element', Target.window().fully().ignore(By.css('.ignore')));
     equal(result.getAsExpected(), true);
     test.setExpectedIgnoreRegions(new Region(172, 928, 456, 306), new Region(8, 1270, 784, 206), new Region(10, 284, 302, 182));
   });

@@ -22,7 +22,7 @@ class WDIOJSExecutor extends EyesJsExecutor {
     try {
       const result = await this._driver.remoteWebDriver.execute(script, ...varArgs);
       this._driver.eyes._logger.verbose('Done!');
-      return result.value;
+      return result;
     } catch (e) {
       this._driver.eyes._logger.verbose(`Error executeScript: ${script}\nargs: ${JSON.stringify(varArgs)}`);
       throw e;
@@ -34,7 +34,7 @@ class WDIOJSExecutor extends EyesJsExecutor {
     try {
       const result = await this._driver.remoteWebDriver.executeAsync(script, ...varArgs);
       this._driver.eyes._logger.verbose('Done!');
-      return result.value;
+      return result;
     } catch (e) {
       this._driver.eyes._logger.verbose("WARNING: execute script error: " + e);
       throw e;

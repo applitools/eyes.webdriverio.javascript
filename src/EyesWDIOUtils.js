@@ -29,18 +29,12 @@ let imageOrientationHandler = new class ImageOrientationHandlerImpl extends Imag
 
   /** @override */
   async tryAutomaticRotation(logger, driver, image) {
-    const {value: res} = await driver.execute(() => 0);
-    return res;
+    return 0;
   }
-};
+}();
 
 // noinspection JSUnusedLocalSymbols
-let javascriptHandler = new class JavascriptHandlerImpl extends JavascriptHandler {
-  /** @override */
-  handle(script, ...args) {
-    throw new Error('You should init javascriptHandler before, using setJavascriptHandler method.');
-  }
-};
+let javascriptHandler = new class JavascriptHandlerImpl extends JavascriptHandler {}();
 
 
 class EyesWDIOUtils {
@@ -457,7 +451,7 @@ class EyesWDIOUtils {
       logger.verbose("Using window size as viewport size.");
 
       /** {width:number, height:number} */
-      const {value: size} = await executor.remoteWebDriver.windowHandleSize();
+      const size = await executor.remoteWebDriver.getWindowSize();
       let width = size.width;
       let height = size.height;
       try {
@@ -469,7 +463,9 @@ class EyesWDIOUtils {
           height = temp;
         }
       } catch (ignored) {
-        // Not every IWebDriver supports querying for orientation.
+        // todo
+        console.log(ignored);
+        // Not every WebDriver supports querying for orientation.
       }
 
       logger.verbose(`Done! Size ${width} x ${height}`);
@@ -516,10 +512,9 @@ class EyesWDIOUtils {
   static async _setBrowserSizeLoop(logger, browser, requiredSize, sleep = 1000, retries = 3) {
     logger.verbose("Trying to set browser size to:", requiredSize);
 
-    await browser.remoteWebDriver.windowHandleSize({width: requiredSize.getWidth(), height: requiredSize.getHeight()});
-    await GeneralUtils.sleep(sleep);
-    const size = await browser.remoteWebDriver.windowHandleSize();
-    const currentSize = new RectangleSize(size.value.width, size.value.height);
+    await browser.remoteWebDriver.setWindowSize(requiredSize.getWidth(), requiredSize.getHeight());
+    const size = await browser.remoteWebDriver.getWindowSize();
+    const currentSize = new RectangleSize(size.width, size.height);
     logger.log(`Current browser size: ${currentSize}`);
     if (currentSize.equals(requiredSize)) {
       return true;
@@ -542,11 +537,11 @@ class EyesWDIOUtils {
    */
   static async setBrowserSizeByViewportSize(logger, browser, actualViewportSize, requiredViewportSize) {
     /** {width:number, height:number} */
-    const browserSize = await browser.remoteWebDriver.windowHandleSize();
+    const browserSize = await browser.remoteWebDriver.getWindowSize();
     logger.verbose("Current browser size:", browserSize);
     const requiredBrowserSize = {
-      width: browserSize.value.width + (requiredViewportSize.getWidth() - actualViewportSize.getWidth()),
-      height: browserSize.value.height + (requiredViewportSize.getHeight() - actualViewportSize.getHeight())
+      width: browserSize.width + (requiredViewportSize.getWidth() - actualViewportSize.getWidth()),
+      height: browserSize.height + (requiredViewportSize.getHeight() - actualViewportSize.getHeight())
     };
     return EyesWDIOUtils.setBrowserSize(logger, browser, new RectangleSize(requiredBrowserSize));
   }
@@ -579,7 +574,7 @@ class EyesWDIOUtils {
     // We move the window to (0,0) to have the best chance to be able to
     // set the viewport size as requested.
     try {
-      await browser.remoteWebDriver.windowHandlePosition({x: 0, y: 0});
+      await browser.remoteWebDriver.setWindowPosition(0, 0);
     } catch (ignored) {
       logger.verbose("Warning: Failed to move the browser window to (0,0)");
     }
@@ -610,7 +605,7 @@ class EyesWDIOUtils {
     const heightDiff = actualViewportSize.getHeight() - requiredSize.getHeight();
     const heightStep = heightDiff > 0 ? -1 : 1;
 
-    const browserSize = await browser.remoteWebDriver.windowHandleSize();
+    const browserSize = await browser.remoteWebDriver.getWindowSize();
     const currWidthChange = 0;
     const currHeightChange = 0;
     // We try the zoom workaround only if size difference is reasonable.
@@ -682,7 +677,7 @@ class EyesWDIOUtils {
     lastRequiredBrowserSize = requiredBrowserSize;
     actualViewportSize = EyesWDIOUtils.getViewportSize(browser.eyes.jsExecutor);
 
-    logger.verbose("Current viewport size:", actualViewportSize);
+    logger.verbose("Current viewport size (loop):", actualViewportSize);
     if (actualViewportSize.equals(requiredSize)) {
       return true;
     }
