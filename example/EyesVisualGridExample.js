@@ -59,6 +59,6 @@ const {BrowserType, SeleniumConfiguration, DeviceName, ScreenOrientation} = requ
     // If the test was aborted before eyes.close was called ends the test as aborted.
     await eyes.abortIfNotClosed();
 
-    chromedriver.stop();
+    await chromedriver.stop();
   }
 })();
