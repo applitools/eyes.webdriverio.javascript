@@ -218,7 +218,7 @@ class EyesVisualGrid extends EyesBase {
    * @param {boolean} [throwEx]
    * @return {Promise<void>}
    */
-  async closeAndPrintResults(throwEx = true) {
+  async closeAndPrintResults(throwEx = false) {
     const results = await this.closeAndReturnResults(throwEx);
 
     const testResultsFormatter = new TestResultsFormatter(results);
@@ -239,7 +239,7 @@ class EyesVisualGrid extends EyesBase {
 
   getRunner() {
     const runner = {};
-    runner.getAllResults = async (throwEx) => {
+    runner.getAllResults = async (throwEx = false) => {
       return await this.closeAndReturnResults(throwEx);
     };
     return runner;
