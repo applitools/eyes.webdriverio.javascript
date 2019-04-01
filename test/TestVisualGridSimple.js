@@ -1,6 +1,8 @@
 'use strict';
 
 const chromedriver = require('chromedriver');
+const {remote} = require('webdriverio');
+const {equal} = require('assert');
 const webdriverio = require('webdriverio');
 const {BatchInfo, Region, CorsIframeHandle} = require('@applitools/eyes-sdk-core');
 const {BrowserType, SeleniumConfiguration} = require('@applitools/eyes-selenium');
@@ -18,10 +20,13 @@ describe('VisualGridSimple', function () {
     chromedriver.start();
   });
 
-  beforeEach(function () {
+  beforeEach(async () => {
     const chrome = Common.CHROME;
-    browser = webdriverio.remote(chrome);
-    return browser.init();
+    browser = await remote(chrome);
+  });
+
+  afterEach(async () => {
+    await browser.deleteSession();
   });
 
   after(async function () {
@@ -51,9 +56,9 @@ describe('VisualGridSimple', function () {
 
     await eyes.check('selector', Target.region('#scroll1'));
 
-    await eyes.getRunner().getAllResults(false);
+    const result = await eyes.close(false);
 
-    await browser.end();
+    equal(result.isPassed(), true);
   });
 
 });
