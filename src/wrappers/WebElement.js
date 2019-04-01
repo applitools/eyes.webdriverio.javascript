@@ -91,7 +91,7 @@ class WebElement {
    * @returns {Promise}
    */
   click() {
-    return this._driver.remoteWebDriver.elementIdClick(this._element.ELEMENT);
+    return this._driver.remoteWebDriver.elementClick(this._element.ELEMENT);
   }
 
 

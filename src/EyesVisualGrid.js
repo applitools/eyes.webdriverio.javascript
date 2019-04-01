@@ -338,6 +338,26 @@ class EyesVisualGrid extends EyesBase {
     }
   }
 
+  async addMouseTrigger(action, control, cursor) {
+    if (this._configuration.isDisabled) {
+      this._logger.verbose(`Ignoring ${action} (disabled)`);
+      return;
+    }
+
+    // Triggers are actually performed on the previous window.
+    if (!this._lastScreenshot) {
+      this._logger.verbose(`Ignoring ${action} (no screenshot)`);
+      return;
+    }
+
+    if (!FrameChain.isSameFrameChain(this._driver.getFrameChain(), this._lastScreenshot.getFrameChain())) {
+      this._logger.verbose(`Ignoring ${action} (different frame)`);
+      return;
+    }
+
+    EyesBase.prototype.addMouseTriggerBase.call(this, action, control, cursor);
+  }
+
   // noinspection JSUnusedGlobalSymbols
   /**
    * @return {boolean}

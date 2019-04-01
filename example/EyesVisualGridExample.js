@@ -1,7 +1,7 @@
 'use strict';
 
 const chromedriver = require('chromedriver');
-const webdriverio = require('webdriverio');
+const {remote} = require('webdriverio');
 const {By, Eyes, Target} = require('../index'); // should be replaced to '@applitools/eyes.webdriverio'
 const {BrowserType, SeleniumConfiguration, DeviceName, ScreenOrientation} = require('@applitools/eyes-selenium');
 
@@ -10,17 +10,17 @@ const {BrowserType, SeleniumConfiguration, DeviceName, ScreenOrientation} = requ
 
   // Open a Chrome browser.
   const chrome = {
-    desiredCapabilities: {
+    capabilities: {
       browserName: 'chrome'
     }
   };
-  let driver = webdriverio.remote(chrome);
-  await driver.init();
+  let driver = await remote(chrome);
+
 
   // Initialize the eyes SDK and set your private API key.
   const eyes = new Eyes(true);
   // eyes.setApiKey('Your API Key');
-  eyes.setApiKey('97ELuwdIiAilbeumIilysV8yY24tygCeRFFTYEBO7EfE110');
+  eyes.setApiKey(process.env.APPLITOOLS_API_KEY);
 
   try {
     const configuration = new SeleniumConfiguration();
@@ -40,7 +40,8 @@ const {BrowserType, SeleniumConfiguration, DeviceName, ScreenOrientation} = requ
     await eyes.check('Main Page', Target.window());
 
     // Click the "Click me!" button.
-    await driver.click(By.cssSelector('button'));
+    const el = await driver.findElement(By.css('button'));
+    await el.click();
 
     // Visual checkpoint #2.
     await eyes.check('Click!', Target.window());
@@ -49,9 +50,11 @@ const {BrowserType, SeleniumConfiguration, DeviceName, ScreenOrientation} = requ
     // const results = await eyes.close(); // will return only first TestResults, but as we have two browsers, we need more results
     const results = await eyes.getRunner().getAllResults(false);
     console.log(results);
+  } catch (e) {
+    console.log(e);
   } finally {
     // Close the browser.
-    await driver.end();
+    await driver.deleteSession();
 
     // If the test was aborted before eyes.close was called ends the test as aborted.
     await eyes.abortIfNotClosed();
