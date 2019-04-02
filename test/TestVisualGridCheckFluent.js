@@ -3,7 +3,7 @@
 const chromedriver = require('chromedriver');
 const webdriverio = require('webdriverio');
 const {ConsoleLogHandler, Region} = require('@applitools/eyes-sdk-core');
-const {BrowserType, SeleniumConfiguration} = require('@applitools/eyes-selenium');
+const {BrowserType, Configuration} = require('@applitools/eyes-selenium');
 const {By, Eyes, Target, VisualGridRunner} = require('../index');
 const Common = require('./Common');
 
@@ -27,9 +27,9 @@ describe('VisualGridCheckFluent', function () {
   });
 
   beforeEach(async function () {
-    const configuration = new SeleniumConfiguration();
-    configuration.appName = this.test.parent.title;
-    configuration.testName = this.currentTest.title;
+    const configuration = new Configuration();
+    configuration.setAppName(this.test.parent.title);
+    configuration.setTestName(this.currentTest.title);
     configuration.addBrowser(1200, 800, BrowserType.CHROME);
     configuration.addBrowser(1200, 800, BrowserType.FIREFOX);
 
