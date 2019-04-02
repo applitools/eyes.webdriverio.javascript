@@ -3,7 +3,6 @@
 const chromedriver = require('chromedriver');
 const {remote} = require('webdriverio');
 const {equal} = require('assert');
-const webdriverio = require('webdriverio');
 const {BatchInfo, Region, CorsIframeHandle} = require('@applitools/eyes-sdk-core');
 const {BrowserType, SeleniumConfiguration} = require('@applitools/eyes-selenium');
 const {Eyes, Target} = require('../index');
@@ -11,7 +10,6 @@ const {Eyes, Target} = require('../index');
 const Common = require('./Common');
 
 let browser;
-
 
 describe('VisualGridSimple', function () {
   this.timeout(5 * 60 * 1000);
@@ -47,7 +45,7 @@ describe('VisualGridSimple', function () {
     configuration.addBrowser(700, 500, BrowserType.CHROME);
     configuration.addBrowser(400, 300, BrowserType.CHROME);
 
-    eyes.configuration = configuration;
+    eyes.setConfiguration(configuration);
     await eyes.open(browser);
 
     await eyes.check('window', Target.window().ignoreRegions(new Region(200, 200, 50, 100)));
