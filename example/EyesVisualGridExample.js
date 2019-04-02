@@ -29,7 +29,7 @@ const {BrowserType, SeleniumConfiguration, DeviceName, ScreenOrientation} = requ
     configuration.addDevice(DeviceName.iPhone_4, ScreenOrientation.PORTRAIT);
     // set your private API key
     configuration.apiKey = process.env.APPLITOOLS_API_KEY;
-    eyes.configuration = configuration;
+    eyes.setConfiguration(configuration);
 
     driver = await eyes.open(driver);
 

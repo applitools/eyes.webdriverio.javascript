@@ -1543,24 +1543,6 @@ class EyesWDIO extends EyesBase {
     return this._configuration;
   }
 
-  /**
-   * @param {Configuration|object} conf
-   */
-  set configuration(conf) {
-    if (!(conf instanceof Configuration)) {
-      conf = new Configuration(conf);
-    }
-
-    this._configuration = conf;
-  }
-
-  /**
-   * @return {Configuration}
-   */
-  get configuration() {
-    return this._configuration;
-  }
-
   setApiKey(apiKey) {
     this._configuration.apiKey = apiKey;
   }

@@ -3,8 +3,8 @@
 const chromedriver = require('chromedriver');
 const webdriverio = require('webdriverio');
 const {BatchInfo, Region, CorsIframeHandle} = require('@applitools/eyes-sdk-core');
-const {BrowserType, SeleniumConfiguration} = require('@applitools/eyes-selenium');
-const {Eyes, Target} = require('../index');
+const {BrowserType, SeleniumConfiguration: Configuration} = require('@applitools/eyes-selenium');
+const {Eyes, Target, VisualGridRunner} = require('../index');
 
 const Common = require('./Common');
 
@@ -31,18 +31,18 @@ describe('VisualGridSimple', function () {
   it('VisualGridTestPage', async function () {
     await browser.url('https://applitools.github.io/demo/TestPages/VisualGridTestPage');
 
-    const eyes = new Eyes(true);
+    const eyes = new Eyes(new VisualGridRunner(3));
     eyes.setBatch(new BatchInfo('EyesRenderingBatch_WDIO'));
     eyes.setCorsIframeHandle(CorsIframeHandle.BLANK);
 
-    const configuration = new SeleniumConfiguration();
+    const configuration = new Configuration();
     configuration.testName = 'Open Concurrency with Batch 2';
     configuration.appName = 'RenderingGridIntegration';
     configuration.addBrowser(800, 600, BrowserType.CHROME);
     configuration.addBrowser(700, 500, BrowserType.CHROME);
     configuration.addBrowser(400, 300, BrowserType.CHROME);
 
-    eyes.configuration = configuration;
+    eyes.setConfiguration(configuration);
     await eyes.open(browser);
 
     await eyes.check('window', Target.window().ignoreRegions(new Region(200, 200, 50, 100)));

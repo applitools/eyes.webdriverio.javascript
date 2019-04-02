@@ -60,7 +60,7 @@ class EyesVisualGrid extends EyesBase {
    * @param {object} driver The web driver that controls the browser hosting the application under test.
    * @param {SeleniumConfiguration|string} optArg1 The Configuration for the test or the name of the application under the test.
    * @param {string} [optArg2] The test name.
-   * @param {RectangleSize|RectangleSizeObject} [optArg3] The required browser's viewport size
+   * @param {RectangleSize|object} [optArg3] The required browser's viewport size
    *   (i.e., the visible part of the document's body) or to use the current window's viewport.
    * @param {SeleniumConfiguration} [optArg4] The Configuration for the test
    * @return {Promise<EyesWebDriver>} A wrapped WebDriver which enables Eyes trigger recording and frame handling.
@@ -79,14 +79,17 @@ class EyesVisualGrid extends EyesBase {
       this._configuration.viewportSize = TypeUtils.getOrDefault(optArg3, this._configuration.viewportSize);
       this._configuration.sessionType = TypeUtils.getOrDefault(optArg4, this._configuration.sessionType);
     }
-    if (!this._configuration.viewportSize) {
-      //todo set first viewportSize from browsersInfo
-      this._configuration.viewportSize = await this._driver.getDefaultContentViewportSize();
-    }
 
-    if (configuration) {
-      const newConfiguration = (configuration instanceof SeleniumConfiguration) ? configuration : SeleniumConfiguration.fromObject(configuration);
-      this._configuration.mergeConfig(newConfiguration);
+    if (!this._configuration.viewportSize && this._configuration.browsersInfo.length > 0) {
+      for (const browserInfo of this._configuration.browsersInfo) {
+        if (browserInfo.width) {
+          this._configuration.viewportSize = new RectangleSize(browserInfo.width, browserInfo.height);
+          break;
+        }
+      }
+    }
+    if (!this._configuration.viewportSize) {
+      this._configuration.viewportSize = await this._driver.getDefaultContentViewportSize();
     }
 
     if (this._configuration.browsersInfo.length === 0 && this._configuration.viewportSize) {
@@ -419,24 +422,6 @@ class EyesVisualGrid extends EyesBase {
    * @return {Configuration}
    */
   getConfiguration() {
-    return this._configuration;
-  }
-
-  /**
-   * @param {Configuration} conf
-   */
-  set configuration(conf) {
-    if (!(conf instanceof Configuration)) {
-      conf = new Configuration(conf);
-    }
-
-    this._configuration = conf;
-  }
-
-  /**
-   * @return {Configuration}
-   */
-  get configuration() {
     return this._configuration;
   }
 
