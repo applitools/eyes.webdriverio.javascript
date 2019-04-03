@@ -78,6 +78,9 @@ class EyesVisualGrid extends EyesBase {
       this._configuration.setSessionType(TypeUtils.getOrDefault(optArg4, this._configuration.getSessionType()));
     }
 
+    ArgumentGuard.notNull(this._configuration.getAppName(), 'appName');
+    ArgumentGuard.notNull(this._configuration.getTestName(), 'testName');
+
     if (!this._configuration.getViewportSize() && this._configuration.getBrowsersInfo().length > 0) {
       for (const browserInfo of this._configuration.getBrowsersInfo()) {
         if (browserInfo.width) {
@@ -176,15 +179,22 @@ class EyesVisualGrid extends EyesBase {
   async close(throwEx = true) {
     try {
       const results = await this._closeCommand(throwEx);
-      const first = results[0];
 
-      if (first instanceof TestFailedError) {
-        return first.getTestResults();
+      for (const result of results) {
+        if (result instanceof TestFailedError) {
+          return result.getTestResults();
+        }
       }
 
-      return first;
+      return results[0];
     } catch (err) {
       if (Array.isArray(err)) {
+        for (const result of err) {
+          if (result instanceof Error) {
+            throw result;
+          }
+        }
+
         throw err[0];
       }
 
@@ -225,7 +235,7 @@ class EyesVisualGrid extends EyesBase {
    * @param {boolean} [throwEx]
    * @return {Promise<void>}
    */
-  async closeAndPrintResults(throwEx = false) {
+  async closeAndPrintResults(throwEx = true) {
     const results = await this.closeAndReturnResults(throwEx);
 
     const testResultsFormatter = new TestResultsFormatter(results);
@@ -246,7 +256,7 @@ class EyesVisualGrid extends EyesBase {
 
   getRunner() {
     const runner = {};
-    runner.getAllResults = async (throwEx = false) => {
+    runner.getAllResults = async (throwEx = true) => {
       return await this.closeAndReturnResults(throwEx);
     };
     return runner;
