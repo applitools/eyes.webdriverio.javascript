@@ -132,7 +132,7 @@ class EyesVisualGrid extends EyesBase {
       compareWithParentBranch: this._configuration.getCompareWithParentBranch(),
       ignoreBaseline: this._configuration.getIgnoreBaseline(),
       parentBranchName: this._configuration.getParentBranchName(),
-      agentId: this._configuration.getAgentId(),
+      agentId: this.getFullAgentId(),
       isDisabled: this._configuration.getIsDisabled(),
       matchTimeout: this._configuration.getMatchTimeout(),
 
@@ -371,7 +371,7 @@ class EyesVisualGrid extends EyesBase {
    * @inheritDoc
    */
   getBaseAgentId() {
-    return `eyes.webdriverio/${VERSION}`;
+    return `eyes.webdriverio.visualgrid/${VERSION}`;
   }
 
   /**
