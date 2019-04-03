@@ -13,9 +13,9 @@
   "dependencies": {
     "@applitools/dom-snapshot": "^1.0.7",
     "@applitools/dom-utils": "~4.6.5",
-    "@applitools/eyes-sdk-core": "^5.1.1",
-    "@applitools/eyes-selenium": "^4.11.0",
-    "@applitools/visual-grid-client": "^12.5.1",
+    "@applitools/eyes-sdk-core": "^5.3.0",
+    "@applitools/eyes-selenium": "^4.13.0",
+    "@applitools/visual-grid-client": "^12.5.3",
     "chromedriver": "^2.37.0",
     "css": "2.2.4",
     "css-url-parser": "^1.1.3",

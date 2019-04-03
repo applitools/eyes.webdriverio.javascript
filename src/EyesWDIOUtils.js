@@ -675,7 +675,7 @@ class EyesWDIOUtils {
 
     await EyesWDIOUtils.setBrowserSize(logger, browser, requiredBrowserSize);
     lastRequiredBrowserSize = requiredBrowserSize;
-    actualViewportSize = EyesWDIOUtils.getViewportSize(browser.eyes.jsExecutor);
+    actualViewportSize = await EyesWDIOUtils.getViewportSize(browser.eyes.jsExecutor);
 
     logger.verbose("Current viewport size (loop):", actualViewportSize);
     if (actualViewportSize.equals(requiredSize)) {
