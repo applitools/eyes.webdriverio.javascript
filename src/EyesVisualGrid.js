@@ -19,6 +19,7 @@ const EyesWebDriver = require('./wrappers/EyesWebDriver');
 const EyesWDIOUtils = require('./EyesWDIOUtils');
 const WDIOJSExecutor = require('./WDIOJSExecutor');
 const WebDriver = require('./wrappers/WebDriver');
+const {VisualGridRunner} = require('./visualgrid/VisualGridRunner');
 
 const VERSION = require('../package.json').version;
 
@@ -33,9 +34,12 @@ class EyesVisualGrid extends EyesBase {
    *
    * @param {string} [serverUrl=EyesBase.getDefaultServerUrl()] The Eyes server URL.
    * @param {boolean} [isDisabled=false] Set to true to disable Applitools Eyes and use the webdriver directly.
+   * @param {VisualGridRunner} [visualGridRunner] - Set {@code true} to disable Applitools Eyes and use the WebDriver directly.
    */
-  constructor(serverUrl, isDisabled) {
+  constructor(serverUrl, isDisabled, visualGridRunner = new VisualGridRunner()) {
     super(serverUrl, isDisabled, new Configuration());
+
+    /** @type {VisualGridRunner} */ this._visualGridRunner = visualGridRunner;
 
     /** @type {boolean} */ this._isOpen = false;
     /** @type {boolean} */ this._isVisualGrid = true;
@@ -90,6 +94,8 @@ class EyesVisualGrid extends EyesBase {
       const vs = this._configuration.getViewportSize();
       this._configuration.addBrowser(vs.getWidth(), vs.getHeight(), BrowserType.CHROME);
     }
+
+    if (this._visualGridRunner.getConcurrentSessions()) this._configuration.setConcurrentSessions(this._visualGridRunner.getConcurrentSessions());
 
     const {openEyes} = makeVisualGridClient({
       logger: this._logger,
