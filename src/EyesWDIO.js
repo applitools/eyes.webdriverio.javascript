@@ -1,7 +1,6 @@
 'use strict';
 
 const {
-  Configuration,
   ContextBasedScaleProviderFactory,
   CoordinatesType,
   EyesBase,
@@ -25,7 +24,7 @@ const {
 } = require('@applitools/eyes-sdk-core');
 
 const {DomCapture} = require('@applitools/dom-utils');
-const {SeleniumConfiguration} = require('@applitools/eyes-selenium');
+const {Configuration} = require('@applitools/eyes-selenium');
 
 const ImageProviderFactory = require('./capture/ImageProviderFactory');
 const CssTranslatePositionProvider = require('./positioning/CssTranslatePositionProvider');
@@ -149,13 +148,14 @@ class EyesWDIO extends EyesBase {
     if (varArg1 instanceof Configuration) {
       this._configuration.mergeConfig(varArg1);
     } else {
-      this._configuration.appName = TypeUtils.getOrDefault(varArg1, this._configuration.appName);
-      this._configuration.testName = TypeUtils.getOrDefault(varArg2, this._configuration.testName);
-      this._configuration.viewportSize = TypeUtils.getOrDefault(varArg3, this._configuration.viewportSize);
-      this._configuration.sessionType = TypeUtils.getOrDefault(varArg4, this._configuration.sessionType);
+      this._configuration.setAppName(TypeUtils.getOrDefault(varArg1, this._configuration.getAppName()));
+      this._configuration.setTestName(TypeUtils.getOrDefault(varArg2, this._configuration.getTestName()));
+      this._configuration.setViewportSize(TypeUtils.getOrDefault(varArg3, this._configuration.getViewportSize()));
+      this._configuration.setSessionType(TypeUtils.getOrDefault(varArg4, this._configuration.getSessionType()));
     }
-    if (!this._configuration.viewportSize) {
-      this._configuration.viewportSize = await this._driver.getDefaultContentViewportSize();
+    if (!this._configuration.getViewportSize()) {
+      const vs = await this._driver.getDefaultContentViewportSize();
+      this._configuration.setViewportSize(vs);
     }
 
     if (this._isDisabled) {
@@ -177,7 +177,7 @@ class EyesWDIO extends EyesBase {
     this._imageProvider = ImageProviderFactory.getImageProvider(this._userAgent, this, this._logger, this._driver);
     this._regionPositionCompensation = RegionPositionCompensationFactory.getRegionPositionCompensation(this._userAgent, this, this._logger);
 
-    await this.openBase(this._configuration.appName, this._configuration.testName, this._configuration.viewportSize, this._configuration.sessionType);
+    await this.openBase(this._configuration.getAppName(), this._configuration.getTestName(), this._configuration.getViewportSize(), this._configuration.getSessionType());
 
     this._devicePixelRatio = EyesWDIO.UNKNOWN_DEVICE_PIXEL_RATIO;
 
@@ -682,7 +682,7 @@ class EyesWDIO extends EyesBase {
    * @param {Location} cursor  The cursor's position relative to the control.
    */
   async addMouseTrigger(action, control, cursor) {
-    if (this._configuration.isDisabled) {
+    if (this._configuration.getIsDisabled()) {
       this._logger.verbose(`Ignoring ${action} (disabled)`);
       return;
     }
@@ -1543,38 +1543,12 @@ class EyesWDIO extends EyesBase {
     return this._configuration;
   }
 
-  /**
-   * @param {Configuration|object} conf
-   */
-  set configuration(conf) {
-    if (!(conf instanceof Configuration)) {
-      conf = new Configuration(conf);
-    }
-
-    this._configuration = conf;
-  }
-
-  /**
-   * @return {Configuration}
-   */
-  get configuration() {
-    return this._configuration;
-  }
-
   setApiKey(apiKey) {
-    this._configuration.apiKey = apiKey;
+    this._configuration.setApiKey(apiKey);
   }
 
   getApiKey() {
-    return this._configuration.apiKey;
-  }
-
-  set apiKey(apiKey) {
-    this._configuration.apiKey = apiKey;
-  }
-
-  get apiKey() {
-    return this._configuration.apiKey;
+    return this._configuration.getApiKey();
   }
 
 }

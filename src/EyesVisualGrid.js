@@ -11,11 +11,10 @@ const {
   TestResultsFormatter,
   CorsIframeHandle,
   CorsIframeHandler,
-  Configuration,
   TypeUtils
 } = require('@applitools/eyes-sdk-core');
 
-const {BrowserType, SeleniumConfiguration} = require('@applitools/eyes-selenium');
+const {BrowserType, Configuration} = require('@applitools/eyes-selenium');
 
 const EyesWebDriver = require('./wrappers/EyesWebDriver');
 const EyesWDIOUtils = require('./EyesWDIOUtils');
@@ -27,7 +26,7 @@ const VERSION = require('../package.json').version;
 
 class EyesVisualGrid extends EyesBase {
   /** @var {Logger} EyesVisualGrid#_logger */
-  /** @var {SeleniumConfiguration} EyesVisualGrid#_configuration */
+  /** @var {Configuration} EyesVisualGrid#_configuration */
 
   /** @var {ImageMatchSettings} EyesVisualGrid#_defaultMatchSettings */
 
@@ -39,7 +38,7 @@ class EyesVisualGrid extends EyesBase {
    * @param {VisualGridRunner} [visualGridRunner] - Set {@code true} to disable Applitools Eyes and use the WebDriver directly.
    */
   constructor(serverUrl, isDisabled, visualGridRunner = new VisualGridRunner()) {
-    super(serverUrl, isDisabled, new SeleniumConfiguration());
+    super(serverUrl, isDisabled, new Configuration());
 
     /** @type {VisualGridRunner} */ this._visualGridRunner = visualGridRunner;
 
@@ -58,11 +57,11 @@ class EyesVisualGrid extends EyesBase {
    * @signature `open(driver, appName, testName, ?viewportSize, ?configuration)`
    *
    * @param {object} driver The web driver that controls the browser hosting the application under test.
-   * @param {SeleniumConfiguration|string} optArg1 The Configuration for the test or the name of the application under the test.
+   * @param {Configuration|string} optArg1 The Configuration for the test or the name of the application under the test.
    * @param {string} [optArg2] The test name.
-   * @param {RectangleSize|RectangleSizeObject} [optArg3] The required browser's viewport size
+   * @param {RectangleSize|object} [optArg3] The required browser's viewport size
    *   (i.e., the visible part of the document's body) or to use the current window's viewport.
-   * @param {SeleniumConfiguration} [optArg4] The Configuration for the test
+   * @param {Configuration} [optArg4] The Configuration for the test
    * @return {Promise<EyesWebDriver>} A wrapped WebDriver which enables Eyes trigger recording and frame handling.
    */
   async open(driver, optArg1, optArg2, optArg3, optArg4) {
@@ -70,70 +69,75 @@ class EyesVisualGrid extends EyesBase {
 
     await this._initDriver(driver);
 
-    let configuration;
     if (optArg1 instanceof Configuration) {
       this._configuration.mergeConfig(optArg1);
     } else {
-      this._configuration.appName = TypeUtils.getOrDefault(optArg1, this._configuration.appName);
-      this._configuration.testName = TypeUtils.getOrDefault(optArg2, this._configuration.testName);
-      this._configuration.viewportSize = TypeUtils.getOrDefault(optArg3, this._configuration.viewportSize);
-      this._configuration.sessionType = TypeUtils.getOrDefault(optArg4, this._configuration.sessionType);
-    }
-    if (!this._configuration.viewportSize) {
-      //todo set first viewportSize from browsersInfo
-      this._configuration.viewportSize = await this._driver.getDefaultContentViewportSize();
+      this._configuration.setAppName(TypeUtils.getOrDefault(optArg1, this._configuration.getAppName()));
+      this._configuration.setTestName(TypeUtils.getOrDefault(optArg2, this._configuration.getTestName()));
+      this._configuration.setViewportSize(TypeUtils.getOrDefault(optArg3, this._configuration.getViewportSize()));
+      this._configuration.setSessionType(TypeUtils.getOrDefault(optArg4, this._configuration.getSessionType()));
     }
 
-    if (configuration) {
-      const newConfiguration = (configuration instanceof SeleniumConfiguration) ? configuration : SeleniumConfiguration.fromObject(configuration);
-      this._configuration.mergeConfig(newConfiguration);
+    ArgumentGuard.notNull(this._configuration.getAppName(), 'appName');
+    ArgumentGuard.notNull(this._configuration.getTestName(), 'testName');
+
+    if (!this._configuration.getViewportSize() && this._configuration.getBrowsersInfo().length > 0) {
+      for (const browserInfo of this._configuration.getBrowsersInfo()) {
+        if (browserInfo.width) {
+          this._configuration.setViewportSize(new RectangleSize(browserInfo.width, browserInfo.height));
+          break;
+        }
+      }
+    }
+    if (!this._configuration.getViewportSize()) {
+      const vs = await this._driver.getDefaultContentViewportSize();
+      this._configuration.setViewportSize(vs);
     }
 
-    if (this._configuration.browsersInfo.length === 0 && this._configuration.viewportSize) {
-      const viewportSize = this._configuration.viewportSize;
-      this._configuration.addBrowser(viewportSize.getWidth(), viewportSize.getHeight(), BrowserType.CHROME);
+    if (this._configuration.getBrowsersInfo().length === 0 && this._configuration.getViewportSize()) {
+      const vs = this._configuration.getViewportSize();
+      this._configuration.addBrowser(vs.getWidth(), vs.getHeight(), BrowserType.CHROME);
     }
 
-    if (this._visualGridRunner.concurrentSessions) this._configuration.concurrentSessions = this._visualGridRunner.concurrentSessions;
+    if (this._visualGridRunner.getConcurrentSessions()) this._configuration.setConcurrentSessions(this._visualGridRunner.getConcurrentSessions());
 
     const {openEyes} = makeVisualGridClient({
-      apiKey: this._configuration.apiKey,
-      showLogs: this._configuration.showLogs,
-      saveDebugData: this._configuration.saveDebugData,
-      proxy: this._configuration.proxy,
-      serverUrl: this._configuration.serverUrl,
-      renderConcurrencyFactor: this._configuration.concurrentSessions,
+      logger: this._logger,
+      apiKey: this._configuration.getApiKey(),
+      showLogs: this._configuration.getShowLogs(),
+      saveDebugData: this._configuration.getSaveDebugData(),
+      proxy: this._configuration.getProxy(),
+      serverUrl: this._configuration.getServerUrl(),
+      renderConcurrencyFactor: this._configuration.getConcurrentSessions(),
     });
 
     this._processPageAndSerializeScript = await getProcessPageAndSerializeScript();
 
-    if (this._configuration.viewportSize) {
-      const vs = this._configuration.viewportSize;
+    if (this._configuration.getViewportSize()) {
+      const vs = this._configuration.getViewportSize();
       await this.setViewportSize(vs);
     }
 
     const {checkWindow, close} = await openEyes({
-      logger: this._logger,
-
-      appName: this._configuration.appName,
-      testName: this._configuration.testName,
-      browser: this._configuration.browsersInfo,
-      properties: this._configuration.properties,
-      batchName: this._configuration.batch && this._configuration.batch.getName(),
-      batchId: this._configuration.batch && this._configuration.batch.getId(),
-      baselineBranchName: this._configuration.baselineBranchName,
-      baselineEnvName: this._configuration.baselineEnvName,
-      baselineName: this._configuration.baselineEnvName,
-      envName: this._configuration.environmentName,
-      branchName: this._configuration.branchName,
-      saveFailedTests: this._configuration.saveFailedTests,
-      saveNewTests: this._configuration.saveNewTests,
-      compareWithParentBranch: this._configuration.compareWithParentBranch,
-      ignoreBaseline: this._configuration.ignoreBaseline,
-      parentBranchName: this._configuration.parentBranchName,
-      agentId: this._configuration.agentId,
-      isDisabled: this._configuration.isDisabled,
-      matchTimeout: this._configuration.matchTimeout,
+      appName: this._configuration.getAppName(),
+      testName: this._configuration.getTestName(),
+      browser: this._configuration.getBrowsersInfo(),
+      properties: this._configuration.getProperties(),
+      batchName: this._configuration.getBatch() && this._configuration.getBatch().getName(),
+      batchId: this._configuration.getBatch() && this._configuration.getBatch().getId(),
+      baselineBranchName: this._configuration.getBaselineBranchName(),
+      baselineEnvName: this._configuration.getBaselineEnvName(),
+      baselineName: this._configuration.getBaselineEnvName(),
+      envName: this._configuration.getEnvironmentName(),
+      branchName: this._configuration.getBranchName(),
+      saveFailedTests: this._configuration.getSaveFailedTests(),
+      saveNewTests: this._configuration.getSaveNewTests(),
+      compareWithParentBranch: this._configuration.getCompareWithParentBranch(),
+      ignoreBaseline: this._configuration.getIgnoreBaseline(),
+      parentBranchName: this._configuration.getParentBranchName(),
+      agentId: this.getFullAgentId(),
+      isDisabled: this._configuration.getIsDisabled(),
+      matchTimeout: this._configuration.getMatchTimeout(),
 
       ignoreCaret: this._defaultMatchSettings.getIgnoreCaret(),
       matchLevel: this._defaultMatchSettings.getMatchLevel(),
@@ -175,15 +179,22 @@ class EyesVisualGrid extends EyesBase {
   async close(throwEx = true) {
     try {
       const results = await this._closeCommand(throwEx);
-      const first = results[0];
 
-      if (first instanceof TestFailedError) {
-        return first.getTestResults();
+      for (const result of results) {
+        if (result instanceof TestFailedError) {
+          return result.getTestResults();
+        }
       }
 
-      return first;
+      return results[0];
     } catch (err) {
       if (Array.isArray(err)) {
+        for (const result of err) {
+          if (result instanceof Error) {
+            throw result;
+          }
+        }
+
         throw err[0];
       }
 
@@ -245,7 +256,7 @@ class EyesVisualGrid extends EyesBase {
 
   getRunner() {
     const runner = {};
-    runner.getAllResults = async (throwEx) => {
+    runner.getAllResults = async (throwEx = true) => {
       return await this.closeAndReturnResults(throwEx);
     };
     return runner;
@@ -323,7 +334,7 @@ class EyesVisualGrid extends EyesBase {
   async setViewportSize(viewportSize) {
     ArgumentGuard.notNull(viewportSize, 'viewportSize');
     viewportSize = new RectangleSize(viewportSize);
-    this._configuration.viewportSize = viewportSize;
+    this._configuration.setViewportSize(viewportSize);
 
     if (this._driver) {
       const originalFrame = this._driver.getFrameChain();
@@ -370,7 +381,7 @@ class EyesVisualGrid extends EyesBase {
    * @inheritDoc
    */
   getBaseAgentId() {
-    return `eyes.webdriverio/${VERSION}`;
+    return `eyes.webdriverio.visualgrid/${VERSION}`;
   }
 
   /**
@@ -422,30 +433,12 @@ class EyesVisualGrid extends EyesBase {
     return this._configuration;
   }
 
-  /**
-   * @param {Configuration} conf
-   */
-  set configuration(conf) {
-    if (!(conf instanceof Configuration)) {
-      conf = new Configuration(conf);
-    }
-
-    this._configuration = conf;
-  }
-
-  /**
-   * @return {Configuration}
-   */
-  get configuration() {
-    return this._configuration;
-  }
-
   setApiKey(apiKey) {
-    this._configuration.apiKey = apiKey;
+    this._configuration.setApiKey(apiKey);
   }
 
   getApiKey() {
-    return this._configuration.apiKey;
+    return this._configuration.getApiKey();
   }
 
 }

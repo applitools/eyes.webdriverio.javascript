@@ -3,7 +3,7 @@
 const chromedriver = require('chromedriver');
 const webdriverio = require('webdriverio');
 const {By, Eyes, Target, VisualGridRunner} = require('../index'); // should be replaced to '@applitools/eyes.webdriverio'
-const {BrowserType, SeleniumConfiguration, DeviceName, ScreenOrientation} = require('@applitools/eyes-selenium');
+const {BrowserType, Configuration, DeviceName, ScreenOrientation} = require('@applitools/eyes-selenium');
 
 (async () => {
   chromedriver.start();
@@ -21,15 +21,15 @@ const {BrowserType, SeleniumConfiguration, DeviceName, ScreenOrientation} = requ
   const eyes = new Eyes(new VisualGridRunner(3));
 
   try {
-    const configuration = new SeleniumConfiguration();
-    configuration.appName = 'Eyes Examples';
-    configuration.testName = 'My first Javascript test!';
-    configuration.addBrowser(1200, 800, BrowserType.CHROME);
-    configuration.addBrowser(1200, 800, BrowserType.FIREFOX);
-    configuration.addDevice(DeviceName.iPhone_4, ScreenOrientation.PORTRAIT);
+    const configuration = new Configuration();
+    configuration.setAppName('Eyes Examples');
+    configuration.setTestName('My first Javascript test!');
+    configuration.addBrowser(800, 600, BrowserType.CHROME);
+    configuration.addBrowser(500, 400, BrowserType.FIREFOX);
+    configuration.addDeviceEmulation(DeviceName.iPhone_4, ScreenOrientation.PORTRAIT);
     // set your private API key
-    configuration.apiKey = process.env.APPLITOOLS_API_KEY;
-    eyes.configuration = configuration;
+    configuration.setApiKey(process.env.APPLITOOLS_API_KEY);
+    eyes.setConfiguration(configuration);
 
     driver = await eyes.open(driver);
 
