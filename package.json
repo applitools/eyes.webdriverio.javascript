@@ -12,7 +12,7 @@
   "repository": "https://github.com/applitools/eyes.webdriverio.javascript",
   "dependencies": {
     "@applitools/dom-snapshot": "^1.0.7",
-    "@applitools/dom-utils": "~4.6.5",
+    "@applitools/dom-utils": "~4.6.6",
     "@applitools/eyes-sdk-core": "^5.3.0",
     "@applitools/eyes-selenium": "^4.13.0",
     "@applitools/visual-grid-client": "^12.5.3",

@@ -18,8 +18,6 @@ const {BrowserType, Configuration, DeviceName, ScreenOrientation} = require('@ap
 
   // Initialize the eyes SDK and set your private API key.
   const eyes = new Eyes(new VisualGridRunner(3));
-  // eyes.setApiKey('Your API Key');
-  eyes.setApiKey(process.env.APPLITOOLS_API_KEY);
 
   try {
     const configuration = new Configuration();
@@ -28,6 +26,8 @@ const {BrowserType, Configuration, DeviceName, ScreenOrientation} = require('@ap
     configuration.addBrowser(800, 500, BrowserType.CHROME);
     configuration.addBrowser(700, 600, BrowserType.FIREFOX);
     configuration.addDeviceEmulation(DeviceName.iPhone_4, ScreenOrientation.PORTRAIT);
+    // eyes.setApiKey('Your API Key');
+    configuration.setApiKey(process.env.APPLITOOLS_API_KEY);
     eyes.setConfiguration(configuration);
 
     driver = await eyes.open(driver);

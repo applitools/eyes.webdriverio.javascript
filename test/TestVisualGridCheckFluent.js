@@ -18,7 +18,6 @@ describe('VisualGridCheckFluent', function () {
     browser = await remote(chrome);
 
     eyes = new Eyes(new VisualGridRunner(3));
-    eyes.setApiKey(process.env.APPLITOOLS_API_KEY);
     eyes.setLogHandler(new ConsoleLogHandler(false));
     // eyes.setProxy('http://localhost:8000');
 
@@ -31,7 +30,7 @@ describe('VisualGridCheckFluent', function () {
     configuration.setTestName(this.currentTest.title);
     configuration.addBrowser(1200, 800, BrowserType.CHROME);
     configuration.addBrowser(1200, 800, BrowserType.FIREFOX);
-
+    configuration.setApiKey(process.env.APPLITOOLS_API_KEY);
     eyes.setConfiguration(configuration);
     browser = await eyes.open(browser);
   });

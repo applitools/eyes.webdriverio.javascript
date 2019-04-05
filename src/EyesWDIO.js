@@ -153,6 +153,10 @@ class EyesWDIO extends EyesBase {
       this._configuration.setViewportSize(TypeUtils.getOrDefault(varArg3, this._configuration.getViewportSize()));
       this._configuration.setSessionType(TypeUtils.getOrDefault(varArg4, this._configuration.getSessionType()));
     }
+
+    ArgumentGuard.notNull(this._configuration.getAppName(), 'appName');
+    ArgumentGuard.notNull(this._configuration.getTestName(), 'testName');
+
     if (!this._configuration.getViewportSize()) {
       const vs = await this._driver.getDefaultContentViewportSize();
       this._configuration.setViewportSize(vs);
@@ -1532,7 +1536,7 @@ class EyesWDIO extends EyesBase {
       conf = new Configuration(conf);
     }
 
-    this._configuration.mergeConfig(conf);
+    this._configuration = conf;
   }
 
   /**
