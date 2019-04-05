@@ -6,7 +6,6 @@ const {getProcessPageAndSerializeScript} = require('@applitools/dom-snapshot');
 const {
   ArgumentGuard,
   EyesBase,
-  RectangleSize,
   TestFailedError,
   TestResultsFormatter,
   CorsIframeHandle,
@@ -14,7 +13,7 @@ const {
   TypeUtils
 } = require('@applitools/eyes-sdk-core');
 
-const {BrowserType, Configuration} = require('@applitools/eyes-selenium');
+const {BrowserType, Configuration, RectangleSize} = require('@applitools/eyes-selenium');
 
 const EyesWebDriver = require('./wrappers/EyesWebDriver');
 const EyesWDIOUtils = require('./EyesWDIOUtils');
