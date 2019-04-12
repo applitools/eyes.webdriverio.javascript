@@ -26,6 +26,7 @@ const {BrowserType, Configuration, DeviceName, ScreenOrientation} = require('@ap
     configuration.setTestName('My first Javascript test!');
     configuration.addBrowser(800, 600, BrowserType.CHROME);
     configuration.addBrowser(500, 400, BrowserType.FIREFOX);
+    configuration.addBrowser(500, 400, BrowserType.IE_11);
     configuration.addDeviceEmulation(DeviceName.iPhone_4, ScreenOrientation.PORTRAIT);
     // set your private API key
     configuration.setApiKey(process.env.APPLITOOLS_API_KEY);

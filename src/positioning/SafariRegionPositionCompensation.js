@@ -1,5 +1,9 @@
 'use strict';
 
+const {
+    Region
+} = require('@applitools/eyes-selenium');
+
 const RegionPositionCompensation = require('./RegionPositionCompensation');
 
 class SafariRegionPositionCompensation extends RegionPositionCompensation {

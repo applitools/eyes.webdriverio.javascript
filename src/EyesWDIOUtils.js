@@ -30,8 +30,7 @@ let imageOrientationHandler = new class ImageOrientationHandlerImpl extends Imag
 
   /** @override */
   async tryAutomaticRotation(logger, driver, image) {
-    const {value: res} = await driver.execute(() => 0);
-    return res;
+    return 0;
   }
 };
 

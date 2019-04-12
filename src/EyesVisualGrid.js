@@ -138,8 +138,8 @@ class EyesVisualGrid extends EyesBase {
       isDisabled: this._configuration.getIsDisabled(),
       matchTimeout: this._configuration.getMatchTimeout(),
 
-      ignoreCaret: this._defaultMatchSettings.getIgnoreCaret(),
-      matchLevel: this._defaultMatchSettings.getMatchLevel(),
+      ignoreCaret: this._configuration.getIgnoreCaret(),
+      matchLevel: this._configuration.getMatchLevel(),
 
       // renderBatch,
       // waitForRenderedStatus,
