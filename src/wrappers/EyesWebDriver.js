@@ -4,6 +4,7 @@ const {ArgumentGuard, MutableImage} = require('@applitools/eyes-sdk-core');
 const FrameChain = require('../frames/FrameChain');
 const EyesWebElement = require('./EyesWebElement');
 const EyesTargetLocator = require('./EyesTargetLocator');
+const EyesNullTargetLocator = require('./EyesNullTargetLocator');
 const WebElement = require('./WebElement');
 const WebDriver = require('./WebDriver');
 const EyesWDIOUtils = require('../EyesWDIOUtils');
@@ -152,7 +153,11 @@ class EyesWebDriver {
    */
   switchTo() {
     this._logger.verbose("switchTo()");
-    return new EyesTargetLocator(this._logger, this, this.webDriver.switchTo());
+    if (!EyesWDIOUtils.isMobileDevice(this.remoteWebDriver)) {
+      return new EyesTargetLocator(this._logger, this, this.webDriver.switchTo());
+    } else {
+      return new EyesNullTargetLocator(this._logger, this);
+    }
   }
 
 

@@ -9,6 +9,7 @@ const {
   FixedScaleProviderFactory,
   FullPageCaptureAlgorithm,
   Location,
+  MutableImage,
   NullCutProvider,
   NullScaleProvider,
   NullRegionProvider,
@@ -487,6 +488,18 @@ class EyesWDIO extends EyesBase {
 
 
   /**
+   * @return {Promise<number>}
+   * @private
+   */
+  async _getMobilePixelRation() {
+    const viewportSize = await this.getViewportSize();
+    const s = await this.getDriver().takeScreenshot();
+    const screenshot = new MutableImage(s);
+    return screenshot.getWidth() / viewportSize.getWidth();
+  }
+
+
+  /**
    * Updates the state of scaling related parameters.
    *
    * @protected
@@ -500,6 +513,13 @@ class EyesWDIO extends EyesBase {
       const that = this;
       return EyesWDIOUtils.getDevicePixelRatio(that._jsExecutor).then(ratio => {
         that._devicePixelRatio = ratio;
+      }).catch(async (err) => {
+        if (EyesWDIOUtils.isMobileDevice(that._driver.remoteWebDriver)) {
+          const ratio = await that._getMobilePixelRation();
+          that._devicePixelRatio = ratio;
+        } else {
+          throw err;
+        }
       }).catch(err => {
         that._logger.verbose("Failed to extract device pixel ratio! Using default.", err);
         that._devicePixelRatio = EyesWDIO.DEFAULT_DEVICE_PIXEL_RATIO;
@@ -811,31 +831,30 @@ class EyesWDIO extends EyesBase {
    * @protected
    * @override
    */
-  setViewportSize(viewportSize) {
+  async setViewportSize(viewportSize) {
     if (this._viewportSizeHandler instanceof ReadOnlyPropertyHandler) {
-      this._logger.verbose("Ignored (viewport size given explicitly)");
+      this._logger.verbose('Ignored (viewport size given explicitly)');
       return Promise.resolve();
     }
 
-    ArgumentGuard.notNull(viewportSize, "viewportSize");
-    viewportSize = new RectangleSize(viewportSize);
+    if (!EyesWDIOUtils.isMobileDevice(this._driver.remoteWebDriver)) {
+      ArgumentGuard.notNull(viewportSize, 'viewportSize');
+      viewportSize = new RectangleSize(viewportSize);
 
-    const that = this;
-    const originalFrame = this._driver.getFrameChain();
-    return this._driver.switchTo().defaultContent().then(() => {
-      return EyesWDIOUtils.setViewportSize(that._logger, that._driver, new RectangleSize(viewportSize)).catch(err => {
-        // Just in case the user catches that error
-        return that._driver.switchTo().frames(originalFrame).then(() => {
-          throw new TestFailedError("Failed to set the viewport size", err);
-        });
-      });
-    }).then(() => {
-      that._effectiveViewport = new Region(Location.ZERO, viewportSize);
+      const originalFrame = this._driver.getFrameChain();
+      await this._driver.switchTo().defaultContent();
+      try {
+        await EyesWDIOUtils.setViewportSize(this._logger, this._driver, new RectangleSize(viewportSize));
+        this._effectiveViewport = new Region(Location.ZERO, viewportSize);
+      } catch (e) {
+        await this._driver.switchTo().frames(originalFrame);
+        throw new TestFailedError('Failed to set the viewport size', err);
+      }
 
-      return that._driver.switchTo().frames(originalFrame);
-    }).then(() => {
-      that._viewportSizeHandler.set(new RectangleSize(viewportSize));
-    });
+      await this._driver.switchTo().frames(originalFrame);
+    }
+
+    this._viewportSizeHandler.set(new RectangleSize(viewportSize));
   }
 
 
@@ -977,6 +996,9 @@ class EyesWDIO extends EyesBase {
    * @return {Promise}
    */
   async _tryHideScrollbars() {
+    if (EyesWDIOUtils.isMobileDevice(this._driver.remoteWebDriver)) {
+      return;
+    }
     if (this._hideScrollbars || this._scrollRootElement) {
       const originalFC = new FrameChain(this._logger, this._driver.getFrameChain());
       const fc = new FrameChain(this._logger, this._driver.getFrameChain());
@@ -1009,6 +1031,9 @@ class EyesWDIO extends EyesBase {
    * @return {Promise}
    */
   async _tryRestoreScrollbars() {
+    if (EyesWDIOUtils.isMobileDevice(this._driver.remoteWebDriver)) {
+      return;
+    }
     if (this._hideScrollbars) {
       const that = this;
       const originalFC = new FrameChain(that._logger, that._driver.getFrameChain());
@@ -1166,6 +1191,11 @@ class EyesWDIO extends EyesBase {
       return Promise.resolve();
     }
 
+    if (EyesWDIOUtils.isMobileDevice(this._driver.remoteWebDriver)) {
+      this._logger.verbose(`NATIVE context identified, skipping 'ensure element visible'`);
+      return;
+    }
+
     const originalFC = new FrameChain(this._logger, this._driver.getFrameChain());
     const switchTo = this._driver.switchTo();
 
@@ -1253,7 +1283,12 @@ class EyesWDIO extends EyesBase {
 
           if (platformName) {
             let os = platformName;
-            const platformVersion = that.getDriver().remoteWebDriver.desiredCapabilities.platformVersion;
+            let platformVersion;
+            if (that.getDriver().remoteWebDriver.capabilities) {
+              platformVersion = that.getDriver().remoteWebDriver.capabilities.platformVersion;
+            } else if (that.getDriver().remoteWebDriver.desiredCapabilities) {
+              platformVersion = that.getDriver().remoteWebDriver.desiredCapabilities.platformVersion;
+            }
             if (platformVersion) {
               os += ` ${platformVersion}`;
             }
@@ -1333,7 +1368,13 @@ class EyesWDIO extends EyesBase {
    * @return {WebElement}
    */
   async getScrollRootElement() {
-    return this._scrollRootElement ? this._scrollRootElement : await this._driver.findElementByTagName('html');
+    let scrollRootElement = null;
+
+    if (!EyesWDIOUtils.isMobileDevice(this._driver)) {
+      scrollRootElement = this._scrollRootElement ? this._scrollRootElement : await this._driver.findElementByTagName('html');
+    }
+
+    return scrollRootElement;
   }
 
   /**
@@ -1359,7 +1400,7 @@ class EyesWDIO extends EyesBase {
   async getTitle() {
     if (!this._dontGetTitle) {
       try {
-        return this._driver.getTitle()
+        return await this._driver.getTitle()
       } catch (e) {
         this._logger.verbose(`failed (${e})`);
         this._dontGetTitle = true;
@@ -1549,6 +1590,13 @@ class EyesWDIO extends EyesBase {
 
   getApiKey() {
     return this._configuration.getApiKey();
+  }
+
+  /**
+   * @return {boolean}
+   */
+  getSendDom() {
+    return EyesWDIOUtils.isMobileDevice(this._driver) && super.getSendDom();
   }
 
 }
