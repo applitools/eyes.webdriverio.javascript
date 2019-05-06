@@ -71,7 +71,7 @@ class EyesWDIO extends EyesBase {
    * @param {Boolean} [isDisabled=false] Set to true to disable Applitools Eyes and use the webdriver directly.
    **/
   constructor(serverUrl, isDisabled = false) {
-    super(serverUrl, isDisabled);
+    super(serverUrl, isDisabled, new Configuration());
 
     /** @type {EyesWebDriver} */
     this._driver = undefined;
@@ -98,8 +98,6 @@ class EyesWDIO extends EyesBase {
     /** @type {EyesJsExecutor} */
     this._jsExecutor = undefined;
     this._rotation = undefined;
-    /** @type {StitchMode} */
-    this._stitchMode = StitchMode.SCROLL;
     /** @type {ImageProvider} */
     this._imageProvider = undefined;
     /** @type {RegionPositionCompensation} */
@@ -452,7 +450,7 @@ class EyesWDIO extends EyesBase {
 
         const isElement = true;
         const insideAFrame = that.getDriver().getFrameChain().size() > 0;
-        if (isElement && insideAFrame && that._stitchMode === StitchMode.CSS) {
+        if (isElement && insideAFrame && that._configuration.getStitchMode() === StitchMode.CSS) {
           that.setPositionProvider(new CssTranslateElementPositionProvider(that._logger, that._driver, eyesElement));
         }
 
@@ -896,20 +894,6 @@ class EyesWDIO extends EyesBase {
   };
 
 
-  // noinspection JSUnusedGlobalSymbols
-  /**
-   *
-   * @param {StitchMode} mode
-   */
-  set stitchMode(mode) {
-    this._logger.verbose(`setting stitch mode to ${mode}`);
-    this._stitchMode = mode;
-    if (this._driver) {
-      this._initPositionProvider();
-    }
-  };
-
-
   /** @private */
   _initPositionProvider() {
     // Setting the correct position provider.
@@ -923,15 +907,6 @@ class EyesWDIO extends EyesBase {
         this.setPositionProvider(new ScrollPositionProvider(this._logger, this._jsExecutor));
     }
   }
-
-
-  /**
-   * Get the stitch mode.
-   * @return {StitchMode} The currently set StitchMode.
-   */
-  get stitchMode() {
-    return this._stitchMode;
-  };
 
 
   /**
@@ -1523,7 +1498,7 @@ class EyesWDIO extends EyesBase {
   setStitchMode(mode) {
     this._logger.verbose(`setting stitch mode to ${mode}`);
 
-    this._stitchMode = mode;
+    this._configuration.setStitchMode(mode);
     if (this._driver) {
       this._initPositionProvider();
     }
