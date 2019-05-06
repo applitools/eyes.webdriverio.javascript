@@ -449,7 +449,7 @@ class EyesWDIOUtils {
     logger.verbose("getViewportSizeOrDisplaySize()");
 
     try {
-      return EyesWDIOUtils.getViewportSize(executor);
+      return await EyesWDIOUtils.getViewportSize(executor);
     } catch (e) {
       logger.verbose("Failed to extract viewport size using Javascript:", e);
 
@@ -705,6 +705,15 @@ class EyesWDIOUtils {
    */
   static scrollToBottomRight(executor) {
     return executor.executeScript(EyesWDIOUtils.JS_SCROLL_TO_BOTTOM_RIGHT);
+  }
+
+
+  /**
+   * @param driver
+   * @return {boolean}
+   */
+  static isMobileDevice(driver) {
+    return !!(driver && driver.isMobile);
   }
 
 }
