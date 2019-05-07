@@ -13,3 +13,4 @@ exports.NetHelper = require('./src/services/NetHelper');
 exports.StitchMode = require('./src/StitchMode');
 exports.StitchMode = require('./src/StitchMode');
 exports.VisualGridRunner = require('./src/visualgrid/VisualGridRunner').VisualGridRunner;
+exports.Configuration = require('@applitools/eyes-selenium').Configuration;
