@@ -162,7 +162,9 @@ class EyesWDIO extends EyesBase {
       return driver;
     }
 
-    this.setSendDom(true);
+    if (driver && !driver.isMobile) {
+      this.setSendDom(true);
+    }
 
     if (driver && driver.isMobile) { // set viewportSize to null if browser is mobile
       varArg3 = null;
