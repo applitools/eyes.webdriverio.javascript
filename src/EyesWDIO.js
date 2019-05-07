@@ -162,10 +162,6 @@ class EyesWDIO extends EyesBase {
       return driver;
     }
 
-    if (driver && !driver.isMobile) {
-      this.setSendDom(true);
-    }
-
     if (driver && driver.isMobile) { // set viewportSize to null if browser is mobile
       varArg3 = null;
     }
@@ -1575,7 +1571,7 @@ class EyesWDIO extends EyesBase {
    * @return {boolean}
    */
   getSendDom() {
-    return EyesWDIOUtils.isMobileDevice(this._driver) && super.getSendDom();
+    return !EyesWDIOUtils.isMobileDevice(this._driver) && super.getSendDom();
   }
 
 }
