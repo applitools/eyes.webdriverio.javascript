@@ -253,6 +253,19 @@ class EyesVisualGrid extends EyesBase {
     return runner;
   }
 
+  /**
+   * @private
+   * @param {{type: string, url: string, value: string}[]} blobs
+   * @return {{type: string, url: string, value: Buffer}[]}
+   */
+  _blobsToResourceContents(blobs) {
+    return blobs.map(({ url, type, value }) => ({
+      url,
+      type,
+      value: Buffer.from(value, 'base64'),
+    }));
+  }
+
   getRunner() {
     const runner = {};
     runner.getAllResults = async (throwEx = true) => {
@@ -294,11 +307,13 @@ class EyesVisualGrid extends EyesBase {
       CorsIframeHandler.blankCorsIframeSrcOfCdt(cdt, frames);
     }
 
-    const resourceContents = blobs.map(({url, type, value}) => ({
-      url,
-      type,
-      value: Buffer.from(value, 'base64'),
-    }));
+    const resourceContents = this._blobsToResourceContents(blobs);
+    if (frames && frames.length > 0) {
+      for (let i = 0; i < frames.length; ++i) {
+        frames[i].resourceContents = this._blobsToResourceContents(frames[i].blobs);
+        delete frames[i].blobs;
+      }
+    }
 
     this._logger.verbose(`Dom extracted  (${checkSettings.toString()})   $$$$$$$$$$$$`);
 
