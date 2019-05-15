@@ -1,9 +1,8 @@
 'use strict';
 
 const chromedriver = require('chromedriver');
-const webdriverio = require('webdriverio');
-const {By, Eyes, Target, VisualGridRunner} = require('../index'); // should be replaced to '@applitools/eyes.webdriverio'
-const {BrowserType, Configuration, DeviceName, ScreenOrientation} = require('@applitools/eyes-selenium');
+const {remote} = require('webdriverio');
+const {By, Eyes, Target, VisualGridRunner, BrowserType, Configuration, DeviceName, ScreenOrientation} = require('../index'); // should be replaced to '@applitools/eyes.webdriverio'
 
 (async () => {
   chromedriver.start();
@@ -14,7 +13,7 @@ const {BrowserType, Configuration, DeviceName, ScreenOrientation} = require('@ap
       browserName: 'chrome'
     }
   };
-  let driver = webdriverio.remote(chrome);
+  let driver = remote(chrome);
   await driver.init();
 
   // Initialize the eyes SDK
@@ -48,8 +47,10 @@ const {BrowserType, Configuration, DeviceName, ScreenOrientation} = require('@ap
 
     // End the test.
     // const results = await eyes.close(); // will return only first TestResults, but as we have two browsers, we need more results
-    const results = await eyes.getRunner().getAllResults(false);
+    const results = await eyes.getRunner().getAllTestResults(false);
     console.log(results);
+  } catch (e) {
+    console.log(`Error ${e}`);
   } finally {
     // Close the browser.
     await driver.end();
