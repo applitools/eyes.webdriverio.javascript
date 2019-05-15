@@ -812,6 +812,14 @@ class EyesWDIO extends EyesBase {
 
 
   /**
+   * @return {Promise}
+   */
+  async closeAsync() {
+    return undefined;
+  }
+
+
+  /**
    * Use this method only if you made a previous call to {@link #open(WebDriver, String, String)} or one of its variants.
    *
    * @override
@@ -1571,7 +1579,7 @@ class EyesWDIO extends EyesBase {
    * @return {boolean}
    */
   getSendDom() {
-    return EyesWDIOUtils.isMobileDevice(this._driver) && super.getSendDom();
+    return !EyesWDIOUtils.isMobileDevice(this._driver) && super.getSendDom();
   }
 
 }
