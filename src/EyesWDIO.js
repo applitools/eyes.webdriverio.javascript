@@ -905,7 +905,7 @@ class EyesWDIO extends EyesBase {
   /** @private */
   _initPositionProvider() {
     // Setting the correct position provider.
-    const stitchMode = this.stitchMode;
+    const stitchMode = this._configuration.getStitchMode();
     this._logger.verbose(`initializing position provider. stitchMode: ${stitchMode}`);
     switch (stitchMode) {
       case StitchMode.CSS:
