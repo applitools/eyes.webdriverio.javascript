@@ -815,7 +815,7 @@ class EyesWDIO extends EyesBase {
    * @return {Promise}
    */
   async closeAsync() {
-    return undefined;
+    await this.close(false);
   }
 
 
@@ -1556,6 +1556,7 @@ class EyesWDIO extends EyesBase {
       conf = new Configuration(conf);
     }
 
+    this._serverConnector._configuration = conf;
     this._configuration = conf;
   }
 
