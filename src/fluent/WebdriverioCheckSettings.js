@@ -218,7 +218,8 @@ class WebdriverioCheckSettings extends CheckSettings {
         return 'full-page';
       }
       return 'viewport';
-    } if (this._targetRegion) {
+    }
+    if (this._targetRegion) {
       if (this.getStitchContent()) {
         return 'region';
       }
@@ -248,6 +249,62 @@ class WebdriverioCheckSettings extends CheckSettings {
   getScriptHooks() {
     return this._scriptHooks;
   }
+
+
+  strictRegions(...regions) {
+    regions.forEach(region => {
+      this._processStrictRegions(region);
+    });
+    return this;
+  }
+
+
+  layoutRegions(...regions) {
+    regions.forEach(region => {
+      this._processLayoutRegions(region);
+    });
+    return this;
+  }
+
+
+  contentRegions(...regions) {
+    regions.forEach(region => {
+      this._processContentRegions(region);
+    });
+    return this;
+  }
+
+
+  _processStrictRegions(regionOrContainer) {
+    if (regionOrContainer instanceof By) {
+      this._strictRegions.push(new IgnoreRegionBySelector(regionOrContainer));
+    } else if (regionOrContainer instanceof WebElement) {
+      this._strictRegions.push(new IgnoreRegionByElement(regionOrContainer));
+    } else {
+      super.strictRegions(regionOrContainer);
+    }
+  }
+
+  _processLayoutRegions(regionOrContainer) {
+    if (regionOrContainer instanceof By) {
+      this._layoutRegions.push(new IgnoreRegionBySelector(regionOrContainer));
+    } else if (regionOrContainer instanceof WebElement) {
+      this._layoutRegions.push(new IgnoreRegionByElement(regionOrContainer));
+    } else {
+      super.layoutRegions(regionOrContainer);
+    }
+  }
+
+  _processContentRegions(regionOrContainer) {
+    if (regionOrContainer instanceof By) {
+      this._contentRegions.push(new IgnoreRegionBySelector(regionOrContainer));
+    } else if (regionOrContainer instanceof WebElement) {
+      this._contentRegions.push(new IgnoreRegionByElement(regionOrContainer));
+    } else {
+      super.contentRegions(regionOrContainer);
+    }
+  }
+
 
 }
 
