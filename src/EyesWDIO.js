@@ -1376,7 +1376,15 @@ class EyesWDIO extends EyesBase {
       return undefined;
     }
 
-    return this.getRemoteWebDriver().requestHandler.sessionID;
+    let autSessionId;
+
+    if (this.getRemoteWebDriver() && this.getRemoteWebDriver().requestHandler && this.getRemoteWebDriver().requestHandler.sessionID) {
+      autSessionId = this.getRemoteWebDriver().requestHandler.sessionID;
+    } else {
+      autSessionId = this.getRemoteWebDriver().sessionId;
+    }
+
+    return autSessionId;
   };
 
 
