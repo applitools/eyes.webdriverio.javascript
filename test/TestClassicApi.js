@@ -39,7 +39,7 @@ shared.examplesFor('TestClassicApi', function (test) {
     equal(result.getAsExpected(), true);
   });
 
-  it.skip('TestIgnoreCaret', async () => {
+  it('TestIgnoreCaret', async () => {
     test.eyes.setIgnoreCaret(true);
     const input = await test.eyes.getDriver().webDriver.findElement(By.xPath('/html/body/input'));
     await input.sendKeys('test');

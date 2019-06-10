@@ -273,6 +273,8 @@ class EyesWDIO extends EyesBase {
   async check(name, checkSettings) {
     ArgumentGuard.notNull(checkSettings, "checkSettings");
 
+    checkSettings.ignoreCaret(checkSettings.getIgnoreCaret() || this.getIgnoreCaret());
+
     this._checkSettings = checkSettings;
 
     let result;
