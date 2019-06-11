@@ -38,6 +38,15 @@ shared.examplesFor('TestClassicApi', function (test) {
     const result = await test.eyes.checkFrame('frame1-1', 'inner-frame');
     equal(result.getAsExpected(), true);
   });
+
+  it('TestIgnoreCaret', async () => {
+    test.eyes.setIgnoreCaret(true);
+    const input = await test.eyes.getDriver().webDriver.findElement(By.xPath('/html/body/input'));
+    await input.sendKeys('test');
+
+    const result = await test.eyes.checkRegionBy(By.xPath('/html/body/input'), 'input');
+    equal(result.getAsExpected(), true);
+  });
 });
 
 module.exports.TestClassicApi = shared;

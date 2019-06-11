@@ -273,6 +273,8 @@ class EyesWDIO extends EyesBase {
   async check(name, checkSettings) {
     ArgumentGuard.notNull(checkSettings, "checkSettings");
 
+    checkSettings.ignoreCaret(checkSettings.getIgnoreCaret() || this.getIgnoreCaret());
+
     this._checkSettings = checkSettings;
 
     let result;
@@ -815,7 +817,7 @@ class EyesWDIO extends EyesBase {
    * @return {Promise}
    */
   async closeAsync() {
-    return undefined;
+    await this.close(false);
   }
 
 
@@ -1376,7 +1378,15 @@ class EyesWDIO extends EyesBase {
       return undefined;
     }
 
-    return this.getRemoteWebDriver().requestHandler.sessionID;
+    let autSessionId;
+
+    if (this.getRemoteWebDriver() && this.getRemoteWebDriver().requestHandler && this.getRemoteWebDriver().requestHandler.sessionID) {
+      autSessionId = this.getRemoteWebDriver().requestHandler.sessionID;
+    } else {
+      autSessionId = this.getRemoteWebDriver().sessionId;
+    }
+
+    return autSessionId;
   };
 
 
@@ -1556,6 +1566,7 @@ class EyesWDIO extends EyesBase {
       conf = new Configuration(conf);
     }
 
+    this._serverConnector._configuration = conf;
     this._configuration = conf;
   }
 
