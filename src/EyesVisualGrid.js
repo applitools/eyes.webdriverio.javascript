@@ -14,13 +14,13 @@ const {
 
 const {BrowserType, Configuration, RectangleSize} = require('@applitools/eyes-selenium');
 
-const {TestResultSummary} = require('./visualgrid/TestResultSummary');
+const {TestResultSummary} = require('./runner/TestResultSummary');
 
 const EyesWebDriver = require('./wrappers/EyesWebDriver');
 const EyesWDIOUtils = require('./EyesWDIOUtils');
 const WDIOJSExecutor = require('./WDIOJSExecutor');
 const WebDriver = require('./wrappers/WebDriver');
-const {VisualGridRunner} = require('./visualgrid/VisualGridRunner');
+const {VisualGridRunner} = require('./runner/VisualGridRunner');
 
 const VERSION = require('../package.json').version;
 
@@ -35,13 +35,13 @@ class EyesVisualGrid extends EyesBase {
    *
    * @param {string} [serverUrl=EyesBase.getDefaultServerUrl()] The Eyes server URL.
    * @param {boolean} [isDisabled=false] Set to true to disable Applitools Eyes and use the webdriver directly.
-   * @param {VisualGridRunner} [visualGridRunner] - Set {@code true} to disable Applitools Eyes and use the WebDriver directly.
+   * @param {EyesRunner} [runner] - Set {@code true} to disable Applitools Eyes and use the WebDriver directly.
    */
-  constructor(serverUrl, isDisabled, visualGridRunner = new VisualGridRunner()) {
+  constructor(serverUrl, isDisabled, runner = new VisualGridRunner()) {
     super(serverUrl, isDisabled, new Configuration());
+    /** @type {EyesRunner} */ this._runner = runner;
 
-    /** @type {VisualGridRunner} */ this._visualGridRunner = visualGridRunner;
-    this._visualGridRunner._eyesInstances.push(this);
+    this._runner._eyesInstances.push(this);
 
     /** @type {boolean} */ this._isOpen = false;
     /** @type {boolean} */ this._isVisualGrid = true;
@@ -101,7 +101,7 @@ class EyesVisualGrid extends EyesBase {
       this._configuration.addBrowser(vs.getWidth(), vs.getHeight(), BrowserType.CHROME);
     }
 
-    if (this._visualGridRunner.getConcurrentSessions()) this._configuration.setConcurrentSessions(this._visualGridRunner.getConcurrentSessions());
+    if (this._runner.getConcurrentSessions()) this._configuration.setConcurrentSessions(this._runner.getConcurrentSessions());
 
     const {openEyes} = makeVisualGridClient({
       logger: this._logger,
@@ -274,7 +274,7 @@ class EyesVisualGrid extends EyesBase {
   }
 
   getRunner() {
-    return this._visualGridRunner;
+    return this._runner;
   }
 
   /**

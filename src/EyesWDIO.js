@@ -44,6 +44,7 @@ const Target = require('./fluent/Target');
 const WDIOJSExecutor = require('./WDIOJSExecutor');
 const WebDriver = require('./wrappers/WebDriver');
 const ReadOnlyPropertyHandler = require("@applitools/eyes-sdk-core/index").ReadOnlyPropertyHandler;
+const { ClassicRunner } = require('./runner/ClassicRunner');
 
 const VERSION = require('../package.json').version;
 
@@ -69,9 +70,11 @@ class EyesWDIO extends EyesBase {
    *
    * @param {String} [serverUrl] The Eyes server URL.
    * @param {Boolean} [isDisabled=false] Set to true to disable Applitools Eyes and use the webdriver directly.
+   * @param {ClassicRunner} [runner] - Set shared ClassicRunner if you want to group results.
    **/
-  constructor(serverUrl, isDisabled = false) {
+  constructor(serverUrl, isDisabled = false, runner = new ClassicRunner()) {
     super(serverUrl, isDisabled, new Configuration());
+    /** @type {EyesRunner} */ this._runner = runner;
 
     /** @type {EyesWebDriver} */
     this._driver = undefined;
@@ -822,6 +825,21 @@ class EyesWDIO extends EyesBase {
 
 
   /**
+   * @param {boolean} [throwEx]
+   * @return {Promise<TestResults>}
+   */
+  async close(throwEx = true) {
+    const results = await super.close(throwEx);
+
+    if (this._runner) {
+      this._runner._allTestResult.push(results);
+    }
+
+    return results;
+  }
+
+
+  /**
    * Use this method only if you made a previous call to {@link #open(WebDriver, String, String)} or one of its variants.
    *
    * @override
@@ -1548,13 +1566,7 @@ class EyesWDIO extends EyesBase {
    * @return {object}
    */
   getRunner() {
-    const runner = {};
-    /** @param  {boolean} throwEx */
-    /** @return {Promise<TestResults|Error>} */
-    runner.getAllResults = async (throwEx) => {
-      return await this.close(throwEx);
-    };
-    return runner;
+    return this._runner;
   }
 
   /**

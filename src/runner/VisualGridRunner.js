@@ -1,18 +1,18 @@
 'use strict';
 
+const { EyesRunner } = require('./EyesRunner');
 const {TestResultSummary} = require('./TestResultSummary');
 
-class VisualGridRunner {
+class VisualGridRunner extends EyesRunner {
   // this class is just a mock for compatibility with Java
 
   /**
    * @param {number} [concurrentSessions]
    */
   constructor(concurrentSessions) {
-    this._concurrentSessions = concurrentSessions;
+    super();
 
-    /** @type {EyesVisualGrid[]} */
-    this._eyesInstances = [];
+    this._concurrentSessions = concurrentSessions;
   }
 
   /**
