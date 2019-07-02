@@ -2,7 +2,7 @@
 
 const chromedriver = require('chromedriver');
 const {remote} = require('webdriverio');
-const {By, Eyes, Target, VisualGridRunner, BrowserType, Configuration, DeviceName, ScreenOrientation} = require('../index'); // should be replaced to '@applitools/eyes.webdriverio'
+const {By, Eyes, Target, VisualGridRunner, BrowserType, Configuration, DeviceName, ScreenOrientation, BatchInfo} = require('../index'); // should be replaced to '@applitools/eyes.webdriverio'
 
 (async () => {
   chromedriver.start();
@@ -20,7 +20,11 @@ const {By, Eyes, Target, VisualGridRunner, BrowserType, Configuration, DeviceNam
   const eyes = new Eyes(new VisualGridRunner(3));
 
   try {
+    const batchInfo = new BatchInfo();
+    batchInfo.setSequenceName('alpha sequence');
+
     const configuration = new Configuration();
+    configuration.setBatch(batchInfo);
     configuration.setAppName('Eyes Examples');
     configuration.setTestName('My first Javascript test!');
     configuration.addBrowser(800, 600, BrowserType.CHROME);

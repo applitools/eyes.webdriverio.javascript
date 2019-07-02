@@ -1,6 +1,6 @@
 {
   "name": "@applitools/eyes.webdriverio",
-  "version": "2.4.0",
+  "version": "2.5.1",
   "description": "Applitools Eyes SDK for Webdriverio ",
   "main": "index.js",
   "scripts": {

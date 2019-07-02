@@ -44,6 +44,7 @@ const Target = require('./fluent/Target');
 const WDIOJSExecutor = require('./WDIOJSExecutor');
 const WebDriver = require('./wrappers/WebDriver');
 const ReadOnlyPropertyHandler = require("@applitools/eyes-sdk-core/index").ReadOnlyPropertyHandler;
+const { ClassicRunner } = require('./runner/ClassicRunner');
 
 const VERSION = require('../package.json').version;
 
@@ -69,9 +70,11 @@ class EyesWDIO extends EyesBase {
    *
    * @param {String} [serverUrl] The Eyes server URL.
    * @param {Boolean} [isDisabled=false] Set to true to disable Applitools Eyes and use the webdriver directly.
+   * @param {ClassicRunner} [runner] - Set shared ClassicRunner if you want to group results.
    **/
-  constructor(serverUrl, isDisabled = false) {
+  constructor(serverUrl, isDisabled = false, runner = new ClassicRunner()) {
     super(serverUrl, isDisabled, new Configuration());
+    /** @type {EyesRunner} */ this._runner = runner;
 
     /** @type {EyesWebDriver} */
     this._driver = undefined;
@@ -272,6 +275,8 @@ class EyesWDIO extends EyesBase {
    */
   async check(name, checkSettings) {
     ArgumentGuard.notNull(checkSettings, "checkSettings");
+
+    checkSettings.ignoreCaret(checkSettings.getIgnoreCaret() || this.getIgnoreCaret());
 
     this._checkSettings = checkSettings;
 
@@ -1396,7 +1401,15 @@ class EyesWDIO extends EyesBase {
       return undefined;
     }
 
-    return this.getRemoteWebDriver().requestHandler.sessionID;
+    let autSessionId;
+
+    if (this.getRemoteWebDriver() && this.getRemoteWebDriver().requestHandler && this.getRemoteWebDriver().requestHandler.sessionID) {
+      autSessionId = this.getRemoteWebDriver().requestHandler.sessionID;
+    } else {
+      autSessionId = this.getRemoteWebDriver().sessionId;
+    }
+
+    return autSessionId;
   };
 
 
@@ -1558,13 +1571,7 @@ class EyesWDIO extends EyesBase {
    * @return {object}
    */
   getRunner() {
-    const runner = {};
-    /** @param  {boolean} throwEx */
-    /** @return {Promise<TestResults|Error>} */
-    runner.getAllResults = async (throwEx) => {
-      return await this.close(throwEx);
-    };
-    return runner;
+    return this._runner;
   }
 
   /**
@@ -1576,6 +1583,7 @@ class EyesWDIO extends EyesBase {
       conf = new Configuration(conf);
     }
 
+    this._serverConnector._configuration = conf;
     this._configuration = conf;
   }
 
