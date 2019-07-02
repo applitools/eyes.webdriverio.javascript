@@ -10,7 +10,6 @@ const Common = require('./Common');
 
 let browser;
 
-
 describe('VisualGridSimple', function () {
   this.timeout(5 * 60 * 1000);
 
@@ -29,18 +28,18 @@ describe('VisualGridSimple', function () {
   });
 
   it('VisualGridTestPage', async function () {
-    await browser.url('https://applitools.github.io/demo/TestPages/VisualGridTestPage');
+    await browser.url('https://www.cigna.com/individuals-families/');
 
     const eyes = new Eyes(new VisualGridRunner(3));
     eyes.setBatch(new BatchInfo('EyesRenderingBatch_WDIO'));
     eyes.setCorsIframeHandle(CorsIframeHandle.BLANK);
 
     const configuration = new Configuration();
+    configuration.setShowLogs(true);
     configuration.setTestName('Open Concurrency with Batch 2');
     configuration.setAppName('RenderingGridIntegration');
-    configuration.addBrowser(800, 600, BrowserType.CHROME);
-    configuration.addBrowser(700, 500, BrowserType.CHROME);
-    configuration.addBrowser(400, 300, BrowserType.CHROME);
+    configuration.addBrowser(800, 600, BrowserType.IE_10);
+    configuration.addBrowser(800, 600, BrowserType.IE_11);
 
     eyes.setConfiguration(configuration);
     await eyes.open(browser);
