@@ -328,7 +328,7 @@ class EyesVisualGrid extends EyesBase {
       url: pageUrl,
       cdt,
       tag: checkSettings.getName(),
-      sizeMode: checkSettings.getSizeMode(),
+      sizeMode: checkSettings.getSizeMode() === 'viewport' && this.getForceFullPageScreenshot() ? 'full-page' : checkSettings.getSizeMode(),
       selector: targetSelector ? targetSelector : undefined,
       region: checkSettings.getTargetRegion(),
       scriptHooks: checkSettings.getScriptHooks(),
@@ -458,6 +458,22 @@ class EyesVisualGrid extends EyesBase {
 
   getApiKey() {
     return this._configuration.getApiKey();
+  }
+
+  /**
+   * Forces a full page screenshot (by scrolling and stitching) if the browser only supports viewport screenshots).
+   *
+   * @param {boolean} shouldForce Whether to force a full page screenshot or not.
+   */
+  setForceFullPageScreenshot(shouldForce) {
+    this._configuration.setForceFullPageScreenshot(shouldForce);
+  }
+
+  /**
+   * @return {boolean} Whether Eyes should force a full page screenshot.
+   */
+  getForceFullPageScreenshot() {
+    return this._configuration.getForceFullPageScreenshot();
   }
 
 }

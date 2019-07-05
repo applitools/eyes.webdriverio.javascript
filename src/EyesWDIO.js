@@ -81,8 +81,6 @@ class EyesWDIO extends EyesBase {
     /** @type {boolean} */
     this._dontGetTitle = false;
 
-    /** @type {boolean} */
-    this._forceFullPageScreenshot = false;
     this._imageRotationDegrees = 0;
     this._automaticRotation = true;
     /** @type {boolean} */
@@ -1122,7 +1120,7 @@ class EyesWDIO extends EyesBase {
       this._logger.verbose('Building screenshot object...');
       const size = new RectangleSize(entireFrameOrElement.getWidth(), entireFrameOrElement.getHeight());
       result = await EyesWDIOScreenshot.fromFrameSize(this._logger, this._driver, entireFrameOrElement, size);
-    } else if (this._forceFullPageScreenshot || this._stitchContent) {
+    } else if (this.getForceFullPageScreenshot() || this._stitchContent) {
       this._logger.verbose('Full page screenshot requested.');
 
       // Save the current frame path.
@@ -1439,7 +1437,7 @@ class EyesWDIO extends EyesBase {
    * @param {boolean} shouldForce Whether to force a full page screenshot or not.
    */
   setForceFullPageScreenshot(shouldForce) {
-    this._forceFullPageScreenshot = shouldForce;
+    this._configuration.setForceFullPageScreenshot(shouldForce);
   }
 
   //noinspection JSUnusedGlobalSymbols
@@ -1447,7 +1445,7 @@ class EyesWDIO extends EyesBase {
    * @return {boolean} Whether Eyes should force a full page screenshot.
    */
   getForceFullPageScreenshot() {
-    return this._forceFullPageScreenshot;
+    return this._configuration.getForceFullPageScreenshot();
   }
 
 
