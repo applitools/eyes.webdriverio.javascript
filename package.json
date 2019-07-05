@@ -11,7 +11,7 @@
   "license": "See LICENSE file",
   "repository": "https://github.com/applitools/eyes.webdriverio.javascript",
   "dependencies": {
-    "@applitools/dom-snapshot": "^1.2.24",
+    "@applitools/dom-snapshot": "^1.3.6",
     "@applitools/dom-utils": "~4.6.21",
     "@applitools/eyes-sdk-core": "~5.11.1",
     "@applitools/eyes-selenium": "^4.22.1",
