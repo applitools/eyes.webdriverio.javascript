@@ -44,6 +44,7 @@ const Target = require('./fluent/Target');
 const WDIOJSExecutor = require('./WDIOJSExecutor');
 const WebDriver = require('./wrappers/WebDriver');
 const ReadOnlyPropertyHandler = require("@applitools/eyes-sdk-core/index").ReadOnlyPropertyHandler;
+const { ClassicRunner } = require('./runner/ClassicRunner');
 
 const VERSION = require('../package.json').version;
 
@@ -69,17 +70,17 @@ class EyesWDIO extends EyesBase {
    *
    * @param {String} [serverUrl] The Eyes server URL.
    * @param {Boolean} [isDisabled=false] Set to true to disable Applitools Eyes and use the webdriver directly.
+   * @param {ClassicRunner} [runner] - Set shared ClassicRunner if you want to group results.
    **/
-  constructor(serverUrl, isDisabled = false) {
+  constructor(serverUrl, isDisabled = false, runner = new ClassicRunner()) {
     super(serverUrl, isDisabled, new Configuration());
+    /** @type {EyesRunner} */ this._runner = runner;
 
     /** @type {EyesWebDriver} */
     this._driver = undefined;
     /** @type {boolean} */
     this._dontGetTitle = false;
 
-    /** @type {boolean} */
-    this._forceFullPageScreenshot = false;
     this._imageRotationDegrees = 0;
     this._automaticRotation = true;
     /** @type {boolean} */
@@ -293,7 +294,8 @@ class EyesWDIO extends EyesBase {
         if (targetRegion) {
           return this._tryHideScrollbars().then(async () => {
             that._targetElementLocation = targetRegion.getLocation();
-            const res = await super.checkWindowBase(new RegionProvider(targetRegion), name, false, checkSettings);
+            const source = await this._driver.getCurrentUrl();
+            const res = await super.checkWindowBase(new RegionProvider(targetRegion), name, false, checkSettings, source);
             await that._tryRestoreScrollbars();
             return res;
           });
@@ -330,8 +332,9 @@ class EyesWDIO extends EyesBase {
               return that.getPositionProvider().setPosition(Location.ZERO);
             }).then(() => {
               return that._tryHideScrollbars();
-            }).then(() => {
-              return super.checkWindowBase(new NullRegionProvider(), name, false, checkSettings);
+            }).then(async() => {
+              const source = await this._driver.getCurrentUrl();
+              return super.checkWindowBase(new NullRegionProvider(), name, false, checkSettings, source);
             }).then(res_ => {
               res = res_;
               return that.getPositionProvider().restoreState(originalPosition);
@@ -375,7 +378,8 @@ class EyesWDIO extends EyesBase {
       }
     };
 
-    const r = await super.checkWindowBase(new RegionProviderImpl(), name, false, checkSettings);
+    const source = await this._driver.getCurrentUrl();
+    const r = await super.checkWindowBase(new RegionProviderImpl(), name, false, checkSettings, source);
     this._logger.verbose("Done! trying to scroll back to original position..");
     return r;
   }
@@ -437,7 +441,7 @@ class EyesWDIO extends EyesBase {
             elementLocation = new Location(pl.getX() + borderLeftWidth, pl.getY() + borderTopWidth);
           });
         });
-      }).then(() => {
+      }).then(async () => {
         const elementRegion = new Region(elementLocation, elementSize, CoordinatesType.CONTEXT_AS_IS);
 
         that._logger.verbose("Element region: " + elementRegion);
@@ -456,7 +460,8 @@ class EyesWDIO extends EyesBase {
           that.setPositionProvider(new CssTranslateElementPositionProvider(that._logger, that._driver, eyesElement));
         }
 
-        return super.checkWindowBase(new NullRegionProvider(), name, false, checkSettings);
+        const source = await this._driver.getCurrentUrl();
+        return super.checkWindowBase(new NullRegionProvider(), name, false, checkSettings, source);
       });
     }).catch(error_ => {
       error = error_;
@@ -563,7 +568,8 @@ class EyesWDIO extends EyesBase {
       }
     };
 
-    const r = await super.checkWindowBase(new RegionProviderImpl(), name, false, checkSettings);
+    const source = await this._driver.getCurrentUrl();
+    const r = await super.checkWindowBase(new RegionProviderImpl(), name, false, checkSettings, source);
     that._checkFrameOrElement = false;
     return r;
   }
@@ -818,6 +824,21 @@ class EyesWDIO extends EyesBase {
    */
   async closeAsync() {
     await this.close(false);
+  }
+
+
+  /**
+   * @param {boolean} [throwEx]
+   * @return {Promise<TestResults>}
+   */
+  async close(throwEx = true) {
+    const results = await super.close(throwEx);
+
+    if (this._runner) {
+      this._runner._allTestResult.push(results);
+    }
+
+    return results;
   }
 
 
@@ -1099,7 +1120,7 @@ class EyesWDIO extends EyesBase {
       this._logger.verbose('Building screenshot object...');
       const size = new RectangleSize(entireFrameOrElement.getWidth(), entireFrameOrElement.getHeight());
       result = await EyesWDIOScreenshot.fromFrameSize(this._logger, this._driver, entireFrameOrElement, size);
-    } else if (this._forceFullPageScreenshot || this._stitchContent) {
+    } else if (this.getForceFullPageScreenshot() || this._stitchContent) {
       this._logger.verbose('Full page screenshot requested.');
 
       // Save the current frame path.
@@ -1416,7 +1437,7 @@ class EyesWDIO extends EyesBase {
    * @param {boolean} shouldForce Whether to force a full page screenshot or not.
    */
   setForceFullPageScreenshot(shouldForce) {
-    this._forceFullPageScreenshot = shouldForce;
+    this._configuration.setForceFullPageScreenshot(shouldForce);
   }
 
   //noinspection JSUnusedGlobalSymbols
@@ -1424,7 +1445,7 @@ class EyesWDIO extends EyesBase {
    * @return {boolean} Whether Eyes should force a full page screenshot.
    */
   getForceFullPageScreenshot() {
-    return this._forceFullPageScreenshot;
+    return this._configuration.getForceFullPageScreenshot();
   }
 
 
@@ -1548,13 +1569,7 @@ class EyesWDIO extends EyesBase {
    * @return {object}
    */
   getRunner() {
-    const runner = {};
-    /** @param  {boolean} throwEx */
-    /** @return {Promise<TestResults|Error>} */
-    runner.getAllResults = async (throwEx) => {
-      return await this.close(throwEx);
-    };
-    return runner;
+    return this._runner;
   }
 
   /**

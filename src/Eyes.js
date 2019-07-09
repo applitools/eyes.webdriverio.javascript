@@ -4,7 +4,9 @@ const {TypeUtils} = require('@applitools/eyes-sdk-core');
 
 const {EyesWDIO} = require('./EyesWDIO');
 const {EyesVisualGrid} = require('./EyesVisualGrid');
-const {VisualGridRunner} = require('./visualgrid/VisualGridRunner');
+const {ClassicRunner} = require('./runner/ClassicRunner');
+const {EyesRunner} = require('./runner/EyesRunner');
+const {VisualGridRunner} = require('./runner/VisualGridRunner');
 
 /**
  * @abstract
@@ -18,25 +20,20 @@ class Eyes {
    *
    * @param {string|boolean|VisualGridRunner} [serverUrl=EyesBase.getDefaultServerUrl()] The Eyes server URL.
    * @param {boolean} [isDisabled=false] Set to true to disable Applitools Eyes and use the webdriver directly.
-   * @param {boolean} [isVisualGrid]
+   * @param {EyesRunner} [runner]
    * @return {EyesWDIO|EyesVisualGrid}
    */
-  constructor(serverUrl, isDisabled, isVisualGrid = false) {
-    let visualGridRunner;
-    if (serverUrl instanceof VisualGridRunner) {
-      isVisualGrid = true;
-      visualGridRunner = serverUrl;
-      serverUrl = undefined;
-    } else if (TypeUtils.isBoolean(serverUrl)) {
-      isVisualGrid = serverUrl;
+  constructor(serverUrl, isDisabled, runner = new ClassicRunner()) {
+    if (serverUrl instanceof EyesRunner) {
+      runner = serverUrl;
       serverUrl = undefined;
     }
 
-    if (isVisualGrid === true) {
-      return new EyesVisualGrid(serverUrl, isDisabled, visualGridRunner);
-    } else {
-      return new EyesWDIO(serverUrl, isDisabled);
+    if (runner && runner instanceof VisualGridRunner) {
+      return new EyesVisualGrid(serverUrl, isDisabled, runner);
     }
+
+    return new EyesWDIO(serverUrl, isDisabled);
   }
 
 }
