@@ -18,10 +18,10 @@ describe(appName, function () {
   beforeEach(function () {
     const caps = {};
     caps['browserName'] = 'Chrome';
-    caps['appiumVersion'] = '1.7.2';
+    caps['appiumVersion'] = '1.8.1';
     caps['deviceName'] = 'Android Emulator';
     caps['deviceOrientation'] = 'portrait';
-    caps['platformVersion'] = '6';
+    caps['platformVersion'] = '8';
     caps['platformName'] = 'Android';
 
     const browserOptions = {desiredCapabilities: caps};
