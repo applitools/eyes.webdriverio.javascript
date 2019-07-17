@@ -58,7 +58,7 @@ const {By, ClassicRunner, Eyes, Target, Configuration, BatchInfo} = require('../
     await driver.end();
 
     // If the test was aborted before eyes.close was called ends the test as aborted.
-    await eyes.abortIfNotClosed();
+    await eyes.abort();
 
     chromedriver.stop();
   }
