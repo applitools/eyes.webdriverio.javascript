@@ -80,6 +80,9 @@ async function runTest(url, runner) {
   } finally {
     // Close the browser
     await driver.end();
+
+    // If the test was aborted before eyes.close was called ends the test as aborted.
+    await eyes.abort();
   }
 }
 

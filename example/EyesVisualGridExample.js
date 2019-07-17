@@ -60,7 +60,7 @@ const {By, Eyes, Target, VisualGridRunner, BrowserType, Configuration, DeviceNam
     await driver.end();
 
     // If the test was aborted before eyes.close was called ends the test as aborted.
-    await eyes.abortIfNotClosed();
+    await eyes.abort();
 
     chromedriver.stop();
   }
