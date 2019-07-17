@@ -55,34 +55,35 @@ class WebElement {
   /**
    * @returns {Promise.<{x, y}>}
    */
-  getLocation() {
-    return this._driver.remoteWebDriver.elementIdLocation(this._element.ELEMENT).then(r => {
+  async getLocation() {
+    try {
+      const r = await this._driver.remoteWebDriver.elementIdLocation(this._element.ELEMENT);
       const {value: location} = r;
       return location;
-    });
+    } catch (e) {
+      throw e;
+    }
   }
 
 
   /**
    * @returns {Promise.<width, height>}
    */
-  getSize() {
-    return this._driver.remoteWebDriver.elementIdSize(this._element.ELEMENT).then(r => {
-      const {value: size} = r;
-      return size;
-    });
+  async getSize() {
+    const r = await this._driver.remoteWebDriver.elementIdSize(this._element.ELEMENT);
+    const {value: size} = r;
+    return size;
   }
 
 
   /**
    * @returns {Promise.<x, y, width, height>}
    */
-  getRect() {
+  async getRect() {
     // todo need to replace elementIdSize and elementIdLocation to elementIdRect
-    return this._driver.remoteWebDriver.elementIdRect(this._element.ELEMENT).then(r => {
-      const {value: rect} = r;
-      return rect;
-    });
+    const r = await this._driver.remoteWebDriver.elementIdRect(this._element.ELEMENT);
+    const {value: rect} = r;
+    return rect;
   }
 
 
