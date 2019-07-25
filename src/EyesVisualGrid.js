@@ -297,9 +297,9 @@ class EyesVisualGrid extends EyesBase {
 
     this._logger.verbose(`Dom extraction starting   (${checkSettings.toString()})   $$$$$$$$$$$$`);
 
-    let targetSelector = await checkSettings.targetSelector;
+    let targetSelector = await checkSettings.getTargetProvider();
     if (targetSelector) {
-      targetSelector = targetSelector.value;
+      targetSelector = targetSelector.getSelector(this);
     }
 
     const domCaptureScript = `var callback = arguments[arguments.length - 1]; return (${this._processPageAndSerializeScript})().then(JSON.stringify).then(callback, function(err) {callback(err.stack || err.toString())})`;

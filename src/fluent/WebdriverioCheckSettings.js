@@ -6,6 +6,8 @@ const WebElement = require('../wrappers/WebElement');
 const FrameLocator = require('./FrameLocator');
 const IgnoreRegionBySelector = require('./IgnoreRegionBySelector');
 const IgnoreRegionByElement = require('./IgnoreRegionByElement');
+const {SelectorByElement} = require('./SelectorByElement');
+const {SelectorByLocator} = require('./SelectorByLocator');
 const FloatingRegionBySelector = require('./FloatingRegionBySelector');
 const FloatingRegionByElement = require('./FloatingRegionByElement');
 
@@ -36,6 +38,24 @@ class WebdriverioCheckSettings extends CheckSettings {
     }
 
     /** @type {Map<string, string>} */ this._scriptHooks = new Map();
+  }
+
+
+  /**
+   * @package
+   * @ignore
+   * @return {?GetSelector}
+   */
+  getTargetProvider() {
+    if (this._targetSelector) {
+      return new SelectorByLocator(this._targetSelector);
+    }
+
+    if (this._targetElement) {
+      return new SelectorByElement(this._targetElement);
+    }
+
+    return undefined;
   }
 
 

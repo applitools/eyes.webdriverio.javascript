@@ -1,6 +1,8 @@
 'use strict';
 
-const {GetRegion, Region, Location, CoordinatesType} = require('@applitools/eyes-sdk-core');
+const {GetRegion, Region, Location, CoordinatesType, GeneralUtils} = require('@applitools/eyes-sdk-core');
+
+const EYES_SELECTOR_TAG = 'data-eyes-selector';
 
 class IgnoreRegionByElement extends GetRegion {
 
@@ -27,6 +29,19 @@ class IgnoreRegionByElement extends GetRegion {
       });
     });
   }
+
+  // noinspection JSCheckFunctionSignatures
+  /**
+   * @inheritDoc
+   * @param {Eyes} eyes
+   * @return {Promise<string>}
+   */
+  async getSelector(eyes) {
+    const randId = GeneralUtils.randomAlphanumeric();
+    await eyes._driver.executeScript(`arguments[0].setAttribute('${EYES_SELECTOR_TAG}', '${randId}');`, this._element);
+    return `[${EYES_SELECTOR_TAG}="${randId}"]`;
+  }
+
 }
 
 module.exports = IgnoreRegionByElement;

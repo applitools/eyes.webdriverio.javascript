@@ -1,6 +1,8 @@
 'use strict';
 
-const {GetRegion, Region, Location, CoordinatesType} = require('@applitools/eyes-sdk-core');
+const {GetRegion} = require('@applitools/eyes-sdk-core');
+
+const { IgnoreRegionByElement } = require('./IgnoreRegionByElement');
 
 class IgnoreRegionBySelector extends GetRegion {
 
@@ -15,20 +17,24 @@ class IgnoreRegionBySelector extends GetRegion {
   // noinspection JSCheckFunctionSignatures
   /**
    * @override
-   * @param {Eyes} eyesBase
+   * @param {Eyes} eyes
    * @param {EyesScreenshot} screenshot
    */
-  getRegion(eyesBase, screenshot) {
-    const that = this;
-    return eyesBase.getDriver().findElement(that._element).then(element => {
-      return element.getLocation().then(point => {
-        return element.getSize().then(size => {
-          const lTag = screenshot.convertLocation(new Location(point), CoordinatesType.CONTEXT_RELATIVE, CoordinatesType.SCREENSHOT_AS_IS);
-          return new Region(lTag.getX(), lTag.getY(), size.getWidth(), size.getHeight());
-        });
-      });
-    });
+  async getRegion(eyes, screenshot) {
+    const element = await eyes.getDriver().findElement(this._element);
+    return new IgnoreRegionByElement(element).getRegion(eyes, screenshot);
   }
+
+  /**
+   * @inheritDoc
+   * @param {Eyes} eyes
+   * @return {Promise<string>}
+   */
+  async getSelector(eyes) {
+    const element = await eyes.getDriver().findElement(this._element);
+    return new IgnoreRegionByElement(element).getSelector(eyes);
+  }
+
 }
 
 module.exports = IgnoreRegionBySelector;

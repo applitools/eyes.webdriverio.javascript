@@ -1,4 +1,4 @@
-
+'use strict';
 
 class By {
 
@@ -19,8 +19,14 @@ class By {
     return new By(`[name=${name}]`);
   }
 
-
+  /**
+   * @alias css
+   */
   static cssSelector(cssSelector) {
+    return By.css(cssSelector);
+  }
+
+  static css(cssSelector) {
     return new By(cssSelector);
   }
 
