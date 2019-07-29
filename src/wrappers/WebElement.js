@@ -1,8 +1,8 @@
 'use strict';
 
-
-const {ArgumentGuard} = require('@applitools/eyes-sdk-core');
+const {ArgumentGuard, TypeUtils} = require('@applitools/eyes-sdk-core');
 const command = require('../services/selenium/Command');
+const By = require('../By');
 
 /**
  * Wrapper for Webdriverio element
@@ -104,6 +104,13 @@ class WebElement {
     // return this.requestHandler.create(`/session/:sessionId/element/${id}/screenshot`);
   }
 
+  /**
+   * @param {object} object
+   * @return {boolean}
+   */
+  static isLocator(object) {
+    return (object instanceof By) || TypeUtils.has(object, ['using', 'value']);
+  }
 
   static equals(a, b) {
     if (a == undefined || b == undefined) {

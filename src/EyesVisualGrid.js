@@ -9,7 +9,8 @@ const {
   TestResultsFormatter,
   CorsIframeHandle,
   CorsIframeHandler,
-  TypeUtils
+  TypeUtils,
+  IgnoreRegionByRectangle
 } = require('@applitools/eyes-sdk-core');
 
 const {BrowserType, Configuration, RectangleSize} = require('@applitools/eyes-selenium');
@@ -105,6 +106,7 @@ class EyesVisualGrid extends EyesBase {
 
     const {openEyes} = makeVisualGridClient({
       logger: this._logger,
+      agentId: this.getFullAgentId(),
       apiKey: this._configuration.getApiKey(),
       showLogs: this._configuration.getShowLogs(),
       saveDebugData: this._configuration.getSaveDebugData(),
@@ -321,6 +323,8 @@ class EyesVisualGrid extends EyesBase {
     this._logger.verbose(`Dom extracted  (${checkSettings.toString()})   $$$$$$$$$$$$`);
 
     const source = await this._driver.getCurrentUrl();
+    const ignoreRegions = await this._prepareRegions(checkSettings.getIgnoreRegions());
+
     await this._checkWindowCommand({
       resourceUrls,
       resourceContents,
@@ -332,7 +336,7 @@ class EyesVisualGrid extends EyesBase {
       selector: targetSelector ? targetSelector : undefined,
       region: checkSettings.getTargetRegion(),
       scriptHooks: checkSettings.getScriptHooks(),
-      ignore: checkSettings.getIgnoreRegions(),
+      ignore: ignoreRegions,
       floating: checkSettings.getFloatingRegions(),
       sendDom: checkSettings.getSendDom() ? checkSettings.getSendDom() : this.getSendDom(),
       matchLevel: checkSettings.getMatchLevel() ? checkSettings.getMatchLevel() : this.getMatchLevel(),
@@ -474,6 +478,31 @@ class EyesVisualGrid extends EyesBase {
    */
   getForceFullPageScreenshot() {
     return this._configuration.getForceFullPageScreenshot();
+  }
+
+  /**
+   * @private
+   * @param {GetRegion[]} regions
+   * @return {{type: string, url: string, value: Buffer}[]}
+   */
+  async _prepareRegions(regions) {
+    if (regions && regions.length > 0) {
+      const newRegions = [];
+
+      for (const region of regions) {
+        if (region instanceof IgnoreRegionByRectangle) {
+          const plainRegion = (await region.getRegion(this, undefined)).toJSON();
+          newRegions.push(plainRegion);
+        } else {
+          const selector = await region.getSelector(this);
+          newRegions.push({ selector });
+        }
+      }
+
+      return newRegions;
+    }
+
+    return regions;
   }
 
 }

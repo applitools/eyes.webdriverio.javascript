@@ -2,7 +2,7 @@
 
 const {GetRegion} = require('@applitools/eyes-sdk-core');
 
-const { IgnoreRegionByElement } = require('./IgnoreRegionByElement');
+const IgnoreRegionByElement = require('./IgnoreRegionByElement');
 
 class IgnoreRegionBySelector extends GetRegion {
 
@@ -21,7 +21,7 @@ class IgnoreRegionBySelector extends GetRegion {
    * @param {EyesScreenshot} screenshot
    */
   async getRegion(eyes, screenshot) {
-    const element = await eyes.getDriver().findElement(this._element);
+    const element = await eyes._driver.findElement(this._element);
     return new IgnoreRegionByElement(element).getRegion(eyes, screenshot);
   }
 
@@ -31,7 +31,7 @@ class IgnoreRegionBySelector extends GetRegion {
    * @return {Promise<string>}
    */
   async getSelector(eyes) {
-    const element = await eyes.getDriver().findElement(this._element);
+    const element = await eyes._driver.findElement(this._element);
     return new IgnoreRegionByElement(element).getSelector(eyes);
   }
 

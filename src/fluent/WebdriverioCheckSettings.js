@@ -3,6 +3,7 @@
 const {CheckSettings, Region, TypeUtils} = require('@applitools/eyes-sdk-core');
 const By = require('../By');
 const WebElement = require('../wrappers/WebElement');
+const EyesWebElement = require('../wrappers/EyesWebElement');
 const FrameLocator = require('./FrameLocator');
 const IgnoreRegionBySelector = require('./IgnoreRegionBySelector');
 const IgnoreRegionByElement = require('./IgnoreRegionByElement');
@@ -12,6 +13,7 @@ const FloatingRegionBySelector = require('./FloatingRegionBySelector');
 const FloatingRegionByElement = require('./FloatingRegionByElement');
 
 const USE_DEFAULT_MATCH_TIMEOUT = -1;
+const BEFORE_CAPTURE_SCREENSHOT = 'beforeCaptureScreenshot';
 
 class WebdriverioCheckSettings extends CheckSettings {
 
@@ -133,6 +135,55 @@ class WebdriverioCheckSettings extends CheckSettings {
   ignores(...regionsOrContainers) {
     super.ignoreRegions(...regionsOrContainers);
     return this;
+  }
+
+
+  /**
+   * @inheritDoc
+   * @param {...(By|WebElement|EyesWebElement|GetRegion|Region)} regions - A region to ignore when validating.
+   * @return {this}
+   */
+  ignoreRegions(...regions) {
+    // noinspection JSValidateTypes
+    return super.ignoreRegions(...regions);
+  }
+
+  /**
+   * @inheritDoc
+   * @param {...(By|WebElement|EyesWebElement|GetRegion|Region)} regions - A region to match using the Layout method.
+   * @return {this}
+   */
+  layoutRegions(...regions) {
+    // noinspection JSValidateTypes
+    return super.layoutRegions(...regions);
+  }
+
+  /**
+   * @inheritDoc
+   * @param {...(By|WebElement|EyesWebElement|GetRegion|Region)} regions - A region to match using the Strict method.
+   * @return {this}
+   */
+  strictRegions(...regions) {
+    // noinspection JSValidateTypes
+    return super.strictRegions(...regions);
+  }
+
+
+  /**
+   * @inheritDoc
+   * @protected
+   * @param {By|WebElement|EyesWebElement|GetRegion|Region} region
+   */
+  _regionToRegionProvider(region) {
+    if (EyesWebElement.isLocator(region)) {
+      return new IgnoreRegionBySelector(region);
+    }
+
+    if (region instanceof WebElement) {
+      return new IgnoreRegionByElement(region);
+    }
+
+    return super._regionToRegionProvider(region);
   }
 
 
@@ -264,6 +315,25 @@ class WebdriverioCheckSettings extends CheckSettings {
   }
 
   /**
+   * @deprecated
+   * @param {String} hook
+   * @return {this}
+   */
+  webHook(hook) {
+    return this.beforeRenderScreenshotHook(hook);
+  }
+
+  /**
+   * @param {String} hook
+   * @return {this}
+   */
+  beforeRenderScreenshotHook(hook) {
+    this._scriptHooks[BEFORE_CAPTURE_SCREENSHOT] = hook;
+    return this;
+  }
+
+  /**
+   * @ignore
    * @return {Map<string, string>}
    */
   getScriptHooks() {

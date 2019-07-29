@@ -25,7 +25,7 @@ class IgnoreRegionByElement extends GetRegion {
     return that._element.getLocation().then(point => {
       return that._element.getSize().then(size => {
         const lTag = screenshot.convertLocation(new Location(point), CoordinatesType.CONTEXT_RELATIVE, CoordinatesType.SCREENSHOT_AS_IS);
-        return new Region(lTag.getX(), lTag.getY(), size.width, size.height);
+        return new Region(lTag.getX(), lTag.getY(), size.getWidth() || size.width, size.getHeight() || size.height);
       });
     });
   }
@@ -38,7 +38,7 @@ class IgnoreRegionByElement extends GetRegion {
    */
   async getSelector(eyes) {
     const randId = GeneralUtils.randomAlphanumeric();
-    await eyes._driver.executeScript(`arguments[0].setAttribute('${EYES_SELECTOR_TAG}', '${randId}');`, this._element);
+    await eyes._driver.executeScript(`arguments[0].setAttribute('${EYES_SELECTOR_TAG}', '${randId}');`, this._element.element);
     return `[${EYES_SELECTOR_TAG}="${randId}"]`;
   }
 
