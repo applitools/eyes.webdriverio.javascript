@@ -344,6 +344,20 @@ class EyesVisualGrid extends EyesBase {
     });
   }
 
+
+  /**
+   * Visually validates a region in the screenshot.
+   *
+   * @param {Region} region - The region to validate (in screenshot coordinates).
+   * @param {string} [tag] - An optional tag to be associated with the screenshot.
+   * @param {number} [matchTimeout] - The amount of time to retry matching.
+   * @return {Promise<MatchResult>} - A promise which is resolved when the validation is finished.
+   */
+  async checkRegion(region, tag, matchTimeout) {
+    await this.check(tag, Target.region(region).timeout(matchTimeout));
+  }
+
+
   /**
    * @return {Promise<RectangleSize>}
    */
