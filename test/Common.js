@@ -140,7 +140,7 @@ class Common {
     const that = this;
     this._browser = webdriverio.remote(browserOptions);
     await this._browser.init();
-    const viewportSize = rectangleSize ? new RectangleSize(rectangleSize) : null;
+    const viewportSize = null;
 
     if (that._eyes.getForceFullPageScreenshot()) {
       testName += '_FPS';
