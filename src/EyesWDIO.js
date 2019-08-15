@@ -228,13 +228,26 @@ class EyesWDIO extends EyesBase {
   /**
    * Visually validates a region in the screenshot.
    *
+   * @param {By|Region} region The WebDriver selector used for finding the region to validate.
+   * @param {String} tag An optional tag to be associated with the screenshot.
+   * @param {int} matchTimeout The amount of time to retry matching.
+   * @return {Promise} A promise which is resolved when the validation is finished.
+   */
+  checkRegion(region, tag, matchTimeout) {
+    return this.check(tag, Target.region(region).timeout(matchTimeout));
+  }
+
+
+  /**
+   * Visually validates a region in the screenshot.
+   *
    * @param {By} by The WebDriver selector used for finding the region to validate.
    * @param {String} tag An optional tag to be associated with the screenshot.
    * @param {int} matchTimeout The amount of time to retry matching.
    * @return {Promise} A promise which is resolved when the validation is finished.
    */
   checkRegionBy(by, tag, matchTimeout) {
-    return this.check(tag, Target.region(by).timeout(matchTimeout).fully());
+    return this.checkRegion(by, tag, matchTimeout);
   }
 
 
