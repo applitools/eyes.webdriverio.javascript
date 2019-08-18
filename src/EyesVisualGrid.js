@@ -1,7 +1,6 @@
 'use strict';
 
-const {makeVisualGridClient} = require('@applitools/visual-grid-client');
-const {getProcessPageAndSerializeScript} = require('@applitools/dom-snapshot');
+const {makeVisualGridClient, capturePageDom} = require('@applitools/visual-grid-client');
 
 const {
   ArgumentGuard,
@@ -48,7 +47,6 @@ class EyesVisualGrid extends EyesBase {
     /** @type {boolean} */ this._isVisualGrid = true;
     /** @type {EyesJsExecutor} */ this._jsExecutor = undefined;
     /** @type {CorsIframeHandle} */ this._corsIframeHandle = CorsIframeHandle.BLANK;
-    /** @type {string} */ this._processPageAndSerializeScript = undefined;
 
     this._checkWindowCommand = undefined;
     this._closeCommand = undefined;
@@ -114,8 +112,6 @@ class EyesVisualGrid extends EyesBase {
       serverUrl: this._configuration.getServerUrl(),
       renderConcurrencyFactor: this._configuration.getConcurrentSessions(),
     });
-
-    this._processPageAndSerializeScript = await getProcessPageAndSerializeScript();
 
     if (this._configuration.getViewportSize()) {
       const vs = this._configuration.getViewportSize();
@@ -304,9 +300,8 @@ class EyesVisualGrid extends EyesBase {
       targetSelector = targetSelector.getSelector(this);
     }
 
-    const domCaptureScript = `var callback = arguments[arguments.length - 1]; return (${this._processPageAndSerializeScript})().then(JSON.stringify).then(callback, function(err) {callback(err.stack || err.toString())})`;
-    const results = await this._jsExecutor.executeAsyncScript(domCaptureScript);
-    const {cdt, url: pageUrl, blobs, resourceUrls, frames} = JSON.parse(results);
+    const pageDomResults = await capturePageDom({ executeScript: this._jsExecutor.executeScript.bind(this._jsExecutor) });
+    const { cdt, url: pageUrl, blobs, resourceUrls, frames } = pageDomResults;
 
     if (this.getCorsIframeHandle() === CorsIframeHandle.BLANK) {
       CorsIframeHandler.blankCorsIframeSrcOfCdt(cdt, frames);
