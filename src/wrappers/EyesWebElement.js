@@ -356,7 +356,7 @@ class EyesWebElement extends WebElement {
    */
   async getSize() {
     const {width, height} = await super.getSize();
-    return new RectangleSize(width, height);
+    return new RectangleSize(Math.ceil(width), Math.ceil(height));
   }
 
   // noinspection JSCheckFunctionSignatures
