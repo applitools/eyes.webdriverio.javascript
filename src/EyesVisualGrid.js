@@ -297,7 +297,7 @@ class EyesVisualGrid extends EyesBase {
 
     let targetSelector = await checkSettings.getTargetProvider();
     if (targetSelector) {
-      targetSelector = targetSelector.getSelector(this);
+      targetSelector = await targetSelector.getSelector(this);
     }
 
     const pageDomResults = await capturePageDom({ executeScript: this._jsExecutor.executeScript.bind(this._jsExecutor) });
