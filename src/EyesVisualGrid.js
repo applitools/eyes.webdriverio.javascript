@@ -48,8 +48,9 @@ class EyesVisualGrid extends EyesBase {
     /** @type {EyesJsExecutor} */ this._jsExecutor = undefined;
     /** @type {CorsIframeHandle} */ this._corsIframeHandle = CorsIframeHandle.BLANK;
 
-    this._checkWindowCommand = undefined;
-    this._closeCommand = undefined;
+    /** @function */ this._checkWindowCommand = undefined;
+    /** @function */ this._closeCommand = undefined;
+    /** @function */ this._abortCommand = undefined;
     /** @type {Promise} */ this._closePromise = undefined;
   }
 
@@ -164,6 +165,7 @@ class EyesVisualGrid extends EyesBase {
         throw err;
       });
     };
+    this._abortCommand = async () => abort(true);
 
     return this._driver;
   }
@@ -231,12 +233,26 @@ class EyesVisualGrid extends EyesBase {
     return results.getAllResults()[0].getTestResults();
   }
 
-  // noinspection JSMethodCanBeStatic
   /**
-   * @return {Promise<TestResults>}
+   * @return {Promise<?TestResults>}
    */
-  async abortIfNotClosed() {
-    return null; // TODO - implement?
+  async abort() {
+    if (typeof this._abortCommand === 'function') {
+      if (this._closePromise) {
+        this._logger.verbose('Can not abort while closing async, abort added to close promise.');
+        return this._closePromise.then(() => this._abortCommand(true));
+      }
+
+      return this._abortCommand();
+    }
+    return null;
+  }
+
+  /**
+   * @return {Promise}
+   */
+  async abortAsync() {
+    this._closePromise = this.abort();
   }
 
   /**

@@ -15,7 +15,7 @@
     "@applitools/eyes-common": "^3.9.3",
     "@applitools/eyes-sdk-core": "^5.16.1",
     "@applitools/eyes-selenium": "^4.28.1",
-    "@applitools/visual-grid-client": "^12.28.3",
+    "@applitools/visual-grid-client": "^12.29.1",
     "chromedriver": "^76.0.1",
     "css": "2.2.4",
     "css-url-parser": "^1.1.3",
