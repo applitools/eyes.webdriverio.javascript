@@ -233,6 +233,10 @@ class EyesVisualGrid extends EyesBase {
     return results.getAllResults()[0].getTestResults();
   }
 
+  async abortIfNotClosed() {
+    return this.abort();
+  }
+
   /**
    * @return {Promise<?TestResults>}
    */
