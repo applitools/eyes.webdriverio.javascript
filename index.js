@@ -1,3 +1,9 @@
+const core = require('@applitools/eyes-sdk-core');
+
+exports.AccessibilityLevel = core.AccessibilityLevel;
+exports.AccessibilityRegionType = core.AccessibilityRegionType;
+exports.AccessibilityMatchSettings = core.AccessibilityMatchSettings;
+
 exports.Eyes = require('./src/Eyes').Eyes;
 exports.EyesWDIO = require('./src/EyesWDIO').EyesWDIO;
 exports.EyesVisualGrid = require('./src/EyesVisualGrid').EyesVisualGrid;

@@ -2,7 +2,19 @@
 
 const chromedriver = require('chromedriver');
 const {remote} = require('webdriverio');
-const {By, Eyes, Target, VisualGridRunner, BrowserType, Configuration, DeviceName, ScreenOrientation, BatchInfo} = require('../index'); // should be replaced to '@applitools/eyes.webdriverio'
+const {
+  By,
+  Eyes,
+  Target,
+  VisualGridRunner,
+  BrowserType,
+  Configuration,
+  DeviceName,
+  ScreenOrientation,
+  BatchInfo,
+  AccessibilityLevel,
+  AccessibilityRegionType
+} = require('../index'); // should be replaced to '@applitools/eyes.webdriverio'
 
 (async () => {
   chromedriver.start();
@@ -10,7 +22,13 @@ const {By, Eyes, Target, VisualGridRunner, BrowserType, Configuration, DeviceNam
   // Open a Chrome browser.
   const chrome = {
     desiredCapabilities: {
-      browserName: 'chrome'
+      browserName: 'chrome',
+      chromeOptions: {
+        args: [
+          'disable-infobars',
+          'headless'
+        ]
+      }
     }
   };
   let driver = remote(chrome);
@@ -41,7 +59,7 @@ const {By, Eyes, Target, VisualGridRunner, BrowserType, Configuration, DeviceNam
     await driver.url('https://applitools.com/helloworld');
 
     // Visual checkpoint #1.
-    await eyes.check('Main Page', Target.window());
+    await eyes.check('Main Page', Target.window().accessibilityLevel(AccessibilityLevel.AA).accessibilityRegion(By.css('button'), AccessibilityRegionType.RegularText));
 
     // Click the "Click me!" button.
     await driver.click(By.cssSelector('button'));

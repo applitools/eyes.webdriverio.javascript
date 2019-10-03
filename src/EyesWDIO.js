@@ -14,7 +14,6 @@ const {
   NullScaleProvider,
   NullRegionProvider,
   ScaleProviderIdentityFactory,
-  RectangleSize,
   Region,
   RegionProvider,
   TestFailedError,
@@ -26,6 +25,7 @@ const {
 
 const {DomCapture} = require('@applitools/dom-utils');
 const {Configuration} = require('@applitools/eyes-selenium');
+const {RectangleSize} = require('@applitools/eyes-common');
 
 const ImageProviderFactory = require('./capture/ImageProviderFactory');
 const CssTranslatePositionProvider = require('./positioning/CssTranslatePositionProvider');
@@ -155,7 +155,7 @@ class EyesWDIO extends EyesBase {
     }
     if (!this._configuration.getViewportSize()) {
       const vs = await this._driver.getDefaultContentViewportSize();
-      this._configuration.setViewportSize(vs);
+      this._configuration.setViewportSize(vs.toJSON());
     }
 
     if (this._isDisabled) {
