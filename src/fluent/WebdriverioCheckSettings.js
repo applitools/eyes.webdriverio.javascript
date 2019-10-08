@@ -11,8 +11,8 @@ const {SelectorByElement} = require('./SelectorByElement');
 const {SelectorByLocator} = require('./SelectorByLocator');
 const FloatingRegionBySelector = require('./FloatingRegionBySelector');
 const FloatingRegionByElement = require('./FloatingRegionByElement');
-const {AccessibilityRegionBySelector} = require('./AccessibilityRegionBySelector');
-const {AccessibilityRegionByElement} = require('./AccessibilityRegionByElement');
+const AccessibilityRegionBySelector = require('./AccessibilityRegionBySelector');
+const AccessibilityRegionByElement = require('./AccessibilityRegionByElement');
 
 const USE_DEFAULT_MATCH_TIMEOUT = -1;
 const BEFORE_CAPTURE_SCREENSHOT = 'beforeCaptureScreenshot';

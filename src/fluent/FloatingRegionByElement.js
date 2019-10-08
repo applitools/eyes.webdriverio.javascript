@@ -26,14 +26,26 @@ class FloatingRegionByElement extends GetFloatingRegion {
    * @param {Eyes} eyesBase
    * @param {EyesScreenshot} screenshot
    */
-  getRegion(eyesBase, screenshot) {
-    const that = this;
-    return that._element.getLocation().then(point => {
-      return that._element.getSize().then(size => {
-        const lTag = screenshot.convertLocation(new Location(point), CoordinatesType.CONTEXT_RELATIVE, CoordinatesType.SCREENSHOT_AS_IS);
-        return new FloatingMatchSettings(lTag.getX(), lTag.getY(), size.getWidth(), size.getHeight(), that._maxUpOffset, that._maxDownOffset, that._maxLeftOffset, that._maxRightOffset);
-      });
+  async getRegion(eyesBase, screenshot) {
+    const point = await this._element.getLocation();
+    const size = await this._element.getSize();
+    const lTag = screenshot.convertLocation(
+      new Location(point),
+      CoordinatesType.CONTEXT_RELATIVE,
+      CoordinatesType.SCREENSHOT_AS_IS
+    );
+
+    const floatingRegion = new FloatingMatchSettings({
+      left: lTag.getX(),
+      top: lTag.getY(),
+      width: size.getWidth(),
+      height: size.getHeight(),
+      maxUpOffset: this._maxUpOffset,
+      maxDownOffset: this._maxDownOffset,
+      maxLeftOffset: this._maxLeftOffset,
+      maxRightOffset: this._maxRightOffset,
     });
+    return [floatingRegion];
   }
 }
 

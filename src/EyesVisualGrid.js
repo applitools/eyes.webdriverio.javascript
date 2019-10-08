@@ -9,10 +9,12 @@ const {
   CorsIframeHandle,
   CorsIframeHandler,
   TypeUtils,
-  IgnoreRegionByRectangle
+  IgnoreRegionByRectangle,
+  BrowserType,
+  Configuration,
+  RectangleSize
 } = require('@applitools/eyes-sdk-core');
 
-const {BrowserType, Configuration, RectangleSize} = require('@applitools/eyes-selenium');
 
 const {TestResultSummary} = require('./runner/TestResultSummary');
 

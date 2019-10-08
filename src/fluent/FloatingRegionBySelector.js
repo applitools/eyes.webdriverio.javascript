@@ -13,7 +13,7 @@ class FloatingRegionBySelector extends GetFloatingRegion {
    */
   constructor(regionSelector, maxUpOffset, maxDownOffset, maxLeftOffset, maxRightOffset) {
     super();
-    this._element = regionSelector;
+    this._selector = regionSelector;
     this._maxUpOffset = maxUpOffset;
     this._maxDownOffset = maxDownOffset;
     this._maxLeftOffset = maxLeftOffset;
@@ -26,27 +26,34 @@ class FloatingRegionBySelector extends GetFloatingRegion {
    * @param {Eyes} eyesBase
    * @param {EyesScreenshot} screenshot
    */
-  getRegion(eyesBase, screenshot) {
-    const that = this;
-    return eyesBase.getDriver().findElement(that._element).then(element => {
-      let location;
-      return element.getLocation().then(point => {
-        location = new Location(point);
-        return element.getSize();
-      }).then(size => {
-        const lTag = screenshot.convertLocation(location, CoordinatesType.CONTEXT_RELATIVE, CoordinatesType.SCREENSHOT_AS_IS);
-        return new FloatingMatchSettings({
+  async getRegion(eyesBase, screenshot) {
+    const elements = await eyesBase.getDriver().findElements(this._selector);
+
+    const values = [];
+    if (elements && elements.length > 0) {
+      for (let i = 0; i < elements.length; i += 1) {
+        const point = await elements[i].getLocation();
+        const size = await elements[i].getSize();
+        const lTag = screenshot.convertLocation(
+          new Location(point),
+          CoordinatesType.CONTEXT_RELATIVE,
+          CoordinatesType.SCREENSHOT_AS_IS
+        );
+        const floatingRegion = new FloatingMatchSettings({
           left: lTag.getX(),
           top: lTag.getY(),
           width: size.getWidth(),
           height: size.getHeight(),
-          maxUpOffset: that._maxUpOffset,
-          maxDownOffset: that._maxDownOffset,
-          maxLeftOffset: that._maxLeftOffset,
-          maxRightOffset: that._maxRightOffset
+          maxUpOffset: this._maxUpOffset,
+          maxDownOffset: this._maxDownOffset,
+          maxLeftOffset: this._maxLeftOffset,
+          maxRightOffset: this._maxRightOffset,
         });
-      });
-    });
+        values.push(floatingRegion);
+      }
+    }
+
+    return values;
   }
 }
 

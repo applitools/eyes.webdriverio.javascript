@@ -20,11 +20,11 @@ const {
   TypeUtils,
   UserAgent,
   ArgumentGuard,
-  SimplePropertyHandler
+  SimplePropertyHandler,
+  Configuration
 } = require('@applitools/eyes-sdk-core');
 
 const {DomCapture} = require('@applitools/dom-utils');
-const {Configuration} = require('@applitools/eyes-selenium');
 const {RectangleSize} = require('@applitools/eyes-common');
 
 const ImageProviderFactory = require('./capture/ImageProviderFactory');
