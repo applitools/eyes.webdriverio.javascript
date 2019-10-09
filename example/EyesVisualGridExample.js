@@ -13,7 +13,8 @@ const {
   ScreenOrientation,
   BatchInfo,
   AccessibilityLevel,
-  AccessibilityRegionType
+  AccessibilityRegionType,
+  Region
 } = require('../index'); // should be replaced to '@applitools/eyes.webdriverio'
 
 (async () => {
@@ -50,7 +51,10 @@ const {
     configuration.addBrowser(500, 400, BrowserType.IE_11);
     configuration.addDeviceEmulation(DeviceName.iPhone_4, ScreenOrientation.PORTRAIT);
     // set your private API key
-    configuration.setApiKey(process.env.APPLITOOLS_API_KEY);
+    configuration.setApiKey(process.env.APPLITOOLS_FABRIC_API_KEY);
+    configuration.setServerUrl('https://eyesfabric4eyes.applitools.com');
+    // set accessibility validation level
+    configuration.setAccessibilityValidation(AccessibilityLevel.AA);
     eyes.setConfiguration(configuration);
 
     driver = await eyes.open(driver);
@@ -59,7 +63,9 @@ const {
     await driver.url('https://applitools.com/helloworld');
 
     // Visual checkpoint #1.
-    await eyes.check('Main Page', Target.window().accessibilityLevel(AccessibilityLevel.AA).accessibilityRegion(By.css('button'), AccessibilityRegionType.RegularText));
+
+    await eyes.check('Main Page', Target.window()
+      .accessibilityRegion(By.css('button'), AccessibilityRegionType.RegularText));
 
     // Click the "Click me!" button.
     await driver.click(By.cssSelector('button'));
