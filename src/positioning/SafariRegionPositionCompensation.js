@@ -2,7 +2,7 @@
 
 const {
     Region
-} = require('@applitools/eyes-selenium');
+} = require('@applitools/eyes-sdk-core');
 
 const RegionPositionCompensation = require('./RegionPositionCompensation');
 

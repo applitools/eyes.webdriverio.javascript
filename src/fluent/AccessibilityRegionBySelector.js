@@ -1,24 +1,25 @@
 'use strict';
 
-const {GetRegion} = require('@applitools/eyes-sdk-core');
+const {GetAccessibilityRegion, Location, CoordinatesType, AccessibilityMatchSettings} = require('@applitools/eyes-sdk-core');
 
-const {SelectorByLocator} = require('./SelectorByLocator');
-
-class IgnoreRegionBySelector extends GetRegion {
+class AccessibilityRegionBySelector extends GetAccessibilityRegion {
 
   /**
    * @param {By} regionSelector
+   * @param {AccessibilityRegionType} regionType
    */
-  constructor(regionSelector) {
+  constructor(regionSelector, regionType) {
     super();
     this._selector = regionSelector;
+    this._regionType = regionType;
   }
 
   // noinspection JSCheckFunctionSignatures
   /**
-   * @override
+   * @inheritDoc
    * @param {Eyes} eyes
    * @param {EyesScreenshot} screenshot
+   * @return {Promise<AccessibilityMatchSettings[]>}
    */
   async getRegion(eyes, screenshot) {
     const elements = await eyes.getDriver().findElements(this._selector);
@@ -33,21 +34,19 @@ class IgnoreRegionBySelector extends GetRegion {
           CoordinatesType.CONTEXT_RELATIVE,
           CoordinatesType.SCREENSHOT_AS_IS
         );
-        values.push(new Region(lTag.getX(), lTag.getY(), size.getWidth(), size.getHeight()));
+        const accessibilityRegion = new AccessibilityMatchSettings({
+          left: lTag.getX(),
+          top: lTag.getY(),
+          width: size.getWidth(),
+          height: size.getHeight(),
+          type: this._regionType,
+        });
+        values.push(accessibilityRegion);
       }
     }
 
     return values;
   }
-
-  /**
-   * @inheritDoc
-   * @param {Eyes} eyes
-   * @return {Promise<string>}
-   */
-  async getSelector(eyes) {
-    return new SelectorByLocator(this._selector).getSelector(eyes);
-  }
 }
 
-module.exports = IgnoreRegionBySelector;
+module.exports = AccessibilityRegionBySelector;

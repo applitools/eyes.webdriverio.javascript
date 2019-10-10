@@ -2,7 +2,20 @@
 
 const chromedriver = require('chromedriver');
 const {remote} = require('webdriverio');
-const {By, Eyes, Target, VisualGridRunner, BrowserType, Configuration, DeviceName, ScreenOrientation, BatchInfo} = require('../index'); // should be replaced to '@applitools/eyes.webdriverio'
+const {
+  By,
+  Eyes,
+  Target,
+  VisualGridRunner,
+  BrowserType,
+  Configuration,
+  DeviceName,
+  ScreenOrientation,
+  BatchInfo,
+  AccessibilityLevel,
+  AccessibilityRegionType,
+  Region
+} = require('../index'); // should be replaced to '@applitools/eyes.webdriverio'
 
 (async () => {
   chromedriver.start();
@@ -10,7 +23,13 @@ const {By, Eyes, Target, VisualGridRunner, BrowserType, Configuration, DeviceNam
   // Open a Chrome browser.
   const chrome = {
     desiredCapabilities: {
-      browserName: 'chrome'
+      browserName: 'chrome',
+      chromeOptions: {
+        args: [
+          'disable-infobars',
+          'headless'
+        ]
+      }
     }
   };
   let driver = remote(chrome);
@@ -32,7 +51,10 @@ const {By, Eyes, Target, VisualGridRunner, BrowserType, Configuration, DeviceNam
     configuration.addBrowser(500, 400, BrowserType.IE_11);
     configuration.addDeviceEmulation(DeviceName.iPhone_4, ScreenOrientation.PORTRAIT);
     // set your private API key
-    configuration.setApiKey(process.env.APPLITOOLS_API_KEY);
+    configuration.setApiKey(process.env.APPLITOOLS_FABRIC_API_KEY);
+    configuration.setServerUrl('https://eyesfabric4eyes.applitools.com');
+    // set accessibility validation level
+    configuration.setAccessibilityValidation(AccessibilityLevel.AA);
     eyes.setConfiguration(configuration);
 
     driver = await eyes.open(driver);
@@ -41,7 +63,9 @@ const {By, Eyes, Target, VisualGridRunner, BrowserType, Configuration, DeviceNam
     await driver.url('https://applitools.com/helloworld');
 
     // Visual checkpoint #1.
-    await eyes.check('Main Page', Target.window());
+
+    await eyes.check('Main Page', Target.window()
+      .accessibilityRegion(By.css('button'), AccessibilityRegionType.RegularText));
 
     // Click the "Click me!" button.
     await driver.click(By.cssSelector('button'));

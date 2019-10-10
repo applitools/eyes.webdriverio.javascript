@@ -2,7 +2,7 @@
 
 require('chromedriver'); // eslint-disable-line node/no-unpublished-require
 const {remote} = require('webdriverio');
-const {Eyes, VisualGridRunner, Target, ConsoleLogHandler, Configuration, BrowserType, DeviceName, ScreenOrientation, BatchInfo} = require('../index'); // should be replaced to '@applitools/eyes-selenium'
+const {Eyes, VisualGridRunner, Target, ConsoleLogHandler, Configuration, BrowserType, DeviceName, ScreenOrientation, BatchInfo} = require('../index'); // should be replaced to '@applitools/eyes.webdriverio'
 
 function initializeEyes(runner) {
   // Create Eyes object with the runner, meaning it'll be a Visual Grid eyes.

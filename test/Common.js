@@ -4,8 +4,18 @@ const {AssertionError, deepEqual} = require('assert');
 const webdriverio = require('webdriverio');
 const chromedriver = require('chromedriver');
 const geckodriver = require('geckodriver');
-const {Eyes, NetHelper, StitchMode} = require('../index');
-const {BatchInfo, ConsoleLogHandler, FloatingMatchSettings, metadata, RectangleSize, Region, TypeUtils} = require('@applitools/eyes-sdk-core');
+const {Configuration, Eyes, NetHelper, StitchMode} = require('../index');
+const {
+  BatchInfo,
+  ConsoleLogHandler,
+  FloatingMatchSettings,
+  metadata,
+  RectangleSize,
+  Region,
+  TypeUtils,
+  AccessibilityRegionByRectangle,
+  AccessibilityLevel
+} = require('@applitools/eyes-sdk-core');
 const {ActualAppOutput, ImageMatchSettings, SessionResults} = metadata;
 const url = require('url');
 
@@ -65,7 +75,17 @@ class Common {
 
   beforeTest({batchName: batchName, fps = false, stitchMode = StitchMode.CSS}) {
     this._eyes = new Eyes();
+/*
+  TODO
+    const configuration = new Configuration();
+    configuration.setApiKey(process.env.APPLITOOLS_FABRIC_API_KEY);
+    configuration.setServerUrl('https://eyesfabric4eyes.applitools.com');
+    configuration.setAccessibilityValidation(AccessibilityLevel.AAA);
+    this._eyes.setConfiguration(configuration);
+*/
+
     this._eyes.setApiKey(process.env.APPLITOOLS_API_KEY);
+
     this._eyes.setLogHandler(new ConsoleLogHandler(true));
 
     this._eyes.setForceFullPageScreenshot(fps);
@@ -154,6 +174,7 @@ class Common {
     await this._browser.url(testedPageUrl);
     that._expectedFloatingsRegions = null;
     that._expectedIgnoreRegions = null;
+    that._expectedAccessibilityRegions = null;
   }
 
   async afterEachTest() {
@@ -171,11 +192,11 @@ class Common {
       const res = await NetHelper.get(apiSessionUri);
       const resultObject = JSON.parse(res);
       /** @type {SessionResults} */
-      const sessionResults = SessionResults.fromObject(resultObject);
+      const sessionResults = new SessionResults(resultObject);
       /** @type {ActualAppOutput} */
-      const actualAppOutput = ActualAppOutput.fromObject(sessionResults.getActualAppOutput()[0]);
+      const actualAppOutput = new ActualAppOutput(sessionResults.getActualAppOutput()[0]);
       /** @type {ImageMatchSettings} */
-      const imageMatchSettings = ImageMatchSettings.fromObject(actualAppOutput.getImageMatchSettings());
+      const imageMatchSettings = new ImageMatchSettings(actualAppOutput.getImageMatchSettings());
 
       if (this._expectedFloatingsRegions) {
         const f = imageMatchSettings.getFloating()[0];
@@ -185,10 +206,18 @@ class Common {
       }
 
       if (this._expectedIgnoreRegions) {
-        const ignoreRegions = Region.fromObject(imageMatchSettings.getIgnore());
+        const ignoreRegions = new Region(imageMatchSettings.getIgnore());
 
         deepEqual(this._expectedIgnoreRegions, ignoreRegions, 'Ignore regions lists differ');
       }
+
+      // if (this._expectedAccessibilityRegions) {
+      //   const accessibilityRegions = new Region(imageMatchSettings.getAccessibility());
+      //
+      //   deepEqual(this._expectedAccessibilityRegions, accessibilityRegions, 'Accessibility regions lists differ');
+      // }
+
+
     } catch (e) {
       if (e instanceof AssertionError) {
         error = e;
@@ -228,6 +257,13 @@ class Common {
    */
   setExpectedIgnoreRegions(...expectedIgnoreRegions) {
     this._expectedIgnoreRegions = expectedIgnoreRegions;
+  }
+
+  /**
+   * @param {AccessibilityRegionByRectangle[]} expectedAccessibilityRegions
+   */
+  setExpectedAccessibilityRegions(...expectedAccessibilityRegions) {
+    this._expectedAccessibilityRegions = expectedAccessibilityRegions;
   }
 
   /**

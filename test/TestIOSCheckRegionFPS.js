@@ -2,8 +2,7 @@
 
 const chromedriver = require('chromedriver');
 const webdriverio = require('webdriverio');
-const {BatchInfo, Region, ConsoleLogHandler} = require('@applitools/eyes-sdk-core');
-const {BrowserType, Configuration} = require('@applitools/eyes-selenium');
+const {BrowserType, Configuration, BatchInfo, Region, ConsoleLogHandler} = require('@applitools/eyes-sdk-core');
 const {By, Eyes, Target, VisualGridRunner} = require('../index');
 
 

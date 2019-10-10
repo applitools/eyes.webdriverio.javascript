@@ -9,10 +9,12 @@ const {
   CorsIframeHandle,
   CorsIframeHandler,
   TypeUtils,
-  IgnoreRegionByRectangle
+  IgnoreRegionByRectangle,
+  BrowserType,
+  Configuration,
+  RectangleSize
 } = require('@applitools/eyes-sdk-core');
 
-const {BrowserType, Configuration, RectangleSize} = require('@applitools/eyes-selenium');
 
 const {TestResultSummary} = require('./runner/TestResultSummary');
 
@@ -48,8 +50,9 @@ class EyesVisualGrid extends EyesBase {
     /** @type {EyesJsExecutor} */ this._jsExecutor = undefined;
     /** @type {CorsIframeHandle} */ this._corsIframeHandle = CorsIframeHandle.BLANK;
 
-    this._checkWindowCommand = undefined;
-    this._closeCommand = undefined;
+    /** @function */ this._checkWindowCommand = undefined;
+    /** @function */ this._closeCommand = undefined;
+    /** @function */ this._abortCommand = undefined;
     /** @type {Promise} */ this._closePromise = undefined;
   }
 
@@ -85,7 +88,7 @@ class EyesVisualGrid extends EyesBase {
     if (!this._configuration.getViewportSize() && this._configuration.getBrowsersInfo().length > 0) {
       for (const browserInfo of this._configuration.getBrowsersInfo()) {
         if (browserInfo.width) {
-          this._configuration.setViewportSize(new RectangleSize(browserInfo.width, browserInfo.height));
+          this._configuration.setViewportSize({width: browserInfo.width, height: browserInfo.height});
           break;
         }
       }
@@ -118,7 +121,7 @@ class EyesVisualGrid extends EyesBase {
       await this.setViewportSize(vs);
     }
 
-    const {checkWindow, close} = await openEyes({
+    const {checkWindow, close, abort} = await openEyes({
       appName: this._configuration.getAppName(),
       testName: this._configuration.getTestName(),
       browser: this._configuration.getBrowsersInfo(),
@@ -142,6 +145,10 @@ class EyesVisualGrid extends EyesBase {
 
       ignoreCaret: this._configuration.getIgnoreCaret(),
       matchLevel: this._configuration.getMatchLevel(),
+      useDom: this._configuration.getUseDom(),
+      enablePatterns: this._configuration.getEnablePatterns(),
+      ignoreDisplacements: this._configuration.getIgnoreDisplacements(),
+      saveDebugData: this._configuration.getSaveDebugData(),
 
       // renderBatch,
       // waitForRenderedStatus,
@@ -164,6 +171,7 @@ class EyesVisualGrid extends EyesBase {
         throw err;
       });
     };
+    this._abortCommand = async () => abort(true);
 
     return this._driver;
   }
@@ -231,12 +239,30 @@ class EyesVisualGrid extends EyesBase {
     return results.getAllResults()[0].getTestResults();
   }
 
-  // noinspection JSMethodCanBeStatic
-  /**
-   * @return {Promise<TestResults>}
-   */
   async abortIfNotClosed() {
-    return null; // TODO - implement?
+    return this.abort();
+  }
+
+  /**
+   * @return {Promise<?TestResults>}
+   */
+  async abort() {
+    if (typeof this._abortCommand === 'function') {
+      if (this._closePromise) {
+        this._logger.verbose('Can not abort while closing async, abort added to close promise.');
+        return this._closePromise.then(() => this._abortCommand(true));
+      }
+
+      return this._abortCommand();
+    }
+    return null;
+  }
+
+  /**
+   * @return {Promise}
+   */
+  async abortAsync() {
+    this._closePromise = this.abort();
   }
 
   /**

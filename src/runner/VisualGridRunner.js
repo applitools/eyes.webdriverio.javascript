@@ -50,6 +50,7 @@ class VisualGridRunner extends EyesRunner {
         }
       }
 
+      await this._closeAllBatches();
       return new TestResultSummary(allResults);
     }
 
