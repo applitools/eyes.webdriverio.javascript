@@ -48,7 +48,6 @@ class CssTranslatePositionProvider extends PositionProvider {
 
     const spp = new ScrollPositionProvider(this._logger, this._executor);
     await spp.setPosition(Location.ZERO);
-    await this._executor.executeScript(`document.documentElement.style.transform = 'translate(10px, -${location.getY()}px)';`);
     await EyesWDIOUtils.translateTo(this._executor, location);
     this._logger.verbose("Done!");
     this._lastSetPosition = location;

@@ -303,7 +303,8 @@ class EyesWDIOUtils {
    * @param {Location} position The position to translate to.
    * @return {Promise} A promise which resolves to the previous transform when the scroll is executed.
    */
-  static translateTo(executor, position) {
+  static async translateTo(executor, position) {
+    await EyesWDIOUtils.setTransform(executor, `translate(10px, -${position.getY()}px)`);
     return EyesWDIOUtils.setTransform(executor, `translate(-${position.getX()}px, -${position.getY()}px)`);
   }
 
