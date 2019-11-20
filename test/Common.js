@@ -59,6 +59,21 @@ class Common {
     }
   };
 
+  static get MOBILE_IOS_SAFARI() {
+    return {
+      remoteHost: "http://127.0.0.1:4723/wd/hub",
+      hostname: "127.0.0.1",
+      port: 4723,
+      desiredCapabilities: {
+        browserName: 'Safari',
+        deviceOrientation: 'portrait',
+        deviceName: 'iPhone 11',
+        platformName: 'iOS',
+        platformVersion: '13.2',
+      }
+    }
+  };
+
   /**
    *
    * @param {Object} options
