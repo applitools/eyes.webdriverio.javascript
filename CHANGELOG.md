@@ -1,3 +1,7 @@
+## [unversioned] - 
+### Fixed
+- Crop safari url bar and status bar on mobile devices (IOS). [Trello 939](https://trello.com/c/SM80YzdM)
+
 ## [2.11.2] - 2019-11-08
 ### Fixed
 - fix css stitching for new chrome 78 (bug in chrome). [Trello 1206](https://trello.com/c/euVqe1Sv)
