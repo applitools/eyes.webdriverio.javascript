@@ -121,44 +121,7 @@ class EyesVisualGrid extends EyesBase {
       await this.setViewportSize(vs);
     }
 
-    const {checkWindow, close, abort} = await openEyes({
-      appName: this._configuration.getAppName(),
-      testName: this._configuration.getTestName(),
-      browser: this._configuration.getBrowsersInfo(),
-      properties: this._configuration.getProperties(),
-      batchSequenceName: this._configuration.getBatch() && this._configuration.getBatch().getSequenceName(),
-      batchName: this._configuration.getBatch() && this._configuration.getBatch().getName(),
-      batchId: this._configuration.getBatch() && this._configuration.getBatch().getId(),
-      baselineBranchName: this._configuration.getBaselineBranchName(),
-      baselineEnvName: this._configuration.getBaselineEnvName(),
-      baselineName: this._configuration.getBaselineEnvName(),
-      envName: this._configuration.getEnvironmentName(),
-      branchName: this._configuration.getBranchName(),
-      saveFailedTests: this._configuration.getSaveFailedTests(),
-      saveNewTests: this._configuration.getSaveNewTests(),
-      compareWithParentBranch: this._configuration.getCompareWithParentBranch(),
-      ignoreBaseline: this._configuration.getIgnoreBaseline(),
-      parentBranchName: this._configuration.getParentBranchName(),
-      agentId: this.getFullAgentId(),
-      isDisabled: this._configuration.getIsDisabled(),
-      matchTimeout: this._configuration.getMatchTimeout(),
-
-      ignoreCaret: this._configuration.getIgnoreCaret(),
-      matchLevel: this._configuration.getMatchLevel(),
-      useDom: this._configuration.getUseDom(),
-      enablePatterns: this._configuration.getEnablePatterns(),
-      ignoreDisplacements: this._configuration.getIgnoreDisplacements(),
-      saveDebugData: this._configuration.getSaveDebugData(),
-
-      // renderBatch,
-      // waitForRenderedStatus,
-      // renderThroat,
-      // getRenderInfoPromise,
-      // getHandledRenderInfoPromise,
-      // getRenderInfo,
-      // createRGridDOMAndGetResourceMapping,
-      // eyesTransactionThroat,
-    });
+    const {checkWindow, close, abort} = await openEyes(this._configuration.toOpenEyesConfiguration());
 
     this._isOpen = true;
     this._checkWindowCommand = checkWindow;
