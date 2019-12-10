@@ -1,12 +1,10 @@
 language: node_js
 node_js:
-  - "8"
-
-
+- '8'
 before_script:
-  - "export APPLITOOLS_BATCH_ID=$TRAVIS_COMMIT"
-  - "echo $APPLITOOLS_BATCH_ID"
-
-
-script:
-  npm test
+- export APPLITOOLS_BATCH_ID=$TRAVIS_COMMIT
+- echo $APPLITOOLS_BATCH_ID
+script: npm test
+notifications:
+  slack:
+    secure: ZZfLCGpFauQ+yHXSES3MgvSrOBdDH01rxlZqGHw7HoOGe7S2aHutotmwRFs+TScAflpmtlwgxNurO051HcecWHuwaA6sqMgK/Kv+/QLGVpbculR0KqbYsUbm5KUhTaLV1q4eE6+9kxYLm4FnLJf/n8H++zaIo+RrVMpXAOZRGrDAJnFZ091YBxjrMgHwLPKMHZ5ByOarWPJcVIPGubsywJpcWiKFTs0as4ggquLDB/34QPpPXDQzjwm+S1Y8pomwKs4dz/djjJCkLJV5Tb3+ON7nXeghETZakcansqSpr6wMC7YclTp0Ka/rT/0R+eH7TyKmfUiN9Z6b6F5hI53onGHlU346KlMoSmKa/eOzFulP6PF6g8921F2gf3X+SDm3XE2U0iPTGe3HjA2WgePQCtb/eEzt+1IKhlBsvspctnX/0BplX+o469mmNhI6TX4wlkIlb9Xmkbmy9V1a0ak5xJbRiB6P8lBgqyazgO8nqniNngZDpqTfMGC+fytwPN9Qn+yjaYwWH+gjw9JruuZyepjzu6+qtgsdqtdWRII6O6uQ6Sd1VMMzruzHizD0D94A7GBn4icO0IyaiPRZ0C8uFGJ9wgC2dy+HK74h6nqQNN/BEHi2Txb3utc1S1JpBM7P0iFOrusp05NrjCTuWsSsKdud5ztBDdnbbBPgNV/k8rU=
