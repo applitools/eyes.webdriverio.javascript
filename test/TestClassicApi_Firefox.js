@@ -12,7 +12,7 @@ const test = new Common({testedPageUrl: testedPageUrl, browserName: 'firefox'});
 
 const platforms = process.env.SELENIUM_SERVER_URL ? ['Linux', 'Windows 10'] : ['bla'];
 platforms.forEach(function (platform) {
-  describe(appName, function () {
+  describe.skip(appName, function () {
 
     before(function () {
       test.beforeTest({});
