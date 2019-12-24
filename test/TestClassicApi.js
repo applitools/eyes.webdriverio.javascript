@@ -16,12 +16,12 @@ shared.examplesFor('TestClassicApi', function (test) {
     equal(result.getAsExpected(), true);
   });
 
-  it('TestCheckFrame', async () => {
+  it.skip('TestCheckFrame', async () => {
     const result = await test.eyes.checkFrame('frame1', null, 'frame1');
     equal(result.getAsExpected(), true);
   });
 
-  it('TestCheckRegionInFrame', async () => {
+  it.skip('TestCheckRegionInFrame', async () => {
     const result = await test.eyes.checkRegionInFrame('frame1', By.id('inner-frame-div'), null, 'Inner frame div', true);
     equal(result.getAsExpected(), true);
   });

@@ -14,13 +14,16 @@ describe('VisualGridCheckFluent', function () {
     chromedriver.start();
 
     const chrome = Common.CHROME;
-    browser = webdriverio.remote(chrome);
+    browser = webdriverio.remote({...chrome, port: 9515, path: '/'});
     await browser.init();
 
     eyes = new Eyes(new VisualGridRunner(3));
     eyes.setApiKey(process.env.APPLITOOLS_API_KEY);
-    eyes.setLogHandler(new ConsoleLogHandler(false));
     // eyes.setProxy('http://localhost:8000');
+
+    if (process.env.APPLITOOLS_SHOW_LOGS) {
+      eyes.setLogHandler(new ConsoleLogHandler(true));
+    }
 
     await browser.url('http://applitools.github.io/demo/TestPages/FramesTestPage/');
   });
@@ -38,12 +41,12 @@ describe('VisualGridCheckFluent', function () {
   });
 
   afterEach(async function () {
-    await chromedriver.stop();
     return eyes.abortIfNotClosed();
   });
 
-  after(function () {
-    return browser.end();
+  after(async function () {
+    await browser.end();
+    chromedriver.stop();
   });
 
   it('TestCheckWindow', async function () {

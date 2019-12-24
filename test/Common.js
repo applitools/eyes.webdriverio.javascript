@@ -101,7 +101,9 @@ class Common {
 
     this._eyes.setApiKey(process.env.APPLITOOLS_API_KEY);
 
-    this._eyes.setLogHandler(new ConsoleLogHandler(true));
+    if (process.env.APPLITOOLS_SHOW_LOGS) {
+      this._eyes.setLogHandler(new ConsoleLogHandler(true));
+    }
 
     this._eyes.setForceFullPageScreenshot(fps);
     this._eyes.setStitchMode(stitchMode);

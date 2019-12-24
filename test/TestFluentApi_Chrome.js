@@ -7,10 +7,10 @@ const Common = require('./Common');
 const appName = 'Eyes Selenium SDK - Fluent API';
 const testedPageUrl = 'http://applitools.github.io/demo/TestPages/FramesTestPage/';
 
-const test = new Common({testedPageUrl});
+const test = new Common({testedPageUrl, browserName: 'chrome'});
 
 
-const platforms = ['Linux', 'Windows 10'];
+const platforms = process.env.SELENIUM_SERVER_URL ? ['Linux', 'Windows 10'] : ['bla'];
 platforms.forEach(function (platform) {
   describe(appName, function () {
 

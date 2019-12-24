@@ -1,6 +1,6 @@
 'use strict';
 
-const {makeVisualGridClient, capturePageDom} = require('@applitools/visual-grid-client');
+const {makeVisualGridClient, takeDomSnapshot} = require('@applitools/visual-grid-client');
 
 const {
   ArgumentGuard,
@@ -247,19 +247,6 @@ class EyesVisualGrid extends EyesBase {
     console.log(testResultsFormatter.asFormatterString());
   }
 
-  /**
-   * @private
-   * @param {{type: string, url: string, value: string}[]} blobs
-   * @return {{type: string, url: string, value: Buffer}[]}
-   */
-  _blobsToResourceContents(blobs) {
-    return blobs.map(({url, type, value}) => ({
-      url,
-      type,
-      value: Buffer.from(value, 'base64'),
-    }));
-  }
-
   getRunner() {
     return this._runner;
   }
@@ -289,19 +276,11 @@ class EyesVisualGrid extends EyesBase {
       targetSelector = await targetSelector.getSelector(this);
     }
 
-    const pageDomResults = await capturePageDom({ executeScript: this._jsExecutor.executeScript.bind(this._jsExecutor) });
-    const { cdt, url: pageUrl, blobs, resourceUrls, frames } = pageDomResults;
+    const pageDomResults = await takeDomSnapshot({ executeScript: this._jsExecutor.executeScript.bind(this._jsExecutor) });
+    const { cdt, url: pageUrl, resourceContents, resourceUrls, frames } = pageDomResults;
 
     if (this.getCorsIframeHandle() === CorsIframeHandle.BLANK) {
       CorsIframeHandler.blankCorsIframeSrcOfCdt(cdt, frames);
-    }
-
-    const resourceContents = this._blobsToResourceContents(blobs);
-    if (frames && frames.length > 0) {
-      for (let i = 0; i < frames.length; ++i) {
-        frames[i].resourceContents = this._blobsToResourceContents(frames[i].blobs);
-        delete frames[i].blobs;
-      }
     }
 
     this._logger.verbose(`Dom extracted  (${checkSettings.toString()})   $$$$$$$$$$$$`);
@@ -489,8 +468,10 @@ class EyesVisualGrid extends EyesBase {
 
       for (const region of regions) {
         if (region instanceof IgnoreRegionByRectangle) {
-          const plainRegion = (await region.getRegion(this, undefined)).toJSON();
-          newRegions.push(plainRegion);
+          const plainRegions = await region.getRegion(this, undefined);
+          plainRegions.forEach((plainRegion) => {
+            newRegions.push(plainRegion.toJSON());
+          });
         } else {
           const selector = await region.getSelector(this);
           newRegions.push({ selector });

@@ -2,7 +2,7 @@
 
 const chromedriver = require('chromedriver');
 const webdriverio = require('webdriverio');
-const {BrowserType, Configuration, BatchInfo, Region, CorsIframeHandle} = require('@applitools/eyes-sdk-core');
+const {BrowserType, Configuration, BatchInfo, Region, CorsIframeHandle, ConsoleLogHandler} = require('@applitools/eyes-sdk-core');
 const {Eyes, Target, VisualGridRunner} = require('../index');
 
 const Common = require('./Common');
@@ -19,7 +19,7 @@ describe('VisualGridSimple', function () {
 
   beforeEach(function () {
     const chrome = Common.CHROME;
-    browser = webdriverio.remote(chrome);
+    browser = webdriverio.remote({...chrome, port: 9515, path: '/'});
     return browser.init();
   });
 
@@ -33,6 +33,10 @@ describe('VisualGridSimple', function () {
     const eyes = new Eyes(new VisualGridRunner(3));
     eyes.setBatch(new BatchInfo('EyesRenderingBatch_WDIO'));
     eyes.setCorsIframeHandle(CorsIframeHandle.BLANK);
+    
+    if (process.env.APPLITOOLS_SHOW_LOGS) {
+      eyes.setLogHandler(new ConsoleLogHandler(true));
+    }
 
     const configuration = new Configuration();
     configuration.setTestName('Open Concurrency with Batch 2');

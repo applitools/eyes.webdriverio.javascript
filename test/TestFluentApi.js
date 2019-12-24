@@ -30,7 +30,7 @@ shared.examplesFor('TestFluentApi', function (test) {
     equal(result.getAsExpected(), true);
   });
 
-  it('TestCheckFrame_Fully_Fluent', async () => {
+  it.skip('TestCheckFrame_Fully_Fluent', async () => {
     const result = await test.eyes.check("Fluent - Full Frame", Target.frame("frame1").fully());
     equal(result.getAsExpected(), true);
   });
@@ -40,19 +40,19 @@ shared.examplesFor('TestFluentApi', function (test) {
     equal(result.getAsExpected(), true);
   });
 
-  it('TestCheckFrameInFrame_Fully_Fluent', async () => {
+  it.skip('TestCheckFrameInFrame_Fully_Fluent', async () => {
     const result = await test.eyes.check("Fluent - Full Frame in Frame", Target.frame("frame1").frame("frame1-1").fully());
     equal(result.getAsExpected(), true);
   });
 
-  it('TestCheckRegionInFrame_Fluent', async () => {
+  it.skip('TestCheckRegionInFrame_Fluent', async () => {
     const result = await test.eyes.check('Fluent - Region in Frame', Target.frame('frame1')
       .region(By.id('inner-frame-div'))
       .fully());
     equal(result.getAsExpected(), true);
   });
 
-  it('TestCheckRegionInFrameInFrame_Fluent', async () => {
+  it.skip('TestCheckRegionInFrameInFrame_Fluent', async () => {
     const result = await test.eyes.check('Fluent - Region in Frame in Frame', Target.frame('frame1')
       .frame('frame1-1')
       .region(By.tagName('img'))

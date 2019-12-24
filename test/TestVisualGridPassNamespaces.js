@@ -9,7 +9,7 @@ const Common = require('./Common');
 
 let browser;
 
-describe('VisualGridSimple', function () {
+describe.skip('VisualGridSimple', function () {
   this.timeout(5 * 60 * 1000);
 
   before(async function () {
