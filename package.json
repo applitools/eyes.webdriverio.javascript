@@ -7,7 +7,7 @@
     "test": "mocha --no-timeouts \"test/+(TestClassicApi*.js|TestFluentApi*.js|TestVisualGrid*.js)\""
   },
   "author": "Applitools Team <team@applitools.com> (http://www.applitools.com/)",
-  "license": "See LICENSE file",
+  "license": "SEE LICENSE IN LICENSE",
   "repository": "https://github.com/applitools/eyes.webdriverio.javascript",
   "dependencies": {
     "@applitools/dom-utils": "~4.6.37",
