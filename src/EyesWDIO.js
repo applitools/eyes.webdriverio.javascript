@@ -76,6 +76,8 @@ class EyesWDIO extends EyesBase {
     super(serverUrl, isDisabled, new Configuration());
     /** @type {EyesRunner} */ this._runner = runner;
 
+    this._runner._eyesInstances.push(this)
+
     /** @type {EyesWebDriver} */
     this._driver = undefined;
     /** @type {boolean} */
