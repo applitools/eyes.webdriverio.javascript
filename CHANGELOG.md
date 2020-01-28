@@ -1,3 +1,6 @@
+## 2.11.7
+- Fixed error when getting images on Safari. Related to [Trello 99](https://trello.com/c/C0oZf2oc)
+
 ## [unversioned] - 
 ### Fixed
 - Crop safari url bar and status bar on mobile devices (IOS). [Trello 939](https://trello.com/c/SM80YzdM)
