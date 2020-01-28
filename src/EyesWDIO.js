@@ -45,6 +45,7 @@ const WDIOJSExecutor = require('./WDIOJSExecutor');
 const WebDriver = require('./wrappers/WebDriver');
 const ReadOnlyPropertyHandler = require("@applitools/eyes-sdk-core/index").ReadOnlyPropertyHandler;
 const {ClassicRunner} = require('./runner/ClassicRunner');
+const ImageRotation = require('./positioning/ImageRotation')
 
 const VERSION = require('../package.json').version;
 
@@ -896,7 +897,7 @@ class EyesWDIO extends EyesBase {
         this._effectiveViewport = new Region(Location.ZERO, viewportSize);
       } catch (e) {
         await this._driver.switchTo().frames(originalFrame);
-        throw new TestFailedError('Failed to set the viewport size', err);
+        throw new TestFailedError('Failed to set the viewport size', e);
       }
 
       await this._driver.switchTo().frames(originalFrame);

@@ -14,7 +14,7 @@ describe('VisualGridSimple', function () {
   this.timeout(5 * 60 * 1000);
 
   before(async function () {
-    chromedriver.start();
+    await chromedriver.start(undefined, true);
   });
 
   beforeEach(function () {
@@ -25,6 +25,7 @@ describe('VisualGridSimple', function () {
 
   after(async function () {
     chromedriver.stop();
+    await new Promise(res => setTimeout(res, 2000))
   });
 
   it('VisualGridTestPage', async function () {

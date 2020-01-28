@@ -14,7 +14,7 @@ platforms.forEach(function (platform) {
   describe.skip(appName, function () {
 
     before(function () {
-      test.beforeTest({});
+      return test.beforeTest({});
     });
 
     beforeEach(function () {

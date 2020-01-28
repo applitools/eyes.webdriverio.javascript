@@ -7,36 +7,30 @@ const {By} = require('../index');
 
 shared.examplesFor('TestClassicApi', function (test) {
   it('TestCheckWindow', async () => {
-    const result = await test.eyes.checkWindow('Window');
-    equal(result.getAsExpected(), true);
+    await test.eyes.checkWindow('Window');
   });
 
   it('TestCheckRegion', async () => {
-    const result = await test.eyes.checkRegionBy(By.id('overflowing-div'), 'Region');
-    equal(result.getAsExpected(), true);
+    await test.eyes.checkRegionBy(By.id('overflowing-div'), 'Region');
   });
 
   it.skip('TestCheckFrame', async () => {
-    const result = await test.eyes.checkFrame('frame1', null, 'frame1');
-    equal(result.getAsExpected(), true);
+    await test.eyes.checkFrame('frame1', null, 'frame1');
   });
 
   it.skip('TestCheckRegionInFrame', async () => {
-    const result = await test.eyes.checkRegionInFrame('frame1', By.id('inner-frame-div'), null, 'Inner frame div', true);
-    equal(result.getAsExpected(), true);
+    await test.eyes.checkRegionInFrame('frame1', By.id('inner-frame-div'), null, 'Inner frame div', true);
   });
 
   it('TestCheckRegion2', async () => {
-    const result = await test.eyes.checkRegionBy(By.id('overflowing-div-image'), 'minions');
-    equal(result.getAsExpected(), true);
+    await test.eyes.checkRegionBy(By.id('overflowing-div-image'), 'minions');
   });
 
   it.skip('TestCheckInnerFrame', async () => {
     await test.eyes.getDriver().switchTo().defaultContent();
     const frame = await test.eyes.getDriver().webDriver.findElement(By.name('frame1'));
     await test.eyes.getDriver().switchTo().frame(frame);
-    const result = await test.eyes.checkFrame('frame1-1', 'inner-frame');
-    equal(result.getAsExpected(), true);
+    await test.eyes.checkFrame('frame1-1', 'inner-frame');
   });
 
   it('TestIgnoreCaret', async () => {
@@ -44,8 +38,7 @@ shared.examplesFor('TestClassicApi', function (test) {
     const input = await test.eyes.getDriver().webDriver.findElement(By.xPath('/html/body/input'));
     await input.sendKeys('test');
 
-    const result = await test.eyes.checkRegionBy(By.xPath('/html/body/input'), 'input');
-    equal(result.getAsExpected(), true);
+    await test.eyes.checkRegionBy(By.xPath('/html/body/input'), 'input');
   });
 });
 

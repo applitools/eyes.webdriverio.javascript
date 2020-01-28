@@ -15,6 +15,7 @@ const {
   RectangleSize
 } = require('@applitools/eyes-sdk-core');
 
+const {Target} = require('../index')
 
 const {TestResultSummary} = require('./runner/TestResultSummary');
 

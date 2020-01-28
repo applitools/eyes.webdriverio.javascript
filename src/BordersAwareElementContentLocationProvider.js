@@ -50,7 +50,7 @@ async function getPropertyValue(logger, element, propName) {
       try {
         cssValue = await element.getComputedStyle(propName);
       } catch (e) {
-        logger.verbose(`Using getComputedStyle failed: ${err}`);
+        logger.verbose(`Using getComputedStyle failed: ${e}`);
         logger.verbose("Using getCssValue...");
         cssValue = await element.getCssValue(propName);
       }

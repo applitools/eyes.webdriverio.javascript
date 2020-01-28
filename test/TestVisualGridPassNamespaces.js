@@ -24,6 +24,7 @@ describe.skip('VisualGridSimple', function () {
 
   after(async function () {
     chromedriver.stop();
+    await new Promise(res => setTimeout(res, 2000))
   });
 
   it('VisualGridTestPage', async function () {

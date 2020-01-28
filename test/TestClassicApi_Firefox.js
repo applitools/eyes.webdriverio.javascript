@@ -15,7 +15,7 @@ platforms.forEach(function (platform) {
   describe.skip(appName, function () {
 
     before(function () {
-      test.beforeTest({});
+      return test.beforeTest({});
     });
 
     beforeEach(function () {
@@ -32,7 +32,7 @@ platforms.forEach(function (platform) {
     });
 
     after(function () {
-      test.afterTest();
+      return test.afterTest();
     });
 
     TestClassicApi.shouldBehaveLike('TestClassicApi', test);

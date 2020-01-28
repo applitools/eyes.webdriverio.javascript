@@ -11,7 +11,7 @@ describe('VisualGridCheckFluent', function () {
   this.timeout(5 * 60 * 1000);
 
   before(async function () {
-    chromedriver.start();
+    await chromedriver.start(undefined, true);
 
     const chrome = Common.CHROME;
     browser = webdriverio.remote({...chrome, port: 9515, path: '/'});
@@ -47,6 +47,7 @@ describe('VisualGridCheckFluent', function () {
   after(async function () {
     await browser.end();
     chromedriver.stop();
+    await new Promise(res => setTimeout(res, 2000))
   });
 
   it('TestCheckWindow', async function () {

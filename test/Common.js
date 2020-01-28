@@ -88,7 +88,7 @@ class Common {
     this._mobileBrowser = mobileBrowser;
   }
 
-  beforeTest({batchName: batchName, fps = false, stitchMode = StitchMode.CSS}) {
+  async beforeTest({batchName: batchName, fps = false, stitchMode = StitchMode.CSS}) {
     this._eyes = new Eyes();
 /*
   TODO
@@ -128,10 +128,14 @@ class Common {
     if (!this._seleniumStandAloneMode && !(process.env.SELENIUM_SERVER_URL === 'http://ondemand.saucelabs.com/wd/hub'
       && process.env.SAUCE_USERNAME && process.env.SAUCE_ACCESS_KEY)) {
       if (this._browserName === 'chrome') {
-        chromedriver.start();
+        await chromedriver.start(undefined, true);
         this._eyes._logger.verbose('Chromedriver is started');
       } else if (this._browserName === 'firefox') {
+        // NOTE: if this method of execution fails due to an `HTTP method not 
+        // allowed` error then use either standalone or Sauce Labs.
+        // See https://github.com/webdriverio/webdriverio/issues/4642
         geckodriver.start();
+        await new Promise(res => setTimeout(res, 2000))
         this._eyes._logger.verbose('Geckodriver is started');
       }
     }
@@ -177,7 +181,7 @@ class Common {
     const that = this;
     this._browser = webdriverio.remote(browserOptions);
     await this._browser.init();
-    const viewportSize = null;
+    const viewportSize = new RectangleSize(rectangleSize);
 
     if (that._eyes.getForceFullPageScreenshot()) {
       testName += '_FPS';
@@ -197,7 +201,7 @@ class Common {
   async afterEachTest() {
     let error;
     try {
-      const results = await this._eyes.close(false);
+      const results = await this._eyes.close(true);
       const query = `?format=json&AccessToken=${results.getSecretToken()}&apiKey=${this.eyes.getApiKey()}`;
       const apiSessionUrl = results.getApiUrls().getSession() + query;
 
@@ -235,28 +239,21 @@ class Common {
       // }
 
 
-    } catch (e) {
-      if (e instanceof AssertionError) {
-        error = e;
-      }
-
-      return this._eyes.abortIfNotClosed();
     } finally {
       await this._browser.end();
-
-      if (error) {
-        throw error;
-      }
+      await this._eyes.abortIfNotClosed();
     }
   }
 
-  afterTest() {
+  async afterTest() {
     if (!this._seleniumStandAloneMode && !(process.env.SELENIUM_SERVER_URL === 'http://ondemand.saucelabs.com/wd/hub'
       && process.env.SAUCE_USERNAME && process.env.SAUCE_ACCESS_KEY)) {
       if (this._browserName === 'chrome') {
         chromedriver.stop();
+        await new Promise(res => setTimeout(res, 2000))
       } else if (this._browserName === 'firefox') {
         geckodriver.stop();
+        await new Promise(res => setTimeout(res, 2000))
       }
     }
   }

@@ -30,9 +30,10 @@ describe.skip(appName, function () {
     chrome.port = '9515';
     chrome.path = '/';
 
+    let browser;
     let results;
     try {
-      let browser = webdriverio.remote(chrome);
+      browser = webdriverio.remote(chrome);
       await browser.init();
       const viewportSize = new RectangleSize({width: 800, height: 600});
 
