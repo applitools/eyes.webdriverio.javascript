@@ -287,8 +287,11 @@ class EyesWebDriver {
 
   // noinspection JSUnusedGlobalSymbols
   async getCurrentUrl() {
-    const {value: result} = await this.url();
-    return result;
+    if (!EyesWDIOUtils.isMobileDevice(this.remoteWebDriver)) {
+      return await this.getUrl();
+    } else {
+      return null;
+    }
   }
 
 
