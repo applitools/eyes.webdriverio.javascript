@@ -1,3 +1,6 @@
+## 2.11.8
+- Fixed error when performing a URL lookup on native mobile. [Trello 208](https://trello.com/c/ZPkZsyaI)
+
 ## 2.11.7
 - Fixed error when getting images on Safari. Related to [Trello 99](https://trello.com/c/C0oZf2oc)
 
