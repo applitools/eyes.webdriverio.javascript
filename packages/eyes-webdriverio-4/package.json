@@ -11,7 +11,7 @@
   },
   "author": "Applitools Team <team@applitools.com> (http://www.applitools.com/)",
   "license": "SEE LICENSE IN LICENSE",
-  "repository": "https://github.com/applitools/eyes.webdriverio.javascript",
+  "repository": "https://github.com/applitools/eyes-sdk-javascript",
   "dependencies": {
     "@applitools/dom-utils": "~4.6.37",
     "@applitools/eyes-common": "^3.17.2",
